@@ -29,7 +29,7 @@ select.tf option{background:#1C1C3A}
 
 .logo{font-family:'Bebas Neue',sans-serif;font-size:3.2rem;letter-spacing:4px;background:linear-gradient(135deg,#F5C518,#fff 50%,#F5C518);-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1}
 .logo-sub{font-size:.78rem;color:var(--mut);letter-spacing:5px;text-transform:uppercase;margin-bottom:2rem}
-.game-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem;margin-bottom:2rem}
+.game-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:.75rem;margin-bottom:2rem}
 .game-card{background:var(--surf);border:2px solid rgba(255,255,255,.15);border-radius:14px;padding:1.1rem .75rem;text-align:center;cursor:pointer;transition:transform .18s,border-color .18s}
 .game-card:hover{transform:translateY(-3px);border-color:var(--gold)}
 .game-card.disabled{opacity:.35;cursor:default;pointer-events:none}
@@ -173,6 +173,33 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
 .wheel-turn-label{font-size:.7rem;font-weight:900;letter-spacing:3px;text-transform:uppercase;color:var(--mut);margin-bottom:.4rem}
 .wheel-turn-name{font-family:'Bebas Neue',sans-serif;font-size:2.2rem;letter-spacing:3px;color:var(--gold)}
 
+/* REAZIONE */
+.chain-head{display:flex;align-items:center;justify-content:space-between;gap:.8rem;margin-bottom:.8rem}
+.chain-title{font-family:'Bebas Neue',sans-serif;font-size:1.45rem;letter-spacing:3px;color:var(--gold)}
+.chain-team{font-size:.78rem;color:var(--mut);text-align:right}
+.chain-stage{background:var(--surf);border:1px solid var(--bord);border-radius:16px;padding:1rem;margin-bottom:1rem}
+.chain-start{display:flex;align-items:center;justify-content:center;gap:.6rem;background:rgba(245,197,24,.1);border:1px solid rgba(245,197,24,.28);border-radius:12px;padding:.75rem;margin-bottom:.9rem}
+.chain-start-label{font-size:.68rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--mut)}
+.chain-start-word{font-family:'Bebas Neue',sans-serif;font-size:1.7rem;letter-spacing:2px;color:var(--gold)}
+.chain-timer-line{display:grid;grid-template-columns:80px 1fr 52px;align-items:center;gap:.65rem;margin-bottom:.9rem}
+.chain-step-label{font-size:.72rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--mut)}
+.chain-time{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;text-align:right;color:var(--gold)}
+.chain-rows{display:flex;flex-direction:column;gap:.55rem}
+.chain-row{display:grid;grid-template-columns:34px 1fr;gap:.55rem;align-items:center}
+.chain-num{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.14);font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--mut)}
+.chain-input{width:100%;text-transform:uppercase;font-weight:900;letter-spacing:1px;text-align:center}
+.chain-input.done{border-color:#2ECC71;background:rgba(46,204,113,.1);color:#2ECC71}
+.chain-input.active{border-color:var(--gold);box-shadow:0 0 0 3px rgba(245,197,24,.1)}
+.chain-input.locked{opacity:.45}
+.chain-hint{min-height:24px;text-align:center;font-size:.82rem;font-weight:800;color:var(--gold);margin:.85rem 0 .6rem}
+.chain-message{min-height:34px;text-align:center;font-weight:900;color:var(--txt);font-size:.9rem;margin-top:.75rem}
+.chain-actions{display:flex;gap:.6rem;margin-top:.75rem}
+.chain-actions button{flex:1}
+.chain-penalty{display:grid;grid-template-columns:repeat(2,1fr);gap:.6rem;margin-bottom:1rem}
+.chain-player{background:var(--surf);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:.65rem;text-align:center}
+.chain-player-name{font-size:.78rem;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chain-player-score{font-family:'Bebas Neue',sans-serif;font-size:1.35rem;color:var(--gold)}
+
 @media(max-width:620px){
   .game-cards{grid-template-columns:repeat(2,1fr)}
   .wheel-status{grid-template-columns:1fr}
@@ -226,6 +253,11 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
         <div class="gc-name">La Ruota</div>
         <div class="gc-sub">Gira e completa!</div>
       </div>
+      <div class="game-card" onclick="startGame('catena')">
+        <div class="gc-emoji">⛓️</div>
+        <div class="gc-name">Reazione a Catena</div>
+        <div class="gc-sub">Collega le parole!</div>
+      </div>
     </div>
     <button class="btn-ghost" onclick="goTo('s-setup')">⚙ Configura giocatori &amp; timer</button>
   </div>
@@ -265,6 +297,11 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
       <input type="range" min="10" max="120" step="5" value="45" id="timer-ere" oninput="document.getElementById('tv-ere').textContent=this.value+'s'" style="flex:1">
       <div class="timer-val" id="tv-ere">45s</div>
     </div>
+    <div class="timer-row">
+      <div class="timer-lbl">Reazione a Catena</div>
+      <input type="range" min="10" max="60" step="5" value="20" id="timer-chain" oninput="document.getElementById('tv-chain').textContent=this.value+'s'" style="flex:1">
+      <div class="timer-val" id="tv-chain">20s</div>
+    </div>
   </div>
   <div class="step-block">
     <div class="step-label">④ Voce domande</div>
@@ -284,6 +321,24 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
     <button class="btn-ghost" style="flex:1" onclick="goTo('s-hero')">← Menu</button>
     <button class="btn-gold" style="flex:2" onclick="goTo('s-hero')">Salva ›</button>
   </div>
+</div>
+
+<!-- PICK REAZIONE -->
+<div class="screen" id="s-pick-chain">
+  <button class="btn-back" onclick="goTo('s-hero')">← Menu</button>
+  <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:3px;color:var(--gold);margin-bottom:.25rem">Chi fa la catena?</div>
+  <div style="font-size:.82rem;color:var(--mut);margin-bottom:1rem">Seleziona la coppia: giocheranno insieme parola dopo parola</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.2rem">
+    <div>
+      <div style="font-size:.7rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:#3498DB;margin-bottom:.6rem">Giocatore 1</div>
+      <div id="pick-grid-chain-p1"></div>
+    </div>
+    <div>
+      <div style="font-size:.7rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:#E74C3C;margin-bottom:.6rem">Giocatore 2</div>
+      <div id="pick-grid-chain-p2"></div>
+    </div>
+  </div>
+  <button class="btn-gold" id="btn-pick-chain-go" style="width:100%" disabled>INIZIA LA CATENA ›</button>
 </div>
 
 <!-- PICK 1 (AUA) -->
@@ -330,9 +385,21 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
 <div class="screen" id="s-pick-wheel">
   <button class="btn-back" onclick="goTo('s-hero')">← Menu</button>
   <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:3px;color:var(--gold);margin-bottom:.25rem">Chi inizia?</div>
-  <div style="font-size:.82rem;color:var(--mut);margin-bottom:1.2rem">Seleziona il primo concorrente: poi la mano passerà agli altri</div>
+  <div style="font-size:.82rem;color:var(--mut);margin-bottom:1.2rem">Seleziona il primo concorrente: la ruota partirà automaticamente al secondo 12 della sigla</div>
+  <div class="aua-intro-wrapper" id="wheel-intro-effects">
+    <div class="intro-card">
+      <div class="intro-tag">Anteprima La Ruota</div>
+      <div class="intro-title">La fortuna sta per girare!</div>
+      <div class="intro-sub">Scegli il primo concorrente: al momento giusto si entra in gioco.</div>
+    </div>
+    <div class="auu-effect aua-glow"></div>
+    <div class="auu-effect aua-ripple"></div>
+    <div class="auu-effect aua-spot a"></div>
+    <div class="auu-effect aua-spot b"></div>
+    <div class="auu-effect aua-spot c"></div>
+    <div class="auu-effect aua-spot d"></div>
+  </div>
   <div class="player-pick-grid" id="pick-grid-wheel"></div>
-  <button class="btn-gold" id="btn-pick-wheel-go" style="width:100%" disabled>INIZIA ›</button>
 </div>
 
 <!-- AUA GAME -->
@@ -353,7 +420,7 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
     <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:3px;color:var(--gold)">🔠 L'Eredità</div>
     <div style="font-size:.78rem;color:var(--mut)" id="ere-word-counter">Parola 1 / 10</div>
   </div>
-  <div class="space-bar-hint">
+  <div class="space-bar-hint" onclick="onSpacePress()" style="cursor:pointer;">
     <kbd>SPAZIO</kbd> = il giocatore attivo ha indovinato!
   </div>
   <div class="active-indicator" id="ere-active-ind"></div>
@@ -410,7 +477,7 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
       </div>
       <div class="wheel-controls">
         <button class="btn-ghost" onclick="goTo('s-hero')">Menu</button>
-        <div class="wheel-space-hint"><kbd>SPAZIO</kbd> Gira</div>
+        <div class="wheel-space-hint" onclick="spinWheel()" style="cursor:pointer;"><kbd>SPAZIO</kbd> Gira</div>
       </div>
     </div>
   </div>
@@ -419,6 +486,37 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
       <div class="wheel-turn-label">Tocca a</div>
       <div class="wheel-turn-name" id="wheel-turn-name"></div>
     </div>
+  </div>
+</div>
+
+<!-- REAZIONE GAME -->
+<div class="screen" id="s-chain">
+  <div class="chain-head">
+    <div class="chain-title">⛓️ Reazione a Catena</div>
+    <div class="chain-team">Coppia: <span id="chain-pair" style="color:var(--txt);font-weight:900"></span></div>
+  </div>
+  <div class="chain-penalty" id="chain-players"></div>
+  <div class="chain-stage">
+    <div class="chain-start">
+      <span class="chain-start-label">Partenza</span>
+      <span class="chain-start-word" id="chain-start-word">—</span>
+    </div>
+    <div class="chain-timer-line">
+      <div class="chain-step-label" id="chain-step-label">Parola 1</div>
+      <div class="timer-bar-wrap" style="margin:0"><div class="timer-bar" id="chain-tbar" style="width:100%"></div></div>
+      <div class="chain-time" id="chain-time">20</div>
+    </div>
+    <div class="chain-rows" id="chain-rows"></div>
+    <div class="chain-hint" id="chain-hint"></div>
+    <div class="chain-actions">
+      <button class="btn-danger" onclick="missChainWord()">SBAGLIATA / AIUTO</button>
+      <button class="btn-gold" onclick="submitChainWord()">CONFERMA</button>
+    </div>
+    <div class="chain-message" id="chain-message"></div>
+  </div>
+  <div style="display:flex;gap:.75rem">
+    <button class="btn-ghost" style="flex:1" onclick="goTo('s-hero')">Menu</button>
+    <button class="btn-ghost" style="flex:1" onclick="beginChain()">Nuova catena</button>
   </div>
 </div>
 
@@ -466,65 +564,66 @@ const TC=[
 ];
 
 let players=[],teams=[],nPid=1,nTid=1;
-let selPid=null,selP1=null,selP2=null,selWheelPid=null;
+let selPid=null,selP1=null,selP2=null,selWheelPid=null,selChainP1=null,selChainP2=null;
 let intesaWinner=null;
 let intesaPlayers={p1:null,p2:null};
 let auaAudio=null,auaErrorAudio=null,auaAutoStartListener=null,auaAutoStarted=false,auaThemeResumeTime=0;
-let rdfAudio=null;
+let rdfAudio=null,rdfAutoStartListener=null,rdfAutoStarted=false;
 let ttsVoices=[];
 let ttsVoiceURI=localStorage.getItem('tvgn-tts-voice')||'';
 let ttsRate=parseFloat(localStorage.getItem('tvgn-tts-rate'))||.9;
 
 const AUA_Q=[
-{q:"Di che colore è il cielo sereno?",a:["Blu","Verde"],wrong:"Verde"},
+{q:"Di che colore è il cielo sereno?",a:["Verde","Blu"],wrong:"Verde"},
 {q:"Quanti giorni ha una settimana?",a:["7","10"],wrong:"10"},
-{q:"Quale animale dice 'bau'?",a:["Cane","Gatto"],wrong:"Gatto"},
+{q:"Quale animale dice 'bau'?",a:["Gatto","Cane"],wrong:"Gatto"},
 {q:"Quanto fa 2+2?",a:["4","5"],wrong:"5"},
-{q:"Quale stagione viene dopo l’inverno?",a:["Primavera","Autunno"],wrong:"Autunno"},
+{q:"Quale stagione viene dopo l’inverno?",a:["Autunno","Primavera"],wrong:"Autunno"},
 {q:"Qual è il contrario di freddo?",a:["Caldo","Ghiaccio"],wrong:"Ghiaccio"},
-{q:"Quale pianeta è noto come pianeta rosso?",a:["Marte","Venere"],wrong:"Venere"},
+{q:"Quale pianeta è noto come pianeta rosso?",a:["Venere","Marte"],wrong:"Venere"},
 {q:"Qual è il risultato di 10×10?",a:["100","110"],wrong:"110"},
-{q:"Quale organo pompa il sangue?",a:["Cuore","Fegato"],wrong:"Fegato"},
+{q:"Quale organo pompa il sangue?",a:["Fegato","Cuore"],wrong:"Fegato"},
 {q:"Quale animale vive nel mare?",a:["Pesce","Mucca"],wrong:"Mucca"},
-{q:"Qual è lo sport più praticato al mondo?",a:["Calcio","Tennis"],wrong:"Tennis"},
+{q:"Qual è lo sport più praticato al mondo?",a:["Tennis","Calcio"],wrong:"Tennis"},
 {q:"Qual è il simbolo dell’acqua?",a:["H2O","O2"],wrong:"O2"},
-{q:"Quale colore si ottiene mescolando rosso e blu?",a:["Viola","Verde"],wrong:"Verde"},
+{q:"Quale colore si ottiene mescolando rosso e blu?",a:["Verde","Viola"],wrong:"Verde"},
 {q:"Quale strumento misura il tempo?",a:["Orologio","Righello"],wrong:"Righello"},
-{q:"Qual è il risultato di 5*5?",a:["25","20"],wrong:"20"},
+{q:"Qual è il risultato di 5 per 5?",a:["20","25"],wrong:"20"},
 {q:"Quale animale è il re della savana?",a:["Leone","Elefante"],wrong:"Elefante"},
-{q:"Quanti minuti ci sono in un’ora?",a:["60","100"],wrong:"100"},
+{q:"Quanti minuti ci sono in un’ora?",a:["100","60"],wrong:"100"},
 {q:"Qual è il contrario di notte?",a:["Giorno","Sera"],wrong:"Sera"},
-{q:"Quale materia studia i numeri?",a:["Matematica","Storia"],wrong:"Storia"},
+{q:"Quale materia studia i numeri?",a:["Storia","Matematica"],wrong:"Storia"},
 {q:"Quale è un linguaggio di programmazione?",a:["Python","Serpente"],wrong:"Serpente"},
-{q:"Quale frutto è giallo e lungo?",a:["Banana","Mela"],wrong:"Mela"},
+{q:"Quale frutto è giallo e lungo?",a:["Mela","Banana"],wrong:"Mela"},
 {q:"Quale animale fa 'miao'?",a:["Gatto","Cane"],wrong:"Cane"},
-{q:"Quanto fa 3*3?",a:["9","6"],wrong:"6"},
+{q:"Quanto fa 3*3?",a:["6","7"],wrong:"6"},
 {q:"Qual è il contrario di grande?",a:["Piccolo","Alto"],wrong:"Alto"},
-{q:"Quale pianeta è più vicino al Sole?",a:["Mercurio","Marte"],wrong:"Marte"},
+{q:"Quale pianeta è più vicino al Sole?",a:["Marte","Mercurio"],wrong:"Marte"},
 {q:"Quale sport usa la racchetta?",a:["Tennis","Calcio"],wrong:"Calcio"},
-{q:"Qual è il simbolo dell’oro?",a:["Au","Ag"],wrong:"Ag"},
+{q:"Qual è il simbolo dell’oro?",a:["Ag","Au"],wrong:"Ag"},
 {q:"Quanti lati ha un quadrato?",a:["4","3"],wrong:"3"},
-{q:"Quale organo usiamo per vedere?",a:["Occhi","Naso"],wrong:"Naso"},
+{q:"Quale organo usiamo per vedere?",a:["Naso","Occhi"],wrong:"Naso"},
 {q:"Quale animale vola?",a:["Uccello","Pesce"],wrong:"Pesce"},
-{q:"Qual è il risultato di 12+8?",a:["20","18"],wrong:"18"},
+{q:"Qual è il risultato di 12+8?",a:["18","20"],wrong:"18"},
 {q:"Quale è un colore primario?",a:["Rosso","Rosa"],wrong:"Rosa"},
-{q:"Quale mese viene dopo gennaio?",a:["Febbraio","Marzo"],wrong:"Marzo"},
+{q:"Quale mese viene dopo gennaio?",a:["Marzo","Febbraio"],wrong:"Marzo"},
 {q:"Quale animale è domestico?",a:["Cane","Lupo"],wrong:"Lupo"},
-{q:"Quanto fa 9-3?",a:["6","5"],wrong:"5"},
+{q:"Quanto fa 9-3?",a:["5","6"],wrong:"5"},
 {q:"Quale materia studia il passato?",a:["Storia","Fisica"],wrong:"Fisica"},
-{q:"Quale strumento musicale ha i tasti bianchi e neri?",a:["Pianoforte","Chitarra"],wrong:"Chitarra"},
+{q:"Quale strumento musicale ha i tasti bianchi e neri?",a:["Chitarra","Pianoforte"],wrong:"Chitarra"},
 {q:"Qual è il contrario di alto?",a:["Basso","Lungo"],wrong:"Lungo"},
-{q:"Quale pianeta ha gli anelli?",a:["Saturno","Venere"],wrong:"Venere"},
+{q:"Quale pianeta ha gli anelli?",a:["Venere","Saturno"],wrong:"Venere"},
 {q:"Quale animale è più veloce sulla terra?",a:["Ghepardo","Tartaruga"],wrong:"Tartaruga"},
-{q:"Quanto fa 6*6?",a:["36","30"],wrong:"30"},
+{q:"Quanto fa 6 per 6?",a:["30","36"],wrong:"30"},
 {q:"Quale è un metallo?",a:["Ferro","Legno"],wrong:"Legno"},
-{q:"Quale animale vive nella fattoria?",a:["Mucca","Squalo"],wrong:"Squalo"},
+{q:"Quale animale vive nella fattoria?",a:["Squalo","Mucca"],wrong:"Squalo"},
 {q:"Quale è il contrario di acceso?",a:["Spento","Caldo"],wrong:"Caldo"},
-{q:"Quale materia studia la natura?",a:["Scienze","Italiano"],wrong:"Italiano"},
+{q:"Quale materia studia la natura?",a:["Italiano","Scienze"],wrong:"Italiano"},
 {q:"Quale sport si gioca con il pallone ovale?",a:["Rugby","Basket"],wrong:"Basket"},
 // {q:"Quale bevi con gusto?",a:["Sborra","Succo di frutta"],wrong:"Succo di frutta"},
 {q:"E' giusto dire che in Italia non si guida a sinistra?",a:["Sì","No"],wrong:"Sì"},
-// {q:"E' giusto dire che Boni è gay?",a:["Sì","No"],wrong:"No"},
+{q:"E' giusto dire che Boni è gay?",a:["Sì","No"],wrong:"No"},
+{q:"Solo Marzo ha 28 giorni",a:["Vero","Falso"],wrong:"Vero"},
 ];
 
 const ERE_WORDS=[
@@ -593,6 +692,19 @@ const WHEEL_PHRASES=[
   {cat:"Casa",text:"CHIAVI NEL CASSETTO"},
   {cat:"TV",text:"APPLAUSI IN STUDIO"},
   {cat:"Fortuna",text:"COLPO DI SCENA FINALE"},
+];
+
+const CHAIN_ROUNDS=[
+  {start:"CASA",words:["RIPOSO","MATTUTINO","BUONGIORNO","SERALE"]},
+  {start:"MARE",words:["ONDA","RADIO","FREQUENZA","MUSICA"]},
+  {start:"SOLE",words:["LUNA","PIENA","NOTTE","STELLATA"]},
+  {start:"LIBRO",words:["PAGINA","BIANCA","NEVE","MONTAGNA"]},
+  {start:"TEMPO",words:["ORO","ANELLO","DITO","INDICE"]},
+  {start:"CUORE",words:["BATTITO","MANI","APPLAUSO","PUBBLICO"]},
+  {start:"STRADA",words:["VIAGGIO","VALIGIA","AEREO","PORTO"]},
+  {start:"SCUOLA",words:["BANCO","POSTA","LETTERA","ALFABETO"]},
+  {start:"FUOCO",words:["FIAMMA","OLIMPICA","GIOCHI","SQUADRA"]},
+  {start:"FESTA",words:["TORTA","CANDELA","LUCE","STELLA"]}
 ];
 
 const WHEEL_SEGMENTS=[
@@ -695,6 +807,7 @@ function speakQuestion(text){
 function goTo(id){
   if(id!=='s-aua'&&id!=='s-eredita')stopQuestionSpeech();
   if(id!=='s-pick-wheel'&&id!=='s-wheel')stopRdfAudio();
+  if(id!=='s-chain')clearChainTimer();
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   if(id==='s-setup')initTtsControls();
@@ -720,6 +833,14 @@ function showAuaIntroEffects(){
 }
 function hideAuaIntroEffects(){
   const el=document.getElementById('aua-intro-effects');
+  if(el){el.classList.remove('active');}
+}
+function showWheelIntroEffects(){
+  const el=document.getElementById('wheel-intro-effects');
+  if(el){el.classList.add('active');}
+}
+function hideWheelIntroEffects(){
+  const el=document.getElementById('wheel-intro-effects');
   if(el){el.classList.remove('active');}
 }
 function clearAuaAutoStart(){
@@ -787,15 +908,39 @@ function stopAuaAudio(){
 function setRdfAudio(){
   if(!rdfAudio){rdfAudio=document.getElementById('rdf-audio');}
 }
-function startRdfAudio(){
+function clearRdfAutoStart(){
+  if(rdfAudio&&rdfAutoStartListener){
+    rdfAudio.removeEventListener('timeupdate',rdfAutoStartListener);
+    rdfAutoStartListener=null;
+  }
+}
+function startRdfAudioAuto(){
   setRdfAudio();
   if(!rdfAudio)return;
+  clearRdfAutoStart();
+  showWheelIntroEffects();
+  rdfAutoStarted=false;
   rdfAudio.currentTime=0;
   rdfAudio.play().catch(()=>{});
+  rdfAutoStartListener=function(){
+    if(rdfAutoStarted)return;
+    if(rdfAudio.currentTime>=12){
+      rdfAutoStarted=true;
+      clearRdfAutoStart();
+      if(!selWheelPid&&players.length){
+        selWheelPid=players[0].id;
+        document.getElementById('pp-wheel-'+selWheelPid)?.classList.add('selected');
+      }
+      beginWheel();
+    }
+  };
+  rdfAudio.addEventListener('timeupdate',rdfAutoStartListener);
 }
 function stopRdfAudio(){
   setRdfAudio();
+  hideWheelIntroEffects();
   if(!rdfAudio)return;
+  clearRdfAutoStart();
   rdfAudio.pause();
   rdfAudio.currentTime=0;
 }
@@ -924,9 +1069,26 @@ function renderHomeLeaderboard(){
 /* ── GAME START ── */
 function startGame(game){
   if(!players.length){goTo('s-setup');return;}
+  if(game==='catena'){
+    if(players.length<2){goTo('s-setup');return;}
+    stopAuaAudio();
+    selChainP1=null;selChainP2=null;
+    ['p1','p2'].forEach(slot=>{
+      document.getElementById('pick-grid-chain-'+slot).innerHTML=players.map(p=>{
+        const c=TC[p.ci%TC.length];const t=teams.find(t=>t.mids.includes(p.id));
+        return `<div class="player-pick" id="pp-chain-${slot}-${p.id}" onclick="selPickChain('${slot}',${p.id})" style="margin-bottom:.5rem">
+          <div class="pp-avatar" style="background:${c.light};color:${c.hex}">${initials(p.name)}</div>
+          <div class="pp-name">${p.name}</div>
+          <div class="pp-info">${t?t.name:'Libero'} · ${p.score}pt</div></div>`;
+      }).join('');
+    });
+    document.getElementById('btn-pick-chain-go').disabled=true;
+    document.getElementById('btn-pick-chain-go').onclick=()=>beginChain();
+    goTo('s-pick-chain');
+    return;
+  }
   if(game==='ruota'){
     stopAuaAudio();
-    startRdfAudio();
     selWheelPid=null;
     document.getElementById('pick-grid-wheel').innerHTML=players.map(p=>{
       const c=TC[p.ci%TC.length];const t=teams.find(t=>t.mids.includes(p.id));
@@ -935,8 +1097,7 @@ function startGame(game){
         <div class="pp-name">${p.name}</div>
         <div class="pp-info">${t?t.name:'Libero'} · ${p.score}pt</div></div>`;
     }).join('');
-    document.getElementById('btn-pick-wheel-go').disabled=true;
-    document.getElementById('btn-pick-wheel-go').onclick=()=>beginWheel();
+    startRdfAudioAuto();
     goTo('s-pick-wheel');
     return;
   }
@@ -998,6 +1159,251 @@ function selPick2(slot,id){
   document.querySelectorAll(`#pick-grid-${slot} .player-pick`).forEach(e=>e.classList.remove('selected'));
   document.getElementById(`pp2-${slot}-${id}`)?.classList.add('selected');
   document.getElementById('btn-pick2-go').disabled=!(selP1&&selP2&&selP1!==selP2);
+}
+
+function selPickChain(slot,id){
+  if(slot==='p1')selChainP1=id;else selChainP2=id;
+  document.querySelectorAll(`#pick-grid-chain-${slot} .player-pick`).forEach(e=>e.classList.remove('selected'));
+  document.getElementById(`pp-chain-${slot}-${id}`)?.classList.add('selected');
+  document.getElementById('btn-pick-chain-go').disabled=!(selChainP1&&selChainP2&&selChainP1!==selChainP2);
+}
+
+/* ══════════════════════════════
+   REAZIONE A CATENA
+══════════════════════════════ */
+let chainState={};let chainInt=null;
+
+function clearChainTimer(){
+  clearInterval(chainInt);
+  chainInt=null;
+}
+
+function normalizeChainWord(text){
+  return (text||'')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^A-Z0-9]/gi,'')
+    .toUpperCase();
+}
+
+function beginChain(){
+  if(!selChainP1||!selChainP2||selChainP1===selChainP2)return;
+  clearChainTimer();
+  const p1=players.find(p=>p.id===selChainP1);
+  const p2=players.find(p=>p.id===selChainP2);
+  if(!p1||!p2)return;
+  const round=CHAIN_ROUNDS[Math.floor(Math.random()*CHAIN_ROUNDS.length)];
+  chainState={
+    pids:[selChainP1,selChainP2],
+    start:round.start,
+    words:round.words,
+    idx:0,
+    max:getTimer('chain'),
+    left:getTimer('chain'),
+    revealed:round.words.map(()=>0),
+    solved:round.words.map(()=>false),
+    blocked:false
+  };
+  document.getElementById('chain-pair').textContent=`${p1.name} + ${p2.name}`;
+  document.getElementById('chain-start-word').textContent=round.start;
+  renderChainPlayers();
+  renderChainRows();
+  setChainMessage('Partite dalla parola data e trovate il primo collegamento.');
+  goTo('s-chain');
+  startChainTimer();
+}
+
+function getChainTeamIds(){
+  return [...new Set(chainState.pids.map(pid=>{
+    const t=teams.find(tm=>tm.mids.includes(pid));
+    return t?t.id:null;
+  }).filter(Boolean))];
+}
+
+function addChainPairPoints(points){
+  chainState.pids.forEach(pid=>{
+    const p=players.find(pl=>pl.id===pid);
+    if(p)p.score+=points;
+  });
+  getChainTeamIds().forEach(tid=>{
+    const t=teams.find(tm=>tm.id===tid);
+    if(t)t.score+=points;
+  });
+}
+
+function renderChainPlayers(){
+  const el=document.getElementById('chain-players');
+  if(!el)return;
+  el.innerHTML=chainState.pids.map(pid=>{
+    const p=players.find(pl=>pl.id===pid);
+    const c=TC[(p?.ci||0)%TC.length];
+    return `<div class="chain-player">
+      <div class="chain-player-name" style="color:${c.hex}">${p?p.name:'—'}</div>
+      <div class="chain-player-score">${p?p.score:0}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderChainRows(){
+  const cs=chainState;
+  const rows=document.getElementById('chain-rows');
+  if(!rows)return;
+  rows.innerHTML=cs.words.map((word,i)=>{
+    const isActive=i===cs.idx&&!cs.solved[i];
+    const val=cs.solved[i]?word:'';
+    const disabled=!isActive;
+    return `<div class="chain-row">
+      <div class="chain-num">${i+1}</div>
+      <input class="tf chain-input${cs.solved[i]?' done':isActive?' active':' locked'}" id="chain-input-${i}"
+        value="${val}" ${disabled?'disabled':''} placeholder="${isActive?'Scrivi la parola...':'—'}"
+        onkeydown="if(event.key==='Enter')submitChainWord()">
+    </div>`;
+  }).join('');
+  document.getElementById('chain-step-label').textContent=`Parola ${Math.min(cs.idx+1,cs.words.length)} / ${cs.words.length}`;
+  renderChainHint();
+  setTimeout(()=>document.getElementById(`chain-input-${cs.idx}`)?.focus(),0);
+}
+
+function renderChainHint(){
+  const cs=chainState;
+  const el=document.getElementById('chain-hint');
+  if(!el)return;
+  const word=cs.words[cs.idx]||'';
+  const shown=cs.revealed[cs.idx]||0;
+  if(!word||cs.solved[cs.idx]){
+    el.textContent='';
+    return;
+  }
+  if(!shown){
+    el.textContent='Nessun aiuto sbloccato';
+    return;
+  }
+  el.textContent='Aiuto: '+word.split('').map((ch,i)=>i<shown?ch:'_').join(' ');
+}
+
+function setChainMessage(text,color='var(--txt)'){
+  const el=document.getElementById('chain-message');
+  if(!el)return;
+  el.textContent=text;
+  el.style.color=color;
+}
+
+function startChainTimer(){
+  clearChainTimer();
+  chainState.left=chainState.max;
+  updateChainTimer();
+  chainInt=setInterval(()=>{
+    if(chainState.blocked)return;
+    chainState.left--;
+    updateChainTimer();
+    if(chainState.left<=0){
+      missChainWord(true);
+    }
+  },1000);
+}
+
+function updateChainTimer(){
+  const cs=chainState;
+  const pct=Math.max(0,Math.round(cs.left/cs.max*100));
+  const col=cs.left<=5?'#E74C3C':cs.left<=10?'#F5C518':'#2ECC71';
+  const bar=document.getElementById('chain-tbar');
+  const time=document.getElementById('chain-time');
+  if(bar){bar.style.width=pct+'%';bar.style.background=col;}
+  if(time){time.textContent=cs.left;time.style.color=col;}
+}
+
+function submitChainWord(){
+  const cs=chainState;
+  if(cs.blocked||cs.idx>=cs.words.length)return;
+  const input=document.getElementById(`chain-input-${cs.idx}`);
+  const guess=normalizeChainWord(input?.value);
+  const answer=normalizeChainWord(cs.words[cs.idx]);
+  if(!guess){
+    setChainMessage('Scrivete una parola prima di confermare.', '#F5C518');
+    return;
+  }
+  if(guess!==answer){
+    missChainWord(false);
+    return;
+  }
+  cs.solved[cs.idx]=true;
+  clearChainTimer();
+  setChainMessage(`Giusto: ${cs.words[cs.idx]}!`, '#2ECC71');
+  cs.idx++;
+  renderChainRows();
+  if(cs.idx>=cs.words.length){
+    completeChain();
+    return;
+  }
+  setTimeout(()=>{
+    setChainMessage('Collegate la parola appena trovata alla prossima.');
+    startChainTimer();
+  },450);
+}
+
+function missChainWord(fromTimer=false){
+  const cs=chainState;
+  if(cs.blocked||cs.idx>=cs.words.length)return;
+  clearChainTimer();
+  addChainPairPoints(-2);
+  const word=cs.words[cs.idx];
+  cs.revealed[cs.idx]=Math.min(word.length,(cs.revealed[cs.idx]||0)+1);
+  renderChainPlayers();
+  renderHomeLeaderboard();
+  renderChainHint();
+  const input=document.getElementById(`chain-input-${cs.idx}`);
+  if(input){
+    input.value='';
+    input.focus();
+  }
+  const prefix=fromTimer?'Tempo scaduto.':'Parola sbagliata.';
+  if(cs.revealed[cs.idx]>=word.length){
+    setChainMessage(`${prefix} Parola svelata: ${word}. Si passa avanti. -2 punti.`, '#E74C3C');
+    cs.solved[cs.idx]=true;
+    cs.idx++;
+    setTimeout(()=>{
+      renderChainRows();
+      if(cs.idx>=cs.words.length)completeChain();
+      else startChainTimer();
+    },1000);
+    return;
+  }
+  setChainMessage(`${prefix} -2 punti e una lettera sbloccata.`, '#E74C3C');
+  startChainTimer();
+}
+
+function completeChain(){
+  clearChainTimer();
+  chainState.blocked=true;
+  addChainPairPoints(5);
+  renderChainPlayers();
+  renderHomeLeaderboard();
+  setChainMessage('Catena completata! +5 punti alla coppia.', '#2ECC71');
+  setTimeout(()=>{
+    const p1=players.find(p=>p.id===chainState.pids[0]);
+    const p2=players.find(p=>p.id===chainState.pids[1]);
+    document.getElementById('win-name').textContent=`${p1?.name||'—'} + ${p2?.name||'—'}`;
+    document.getElementById('win-sub').textContent='+5 punti per aver chiuso Reazione a Catena!';
+    const sorted=[...players].sort((a,b)=>b.score-a.score);
+    let html='<div style="font-size:.68rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--mut);margin-bottom:.6rem">Classifica giocatori</div>';
+    html+=sorted.map((pl,i)=>{
+      const c=TC[pl.ci%TC.length];const tm=teams.find(t=>t.mids.includes(pl.id));
+      return `<div class="sc-row">
+        <div class="sc-rank">${i+1}</div>
+        <div class="avatar" style="background:${c.light};color:${c.hex};width:24px;height:24px;font-size:.62rem;border-radius:50%;flex-shrink:0">${initials(pl.name)}</div>
+        <div class="sc-name">${pl.name}${tm?` <span style="font-size:.68rem;color:var(--mut)">(${tm.name})</span>`:''}</div>
+        <div class="sc-pts">${pl.score}</div></div>`;
+    }).join('');
+    if(teams.length){
+      html+='<div style="height:.5rem"></div><div style="font-size:.68rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--mut);margin:.4rem 0">Squadre</div>';
+      html+=[...teams].sort((a,b)=>b.score-a.score).map((tm,i)=>`<div class="sc-row">
+        <div class="sc-rank">${i+1}</div>
+        <div style="width:10px;height:10px;border-radius:50%;background:${tm.color.hex};flex-shrink:0"></div>
+        <div class="sc-name">${tm.name}</div><div class="sc-pts">${tm.score}</div></div>`).join('');
+    }
+    document.getElementById('win-scores').innerHTML=html;
+    goTo('s-win');
+  },900);
 }
 
 /* ══════════════════════════════
@@ -1363,11 +1769,11 @@ function selPickWheel(id){
   selWheelPid=id;
   document.querySelectorAll('#pick-grid-wheel .player-pick').forEach(e=>e.classList.remove('selected'));
   document.getElementById('pp-wheel-'+id)?.classList.add('selected');
-  document.getElementById('btn-pick-wheel-go').disabled=false;
 }
 
 function beginWheel(){
   if(!selWheelPid)return;
+  hideWheelIntroEffects();
   const startIdx=players.findIndex(p=>p.id===selWheelPid);
   if(startIdx<0)return;
   const phrase=WHEEL_PHRASES[Math.floor(Math.random()*WHEEL_PHRASES.length)];
