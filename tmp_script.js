@@ -1,565 +1,4 @@
-<!DOCTYPE html>
-<html><head>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800;900&display=swap');
-*{box-sizing:border-box;margin:0;padding:0}
-:root{--gold:#F5C518;--bg:#08081A;--surf:#12122A;--surf2:#1C1C3A;--bord:rgba(245,197,24,0.22);--txt:#F0EEE4;--mut:#7A7A9A}
-body{background:var(--bg);color:var(--txt);font-family:'Nunito',sans-serif;min-height:600px}
-.screen{display:none;padding:1.4rem;max-width:720px;margin:0 auto}
-.screen.active{display:block}
 
-.btn-gold{background:var(--gold);color:#08081A;border:none;border-radius:12px;padding:.85rem 2.2rem;font-family:'Nunito',sans-serif;font-size:.95rem;font-weight:900;cursor:pointer;transition:transform .15s,background .15s}
-.btn-gold:hover{background:#FFD93D;transform:scale(1.03)}
-.btn-gold:disabled{opacity:.35;cursor:not-allowed;transform:none}
-.btn-ghost{background:rgba(255,255,255,.1);color:#fff;border:1.5px solid rgba(255,255,255,.3);border-radius:12px;padding:.8rem 1.8rem;font-family:'Nunito',sans-serif;font-size:.88rem;font-weight:800;cursor:pointer;transition:all .18s}
-.btn-ghost:hover{background:rgba(255,255,255,.22);border-color:rgba(255,255,255,.6)}
-.btn-add{background:rgba(245,197,24,.18);color:var(--gold);border:1.5px solid rgba(245,197,24,.4);border-radius:9px;padding:.62rem 1rem;font-size:1.2rem;cursor:pointer;transition:background .15s;flex-shrink:0}
-.btn-add:hover{background:rgba(245,197,24,.38)}
-.btn-rm{background:transparent;color:var(--mut);border:none;cursor:pointer;font-size:1rem;padding:.2rem .4rem;border-radius:6px}
-.btn-rm:hover{color:#ff6b6b}
-.btn-success{background:rgba(46,204,113,.2);color:#2ECC71;border:1.5px solid rgba(46,204,113,.45);border-radius:10px;padding:.7rem 1.6rem;font-family:'Nunito',sans-serif;font-size:.9rem;font-weight:900;cursor:pointer;transition:all .18s}
-.btn-success:hover{background:rgba(46,204,113,.38)}
-.btn-danger{background:rgba(231,76,60,.2);color:#ff6b6b;border:1.5px solid rgba(231,76,60,.45);border-radius:10px;padding:.7rem 1.6rem;font-family:'Nunito',sans-serif;font-size:.9rem;font-weight:900;cursor:pointer;transition:all .18s}
-.btn-danger:hover{background:rgba(231,76,60,.38)}
-
-input.tf,select.tf{background:var(--surf2);border:1.5px solid rgba(255,255,255,.18);border-radius:9px;padding:.65rem .9rem;color:var(--txt);font-family:'Nunito',sans-serif;font-size:.9rem;outline:none;transition:border-color .15s;flex:1}
-input.tf:focus,select.tf:focus{border-color:var(--gold)}
-input.tf::placeholder{color:var(--mut)}
-select.tf option{background:#1C1C3A}
-
-.logo{font-family:'Bebas Neue',sans-serif;font-size:3.2rem;letter-spacing:4px;background:linear-gradient(135deg,#F5C518,#fff 50%,#F5C518);-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1}
-.logo-sub{font-size:.78rem;color:var(--mut);letter-spacing:5px;text-transform:uppercase;margin-bottom:2rem}
-.game-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:.75rem;margin-bottom:2rem}
-.game-card{background:var(--surf);border:2px solid rgba(255,255,255,.15);border-radius:14px;padding:1.1rem .75rem;text-align:center;cursor:pointer;transition:transform .18s,border-color .18s}
-.game-card:hover{transform:translateY(-3px);border-color:var(--gold)}
-.game-card.disabled{opacity:.35;cursor:default;pointer-events:none}
-.gc-emoji{font-size:2rem;margin-bottom:.4rem}
-.gc-name{font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:2px;color:var(--gold)}
-.gc-sub{font-size:.68rem;color:var(--mut);margin-top:.2rem}
-
-.step-block{background:var(--surf);border:1px solid var(--bord);border-radius:14px;padding:1.2rem;margin-bottom:1rem}
-.step-label{font-size:.68rem;font-weight:900;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:.8rem}
-.field-row{display:flex;gap:.6rem;margin-bottom:.6rem}
-.chip-list{display:flex;flex-direction:column;gap:.4rem;min-height:40px}
-.chip{display:flex;align-items:center;justify-content:space-between;background:var(--surf2);border:1px solid rgba(255,255,255,.09);border-radius:9px;padding:.48rem .9rem}
-.avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:900;flex-shrink:0}
-.chip-left{display:flex;align-items:center;gap:.65rem}
-.chip-name{font-weight:800;font-size:.88rem}
-.chip-tag{font-size:.66rem;font-weight:800;padding:.15rem .5rem;border-radius:20px;margin-left:.35rem}
-.empty{text-align:center;color:var(--mut);font-size:.8rem;padding:.8rem}
-.btn-back{background:rgba(255,255,255,.08);color:#ccc;border:1.5px solid rgba(255,255,255,.22);border-radius:10px;padding:.6rem 1.3rem;font-family:'Nunito',sans-serif;font-size:.82rem;font-weight:800;cursor:pointer;transition:all .18s;margin-bottom:1.1rem;display:inline-block}
-.btn-back:hover{color:#fff;border-color:rgba(255,255,255,.5)}
-.timer-row{display:flex;align-items:center;gap:1rem;margin-bottom:.6rem}
-.timer-lbl{font-size:.82rem;font-weight:700;color:var(--mut);min-width:120px}
-.timer-val{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--gold);min-width:40px}
-
-.player-pick-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:.75rem;margin-bottom:1.4rem}
-.player-pick{background:var(--surf);border:2px solid rgba(255,255,255,.15);border-radius:14px;padding:.9rem .7rem;text-align:center;cursor:pointer;transition:all .18s}
-.player-pick:hover{border-color:rgba(245,197,24,.55)}
-.player-pick.selected{border-color:var(--gold);background:rgba(245,197,24,.1)}
-.pp-avatar{width:46px;height:46px;border-radius:50%;margin:0 auto .5rem;display:flex;align-items:center;justify-content:center;font-size:1rem;font-weight:900}
-.pp-name{font-weight:800;font-size:.84rem}
-.pp-info{font-size:.68rem;color:var(--mut);margin-top:.2rem}
-
-.progress-track{display:flex;gap:3px;padding:.45rem;background:var(--surf);border-radius:10px;margin-bottom:1.2rem;align-items:center}
-.prog-dot{flex:1;height:9px;border-radius:5px;background:var(--surf2);transition:background .3s}
-.prog-dot.done{background:#2ECC71}
-.prog-dot.cur{background:var(--gold);animation:blink 1s infinite}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.45}}
-.q-card{background:var(--surf);border:1px solid var(--bord);border-radius:18px;padding:1.4rem;margin-bottom:1rem}
-.q-num{font-size:.7rem;font-weight:900;letter-spacing:3px;text-transform:uppercase;color:var(--mut);margin-bottom:.5rem}
-.q-hint{font-size:.72rem;color:var(--gold);font-weight:800;letter-spacing:1px;text-transform:uppercase;background:rgba(245,197,24,.12);padding:.28rem .75rem;border-radius:20px;display:inline-block;margin-bottom:.9rem}
-.q-text{font-size:1.08rem;font-weight:800;line-height:1.5;margin-bottom:1.1rem}
-.answers{display:grid;grid-template-columns:1fr 1fr;gap:.7rem}
-.ans-btn{background:rgba(255,255,255,.09);border:2px solid rgba(255,255,255,.22);border-radius:12px;padding:.95rem;font-family:'Nunito',sans-serif;font-size:.93rem;font-weight:800;color:var(--txt);cursor:pointer;transition:all .18s;text-align:center}
-.ans-btn:hover{border-color:var(--gold);background:rgba(245,197,24,.14);color:#fff}
-.ans-btn.correct{background:rgba(46,204,113,.22);border-color:#2ECC71;color:#2ECC71}
-.ans-btn.wrong{background:rgba(231,76,60,.22);border-color:#E74C3C;color:#E74C3C}
-.ans-btn.disabled{pointer-events:none;opacity:.45}
-.timer-bar-wrap{background:var(--surf2);border-radius:6px;height:8px;margin-bottom:.6rem;overflow:hidden}
-.timer-bar{height:100%;border-radius:6px;transition:width .1s linear}
-.timer-display{font-family:'Bebas Neue',sans-serif;font-size:2rem;text-align:center;letter-spacing:2px;margin-bottom:.8rem}
-
-.aua-intro-wrapper{position:relative;margin-bottom:1.4rem;min-height:180px;overflow:hidden}
-.aua-intro-wrapper::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at top center,rgba(245,197,24,.08),transparent 35%);pointer-events:none;}
-.aua-intro-wrapper .intro-card{position:relative;z-index:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:1.2rem 1rem;min-height:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;backdrop-filter:blur(6px);}
-.aua-intro-wrapper .intro-title{font-family:'Bebas Neue',sans-serif;font-size:1.7rem;letter-spacing:3px;color:var(--gold);margin-bottom:.45rem;}
-.aua-intro-wrapper .intro-sub{font-size:.9rem;color:#fff;margin-bottom:.9rem;opacity:.92;}
-.aua-intro-wrapper .intro-tag{font-size:.72rem;letter-spacing:2px;text-transform:uppercase;color:var(--mut);background:rgba(255,255,255,.1);padding:.35rem .8rem;border-radius:999px;display:inline-block;}
-.auu-effect{position:absolute;pointer-events:none;opacity:0;visibility:hidden;transition:opacity .3s ease,visibility .3s ease;}
-.aua-intro-wrapper.active .auu-effect{opacity:1;visibility:visible;}
-.aua-glow{width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(245,197,24,.35),transparent 60%);filter:blur(18px);animation:float 5s ease-in-out infinite;top:-30px;left:-20%;}
-.aua-ripple{width:140px;height:140px;border-radius:50%;border:1px solid rgba(245,197,24,.3);animation:ripple 2.8s ease-out infinite;top:20%;right:-10%;}
-.aua-spot{width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,.9);filter:blur(0.8px);animation:pop 2.5s ease-in-out infinite;}
-.aua-spot.a{top:15%;left:30%;animation-delay:0s;}
-.aua-spot.b{top:45%;left:80%;animation-delay:.5s;}
-.aua-spot.c{top:70%;left:25%;animation-delay:1.1s;}
-.aua-spot.d{top:30%;left:60%;animation-delay:1.7s;}
-@keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-12px);}}
-@keyframes ripple{0%{transform:scale(.8);opacity:.8;}100%{transform:scale(1.9);opacity:0;}}
-@keyframes pop{0%,100%{transform:scale(1);opacity:0.8;}50%{transform:scale(1.5);opacity:0;}}
-
-/* EREDITA */
-.ere-layout{display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin-bottom:1rem}
-.ere-panel{background:var(--surf);border:2px solid rgba(255,255,255,.12);border-radius:16px;padding:1rem;text-align:center;transition:border-color .25s,background .25s}
-.ere-panel.active-turn{border-color:var(--gold);background:rgba(245,197,24,.06)}
-.ere-panel.just-scored{border-color:#2ECC71;background:rgba(46,204,113,.08)}
-.ep-name{font-family:'Bebas Neue',sans-serif;font-size:1.25rem;letter-spacing:2px;margin-bottom:.25rem}
-.ep-team-badge{font-size:.66rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;padding:.18rem .55rem;border-radius:20px;display:inline-block;margin-bottom:.7rem}
-.ep-timer{font-family:'Bebas Neue',sans-serif;font-size:3rem;line-height:1;margin-bottom:.3rem}
-.ep-bar-wrap{height:6px;background:var(--surf2);border-radius:4px;margin-bottom:.7rem;overflow:hidden}
-.ep-bar{height:100%;border-radius:4px;transition:width .1s linear}
-.ep-score-label{font-size:.72rem;color:var(--mut);font-weight:700}
-.ep-score-val{font-family:'Bebas Neue',sans-serif;font-size:1.4rem}
-
-.word-card{background:var(--surf);border:1px solid var(--bord);border-radius:16px;padding:1.2rem 1rem;text-align:center;margin-bottom:1rem}
-.word-clue{font-size:.95rem;font-weight:700;line-height:1.55;color:var(--txt);margin-bottom:1rem;min-height:48px}
-.letter-row{display:flex;gap:5px;justify-content:center;flex-wrap:wrap;margin-bottom:.6rem}
-.lbox{width:30px;height:36px;border-radius:7px;border:2px solid rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:var(--txt);transition:all .35s;background:var(--surf2)}
-.lbox.rev{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.45);animation:popIn .3s ease}
-@keyframes popIn{0%{transform:scale(.7);opacity:.4}100%{transform:scale(1);opacity:1}}
-.lbox.spc{width:10px;border:none;background:transparent}
-.rev-count{font-size:.73rem;color:var(--mut);margin-top:.35rem}
-
-.space-bar-hint{display:flex;align-items:center;justify-content:center;gap:.6rem;background:rgba(245,197,24,.1);border:1px solid rgba(245,197,24,.3);border-radius:10px;padding:.6rem 1rem;font-size:.82rem;color:var(--gold);font-weight:800;margin-bottom:1rem;letter-spacing:.5px}
-kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radius:5px;font-family:monospace;font-size:.85rem;border:1px solid rgba(255,255,255,.3)}
-
-.active-indicator{font-size:.72rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;text-align:center;padding:.4rem;border-radius:8px;margin-bottom:.8rem}
-
-/* RUOTA */
-.wheel-game{min-height:calc(100vh - 2.8rem);display:flex;flex-direction:column;gap:1rem}
-.wheel-top{flex:1;display:flex;flex-direction:column;justify-content:flex-start}
-.wheel-head{display:flex;align-items:center;justify-content:space-between;gap:.8rem;margin-bottom:.9rem}
-.wheel-title{font-family:'Bebas Neue',sans-serif;font-size:1.45rem;letter-spacing:3px;color:var(--gold)}
-.wheel-player{font-size:.78rem;color:var(--mut);text-align:right}
-.wheel-status{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;margin-bottom:1rem}
-.wheel-stat{background:var(--surf);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:.65rem;text-align:center}
-.wheel-stat-label{font-size:.62rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--mut);margin-bottom:.2rem}
-.wheel-stat-val{font-family:'Bebas Neue',sans-serif;font-size:1.35rem;letter-spacing:1px;color:var(--gold)}
-.phrase-card{background:var(--surf);border:1px solid var(--bord);border-radius:16px;padding:1.1rem .8rem;text-align:center}
-.phrase-cat{font-size:.66rem;font-weight:900;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:.9rem}
-.phrase-board{display:flex;flex-wrap:wrap;justify-content:center;gap:.48rem .72rem}
-.phrase-word{display:flex;gap:4px}
-.phrase-tile{width:26px;height:34px;border-radius:6px;background:var(--surf2);border:2px solid rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:1.22rem;color:#fff;transition:background .25s,border-color .25s,transform .25s}
-.phrase-tile.revealed{background:rgba(245,197,24,.16);border-color:rgba(245,197,24,.62);color:var(--gold);transform:translateY(-1px)}
-.phrase-tile.punct{background:transparent;border-color:transparent;width:14px;color:var(--txt)}
-.wheel-message{min-height:38px;text-align:center;font-weight:900;color:var(--txt);font-size:.9rem;margin-top:.85rem}
-.wheel-letter-panel{display:none;margin-top:.9rem;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:.8rem}
-.wheel-letter-panel.active{display:block}
-.wheel-letter-row{display:flex;gap:.55rem;align-items:center}
-.wheel-letter-row input{text-transform:uppercase;text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1.35rem;letter-spacing:2px;max-width:90px}
-.vowel-row{display:flex;gap:.45rem;justify-content:center;flex-wrap:wrap;margin-top:.75rem}
-.vowel-row button{min-width:42px;padding:.55rem .7rem}
-.wheel-mini-label{font-size:.66rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--mut);margin-bottom:.55rem;text-align:left}
-.wheel-bottom{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:.9rem;padding-bottom:.5rem}
-.wheel-wrap{position:relative;width:min(76vw,330px);aspect-ratio:1;border-radius:50%}
-.wheel-pointer{position:absolute;top:-10px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;border-top:24px solid var(--gold);z-index:3;filter:drop-shadow(0 3px 3px rgba(0,0,0,.35))}
-.wheel-disc{position:absolute;inset:0;border-radius:50%;overflow:hidden;border:8px solid rgba(255,255,255,.16);background:conic-gradient(#F5C518 0 30deg,#3498DB 30deg 60deg,#E74C3C 60deg 90deg,#2ECC71 90deg 120deg,#9B59B6 120deg 150deg,#F39C12 150deg 180deg,#1ABC9C 180deg 210deg,#ECF0F1 210deg 240deg,#D35400 240deg 270deg,#8E44AD 270deg 300deg,#27AE60 300deg 330deg,#C0392B 330deg 360deg);box-shadow:0 16px 34px rgba(0,0,0,.36),inset 0 0 0 6px rgba(0,0,0,.18);transition:transform 4s cubic-bezier(.12,.78,.18,1)}
-.wheel-disc::after{content:'';position:absolute;inset:38%;border-radius:50%;background:var(--surf);border:5px solid rgba(255,255,255,.16);z-index:1}
-.wheel-label{position:absolute;left:50%;top:50%;transform:rotate(var(--a)) translateY(-116px) rotate(90deg);transform-origin:0 0;font-family:'Bebas Neue',sans-serif;font-size:.82rem;letter-spacing:1px;color:#08081A;text-shadow:0 1px rgba(255,255,255,.35);z-index:2;white-space:nowrap}
-.wheel-controls{display:flex;gap:.65rem;width:100%}
-.wheel-controls button{flex:1}
-.wheel-space-hint{flex:1;display:flex;align-items:center;justify-content:center;gap:.55rem;background:rgba(245,197,24,.1);border:1px solid rgba(245,197,24,.3);border-radius:10px;padding:.7rem 1rem;color:var(--gold);font-size:.78rem;font-weight:900;letter-spacing:1px;text-transform:uppercase}
-.wheel-solve-row{display:flex;gap:.55rem;margin-top:.75rem}
-.wheel-solve-row input{text-transform:uppercase}
-.wheel-banks{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:.5rem;margin-bottom:.8rem}
-.wheel-bank{background:var(--surf);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:.55rem .65rem;transition:border-color .2s,background .2s}
-.wheel-bank.active{border-color:var(--gold);background:rgba(245,197,24,.1)}
-.wheel-bank-name{font-size:.72rem;font-weight:900;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.wheel-bank-score{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:var(--gold);letter-spacing:1px}
-.wheel-turn-alert{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(8,8,26,.72);z-index:20;padding:1rem}
-.wheel-turn-alert.active{display:flex}
-.wheel-turn-box{background:var(--surf);border:2px solid var(--gold);border-radius:16px;padding:1.4rem 1.8rem;text-align:center;box-shadow:0 18px 50px rgba(0,0,0,.45)}
-.wheel-turn-label{font-size:.7rem;font-weight:900;letter-spacing:3px;text-transform:uppercase;color:var(--mut);margin-bottom:.4rem}
-.wheel-turn-name{font-family:'Bebas Neue',sans-serif;font-size:2.2rem;letter-spacing:3px;color:var(--gold)}
-
-/* REAZIONE */
-.chain-head{display:flex;align-items:center;justify-content:space-between;gap:.8rem;margin-bottom:.8rem}
-.chain-title{font-family:'Bebas Neue',sans-serif;font-size:1.45rem;letter-spacing:3px;color:var(--gold)}
-.chain-team{font-size:.78rem;color:var(--mut);text-align:right}
-.chain-stage{background:var(--surf);border:1px solid var(--bord);border-radius:16px;padding:1rem;margin-bottom:1rem}
-.chain-start{display:flex;align-items:center;justify-content:center;gap:.6rem;background:rgba(245,197,24,.1);border:1px solid rgba(245,197,24,.28);border-radius:12px;padding:.75rem;margin-bottom:.9rem}
-.chain-start-label{font-size:.68rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--mut)}
-.chain-start-word{font-family:'Bebas Neue',sans-serif;font-size:1.7rem;letter-spacing:2px;color:var(--gold)}
-.chain-timer-line{display:grid;grid-template-columns:80px 1fr 52px;align-items:center;gap:.65rem;margin-bottom:.9rem}
-.chain-step-label{font-size:.72rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--mut)}
-.chain-time{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;text-align:right;color:var(--gold)}
-.chain-rows{display:flex;flex-direction:column;gap:.55rem}
-.chain-row{display:grid;grid-template-columns:34px 1fr;gap:.55rem;align-items:center}
-.chain-num{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.14);font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--mut)}
-.chain-input{width:100%;text-transform:uppercase;font-weight:900;letter-spacing:1px;text-align:center}
-.chain-input.done{border-color:#2ECC71;background:rgba(46,204,113,.1);color:#2ECC71}
-.chain-input.active{border-color:var(--gold);box-shadow:0 0 0 3px rgba(245,197,24,.1)}
-.chain-input.locked{opacity:.45}
-.chain-hint{min-height:24px;text-align:center;font-size:.82rem;font-weight:800;color:var(--gold);margin:.85rem 0 .6rem}
-.chain-message{min-height:34px;text-align:center;font-weight:900;color:var(--txt);font-size:.9rem;margin-top:.75rem}
-.chain-actions{display:flex;gap:.6rem;margin-top:.75rem}
-.chain-actions button{flex:1}
-.chain-penalty{display:grid;grid-template-columns:repeat(2,1fr);gap:.6rem;margin-bottom:1rem}
-.chain-player{background:var(--surf);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:.65rem;text-align:center}
-.chain-player-name{font-size:.78rem;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.chain-player-score{font-family:'Bebas Neue',sans-serif;font-size:1.35rem;color:var(--gold)}
-
-@media(max-width:620px){
-  .game-cards{grid-template-columns:repeat(2,1fr)}
-  .wheel-status{grid-template-columns:1fr}
-  .wheel-letter-row{flex-wrap:wrap;justify-content:center}
-  .phrase-tile{width:22px;height:31px;font-size:1.08rem}
-  .wheel-label{transform:rotate(var(--a)) translateY(-96px) rotate(90deg);font-size:.7rem}
-}
-
-.win-wrap{text-align:center;padding:2rem 1rem}
-.win-trophy{font-size:3.5rem;margin-bottom:.8rem}
-.win-title{font-family:'Bebas Neue',sans-serif;font-size:2.8rem;letter-spacing:4px;color:var(--gold)}
-.win-name{font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:2px;margin-bottom:.4rem}
-.win-sub{font-size:.87rem;color:var(--mut);margin-bottom:1.8rem}
-.scores-panel{background:var(--surf);border:1px solid var(--bord);border-radius:14px;padding:1rem;margin-bottom:1.4rem;text-align:left}
-.sc-row{display:flex;align-items:center;gap:.7rem;padding:.45rem 0;border-bottom:1px solid rgba(255,255,255,.05)}
-.sc-row:last-child{border-bottom:none}
-.sc-rank{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;width:22px;color:var(--mut)}
-.sc-name{flex:1;font-weight:800;font-size:.88rem}
-.sc-pts{font-family:'Bebas Neue',sans-serif;font-size:1.25rem;color:var(--gold)}
-
-@media(max-width:480px){
-  .game-cards,.ere-layout{grid-template-columns:1fr}
-  .answers{grid-template-columns:1fr}
-}
-</style>
-</head><body>
-
-<!-- HERO -->
-<div class="screen active" id="s-hero">
-  <div style="text-align:center;padding:2.2rem 1rem 1.8rem">
-    <div class="logo">TV Game Night</div>
-    <div class="logo-sub">I grandi giochi della TV italiana</div>
-    <div class="game-cards">
-      <div class="game-card" onclick="startGame('aua')">
-        <div class="gc-emoji">🎡</div>
-        <div class="gc-name">Avanti un Altro</div>
-        <div class="gc-sub">Rispondi sbagliando!</div>
-      </div>
-      <div class="game-card" onclick="startGame('eredita')">
-        <div class="gc-emoji">🔠</div>
-        <div class="gc-name">L'Eredità</div>
-        <div class="gc-sub">Indovina la parola!</div>
-      </div>
-      <div class="game-card" onclick="startGame('intesa')">
-        <div class="gc-emoji">🤝</div>
-        <div class="gc-name">L'Intesa Vincente</div>
-        <div class="gc-sub">Rispondi in coppia!</div>
-      </div>
-      <div class="game-card" onclick="startGame('ruota')">
-        <div class="gc-emoji">🎯</div>
-        <div class="gc-name">La Ruota</div>
-        <div class="gc-sub">Gira e completa!</div>
-      </div>
-      <div class="game-card" onclick="startGame('catena')">
-        <div class="gc-emoji">⛓️</div>
-        <div class="gc-name">Reazione a Catena</div>
-        <div class="gc-sub">Collega le parole!</div>
-      </div>
-      <div class="game-card" onclick="window.location.href='host.html'">
-        <div class="gc-emoji">🚫</div>
-        <div class="gc-name">Taboo</div>
-        <div class="gc-sub">Non dire le parole proibite</div>
-      </div>
-    </div>
-    <button class="btn-ghost" onclick="goTo('s-setup')">⚙ Configura giocatori &amp; timer</button>
-  </div>
-  <div class="scores-panel" id="home-leaderboard"></div>
-</div>
-
-<audio id="aua-audio" src="Music theme/aua_music_theme.mp3" preload="auto"></audio>
-<audio id="aua-error-audio" src="Music theme/aua_errore.mp3" preload="auto"></audio>
-<audio id="rdf-audio" src="Music theme/rdf_music_theme.mp3" preload="auto"></audio>
-
-<!-- SETUP -->
-<div class="screen" id="s-setup">
-  <button class="btn-back" onclick="goTo('s-hero')">← Menu</button>
-  <div style="font-family:'Bebas Neue',sans-serif;font-size:1.7rem;letter-spacing:3px;margin-bottom:.25rem">Configurazione</div>
-  <div style="font-size:.8rem;color:var(--mut);margin-bottom:1.2rem">Giocatori, squadre e timer</div>
-  <div class="step-block">
-    <div class="step-label">① Giocatori</div>
-    <div class="field-row">
-      <input class="tf" id="inp-player" placeholder="Nome giocatore..." maxlength="20" onkeydown="if(event.key==='Enter')addPlayer()">
-      <button class="btn-add" onclick="addPlayer()">＋</button>
-    </div>
-    <div class="chip-list" id="list-players"><div class="empty">Nessun giocatore — scrivi un nome e premi ＋</div></div>
-  </div>
-  <div class="step-block">
-    <div class="step-label">② Squadre <span style="font-weight:400;color:var(--mut);font-size:.63rem">— opzionale</span></div>
-    <div id="team-section"><div class="empty">Aggiungi almeno 2 giocatori per creare squadre</div></div>
-  </div>
-  <div class="step-block">
-    <div class="step-label">③ Timer di gioco</div>
-    <div class="timer-row">
-      <div class="timer-lbl">Avanti un Altro</div>
-      <input type="range" min="10" max="120" step="5" value="120" id="timer-aua" oninput="document.getElementById('tv-aua').textContent=this.value+'s'" style="flex:1">
-      <div class="timer-val" id="tv-aua">120s</div>
-    </div>
-    <div class="timer-row">
-      <div class="timer-lbl">L'Eredità</div>
-      <input type="range" min="10" max="120" step="5" value="45" id="timer-ere" oninput="document.getElementById('tv-ere').textContent=this.value+'s'" style="flex:1">
-      <div class="timer-val" id="tv-ere">45s</div>
-    </div>
-    <div class="timer-row">
-      <div class="timer-lbl">Reazione a Catena</div>
-      <input type="range" min="10" max="60" step="5" value="20" id="timer-chain" oninput="document.getElementById('tv-chain').textContent=this.value+'s'" style="flex:1">
-      <div class="timer-val" id="tv-chain">20s</div>
-    </div>
-  </div>
-  <div class="step-block">
-    <div class="step-label">④ Voce domande</div>
-    <div class="timer-row">
-      <div class="timer-lbl">Voce</div>
-      <select class="tf" id="tts-voice" onchange="setTtsVoice(this.value)">
-        <option value="">Automatica</option>
-      </select>
-    </div>
-    <div class="timer-row">
-      <div class="timer-lbl">Velocità</div>
-      <input type="range" min="0.75" max="1.1" step="0.05" value="0.9" id="tts-rate" oninput="setTtsRate(this.value)" style="flex:1">
-      <div class="timer-val" id="tts-rate-val">0.90x</div>
-    </div>
-  </div>
-  <div style="display:flex;gap:.75rem;margin-top:.4rem">
-    <button class="btn-ghost" style="flex:1" onclick="goTo('s-hero')">← Menu</button>
-    <button class="btn-gold" style="flex:2" onclick="goTo('s-hero')">Salva ›</button>
-  </div>
-</div>
-
-<!-- PICK REAZIONE -->
-<div class="screen" id="s-pick-chain">
-  <button class="btn-back" onclick="goTo('s-hero')">← Menu</button>
-  <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:3px;color:var(--gold);margin-bottom:.25rem">Chi fa la catena?</div>
-  <div style="font-size:.82rem;color:var(--mut);margin-bottom:1rem">Seleziona la coppia: giocheranno insieme parola dopo parola</div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.2rem">
-    <div>
-      <div style="font-size:.7rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:#3498DB;margin-bottom:.6rem">Giocatore 1</div>
-      <div id="pick-grid-chain-p1"></div>
-    </div>
-    <div>
-      <div style="font-size:.7rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:#E74C3C;margin-bottom:.6rem">Giocatore 2</div>
-      <div id="pick-grid-chain-p2"></div>
-    </div>
-  </div>
-  <button class="btn-gold" id="btn-pick-chain-go" style="width:100%" disabled>INIZIA LA CATENA ›</button>
-</div>
-
-<!-- PICK 1 (AUA) -->
-<div class="screen" id="s-pick">
-  <button class="btn-back" onclick="goTo('s-hero')">← Menu</button>
-  <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:3px;color:var(--gold);margin-bottom:.25rem">Chi gioca?</div>
-  <div style="font-size:.82rem;color:var(--mut);margin-bottom:1.2rem">Seleziona il giocatore che risponderà alle domande</div>
-  <div class="aua-intro-wrapper" id="aua-intro-effects">
-    <div class="intro-card">
-      <div class="intro-tag">Anteprima Avanti un Altro</div>
-      <div class="intro-title">Preparati a rispondere sbagliando!</div>
-      <div class="intro-sub">Il gioco parte tra pochi secondi: guarda gli effetti e concentrati sul ritmo.</div>
-    </div>
-    <div class="auu-effect aua-glow"></div>
-    <div class="auu-effect aua-ripple"></div>
-    <div class="auu-effect aua-spot a"></div>
-    <div class="auu-effect aua-spot b"></div>
-    <div class="auu-effect aua-spot c"></div>
-    <div class="auu-effect aua-spot d"></div>
-  </div>
-  <div class="player-pick-grid" id="pick-grid"></div>
-  <button class="btn-gold" id="btn-pick-go" style="width:100%;display:none" disabled>INIZIA ›</button>
-</div>
-
-<!-- PICK 2 (EREDITA) -->
-<div class="screen" id="s-pick2">
-  <button class="btn-back" onclick="goTo('s-hero')">← Menu</button>
-  <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:3px;color:var(--gold);margin-bottom:.25rem">Chi sfida chi?</div>
-  <div style="font-size:.82rem;color:var(--mut);margin-bottom:1rem">Seleziona i due sfidanti</div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.2rem">
-    <div>
-      <div style="font-size:.7rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:#3498DB;margin-bottom:.6rem">Sfidante 1</div>
-      <div id="pick-grid-p1"></div>
-    </div>
-    <div>
-      <div style="font-size:.7rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:#E74C3C;margin-bottom:.6rem">Sfidante 2</div>
-      <div id="pick-grid-p2"></div>
-    </div>
-  </div>
-  <button class="btn-gold" id="btn-pick2-go" style="width:100%" disabled>INIZIA LA SFIDA ›</button>
-</div>
-
-<!-- PICK RUOTA -->
-<div class="screen" id="s-pick-wheel">
-  <button class="btn-back" onclick="goTo('s-hero')">← Menu</button>
-  <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:3px;color:var(--gold);margin-bottom:.25rem">Chi inizia?</div>
-  <div style="font-size:.82rem;color:var(--mut);margin-bottom:1.2rem">Seleziona il primo concorrente: la ruota partirà automaticamente al secondo 12 della sigla</div>
-  <div class="aua-intro-wrapper" id="wheel-intro-effects">
-    <div class="intro-card">
-      <div class="intro-tag">Anteprima La Ruota</div>
-      <div class="intro-title">La fortuna sta per girare!</div>
-      <div class="intro-sub">Scegli il primo concorrente: al momento giusto si entra in gioco.</div>
-    </div>
-    <div class="auu-effect aua-glow"></div>
-    <div class="auu-effect aua-ripple"></div>
-    <div class="auu-effect aua-spot a"></div>
-    <div class="auu-effect aua-spot b"></div>
-    <div class="auu-effect aua-spot c"></div>
-    <div class="auu-effect aua-spot d"></div>
-  </div>
-  <div class="player-pick-grid" id="pick-grid-wheel"></div>
-</div>
-
-<!-- AUA GAME -->
-<div class="screen" id="s-aua">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem">
-    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:3px;color:var(--gold)">🎡 Avanti un Altro</div>
-    <div style="font-size:.8rem;color:var(--mut)">Gioca: <span id="aua-pname" style="color:var(--txt);font-weight:800"></span></div>
-  </div>
-  <div class="timer-bar-wrap"><div class="timer-bar" id="aua-tbar" style="width:100%"></div></div>
-  <div class="timer-display" id="aua-tdisp">30</div>
-  <div class="progress-track" id="aua-track"></div>
-  <div id="aua-content"></div>
-</div>
-
-<!-- EREDITA GAME -->
-<div class="screen" id="s-eredita">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem">
-    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:3px;color:var(--gold)">🔠 L'Eredità</div>
-    <div style="font-size:.78rem;color:var(--mut)" id="ere-word-counter">Parola 1 / 10</div>
-  </div>
-  <div class="space-bar-hint" onclick="onSpacePress()" style="cursor:pointer;">
-    <kbd>SPAZIO</kbd> = il giocatore attivo ha indovinato!
-  </div>
-  <div class="active-indicator" id="ere-active-ind"></div>
-  <div class="ere-layout" id="ere-panels"></div>
-  <div class="word-card" id="ere-word-card"></div>
-  <div style="display:flex;gap:.75rem;justify-content:center" id="ere-controls"></div>
-</div>
-
-<!-- RUOTA GAME -->
-<div class="screen" id="s-wheel">
-  <div class="wheel-game">
-    <div class="wheel-top">
-      <div class="wheel-head">
-        <div class="wheel-title">🎯 La Ruota della Fortuna</div>
-        <div class="wheel-player">Gioca: <span id="wheel-pname" style="color:var(--txt);font-weight:900"></span></div>
-      </div>
-      <div class="wheel-banks" id="wheel-banks"></div>
-      <div class="wheel-status">
-        <div class="wheel-stat">
-          <div class="wheel-stat-label">Premio</div>
-          <div class="wheel-stat-val" id="wheel-prize">—</div>
-        </div>
-        <div class="wheel-stat">
-          <div class="wheel-stat-label">Banca</div>
-          <div class="wheel-stat-val" id="wheel-round-score">0</div>
-        </div>
-        <div class="wheel-stat">
-          <div class="wheel-stat-label">Lettere</div>
-          <div class="wheel-stat-val" id="wheel-left-count">0</div>
-        </div>
-      </div>
-      <div class="phrase-card">
-        <div class="phrase-cat" id="wheel-category">Frase</div>
-        <div class="phrase-board" id="wheel-phrase"></div>
-        <div class="wheel-message" id="wheel-message"></div>
-        <div class="wheel-letter-panel" id="wheel-letter-panel">
-          <div class="wheel-mini-label" id="wheel-letter-label">Scegli una consonante</div>
-          <div class="wheel-letter-row">
-            <input class="tf" id="wheel-letter-input" maxlength="1" placeholder="?" onkeydown="if(event.key==='Enter')submitWheelLetter()">
-            <button class="btn-gold" id="wheel-letter-submit" onclick="submitWheelLetter()">CONFERMA</button>
-          </div>
-          <div class="vowel-row" id="wheel-vowels"></div>
-        </div>
-        <div class="wheel-solve-row">
-          <input class="tf" id="wheel-solution-input" placeholder="Scrivi la soluzione..." onkeydown="if(event.key==='Enter')submitWheelSolution()">
-          <button class="btn-success" onclick="submitWheelSolution()">PROVA</button>
-        </div>
-      </div>
-    </div>
-    <div class="wheel-bottom">
-      <div class="wheel-wrap">
-        <div class="wheel-pointer"></div>
-        <div class="wheel-disc" id="wheel-disc"><div id="wheel-labels"></div></div>
-      </div>
-      <div class="wheel-controls">
-        <button class="btn-ghost" onclick="goTo('s-hero')">Menu</button>
-        <div class="wheel-space-hint" onclick="spinWheel()" style="cursor:pointer;"><kbd>SPAZIO</kbd> Gira</div>
-      </div>
-    </div>
-  </div>
-  <div class="wheel-turn-alert" id="wheel-turn-alert">
-    <div class="wheel-turn-box">
-      <div class="wheel-turn-label">Tocca a</div>
-      <div class="wheel-turn-name" id="wheel-turn-name"></div>
-    </div>
-  </div>
-</div>
-
-<!-- REAZIONE GAME -->
-<div class="screen" id="s-chain">
-  <div class="chain-head">
-    <div class="chain-title">⛓️ Reazione a Catena</div>
-    <div class="chain-team">Coppia: <span id="chain-pair" style="color:var(--txt);font-weight:900"></span></div>
-  </div>
-  <div class="chain-penalty" id="chain-players"></div>
-  <div class="chain-stage">
-    <div class="chain-start">
-      <span class="chain-start-label">Partenza</span>
-      <span class="chain-start-word" id="chain-start-word">—</span>
-    </div>
-    <div class="chain-timer-line">
-      <div class="chain-step-label" id="chain-step-label">Parola 1</div>
-      <div class="timer-bar-wrap" style="margin:0"><div class="timer-bar" id="chain-tbar" style="width:100%"></div></div>
-      <div class="chain-time" id="chain-time">20</div>
-    </div>
-    <div class="chain-rows" id="chain-rows"></div>
-    <div class="chain-hint" id="chain-hint"></div>
-    <div class="chain-actions">
-      <button class="btn-danger" onclick="missChainWord()">SBAGLIATA / AIUTO</button>
-      <button class="btn-gold" onclick="submitChainWord()">CONFERMA</button>
-    </div>
-    <div class="chain-message" id="chain-message"></div>
-  </div>
-  <div style="display:flex;gap:.75rem">
-    <button class="btn-ghost" style="flex:1" onclick="goTo('s-hero')">Menu</button>
-    <button class="btn-ghost" style="flex:1" onclick="beginChain()">Nuova catena</button>
-  </div>
-</div>
-
-<!-- INTESA SCORE -->
-<div class="screen" id="s-intesa-score">
-  <button class="btn-back" onclick="goTo('s-hero')">← Menu</button>
-  <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:3px;color:var(--gold);margin-bottom:.25rem">Punteggi L'Intesa</div>
-  <div style="font-size:.82rem;color:var(--mut);margin-bottom:1.2rem">Inserisci i punti ottenuti per ogni giocatore</div>
-  <div style="background:rgba(52,152,219,.08);border:1px solid rgba(52,152,219,.2);border-radius:12px;padding:1rem;margin-bottom:1.4rem">
-    <div style="font-size:.7rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:#3498DB;margin-bottom:.8rem">Giocatore 1</div>
-    <div id="intesa-p1-input" style="display:flex;gap:.6rem;align-items:center"></div>
-  </div>
-  <div style="background:rgba(231,76,60,.08);border:1px solid rgba(231,76,60,.2);border-radius:12px;padding:1rem;margin-bottom:1.4rem">
-    <div style="font-size:.7rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:#E74C3C;margin-bottom:.8rem">Giocatore 2</div>
-    <div id="intesa-p2-input" style="display:flex;gap:.6rem;align-items:center"></div>
-  </div>
-  <div style="display:flex;gap:.75rem">
-    <button class="btn-ghost" style="flex:1" onclick="goTo('s-hero')">← Annulla</button>
-    <button class="btn-gold" style="flex:2" onclick="saveIntesaScores()">Salva punteggi ›</button>
-  </div>
-</div>
-
-<!-- WIN -->
-<div class="screen" id="s-win">
-  <div class="win-wrap">
-    <div class="win-trophy">🏆</div>
-    <div class="win-title">BRAVO!</div>
-    <div class="win-name" id="win-name">—</div>
-    <div class="win-sub" id="win-sub"></div>
-    <div class="scores-panel" id="win-scores"></div>
-    <div style="display:flex;gap:.75rem">
-      <button class="btn-ghost" style="flex:1" onclick="goTo('s-hero')">Menu</button>
-      <button class="btn-gold" style="flex:2" onclick="goTo('s-hero')">Gioca ancora ›</button>
-    </div>
-  </div>
-</div>
-
-<script>
 const TC=[
   {hex:'#3498DB',light:'rgba(52,152,219,.22)'},
   {hex:'#E74C3C',light:'rgba(231,76,60,.22)'},
@@ -572,6 +11,25 @@ let players=[],teams=[],nPid=1,nTid=1;
 let selPid=null,selP1=null,selP2=null,selWheelPid=null,selChainP1=null,selChainP2=null;
 let intesaWinner=null;
 let intesaPlayers={p1:null,p2:null};
+
+// Firebase config - SOSTITUISCI CON LE TUE CREDENZIALI
+const firebaseConfig = {
+  apiKey: "AIzaSyAs9kwrZnnBTOaBzkLn6ZhLN5mfWWmXcl4",
+  authDomain: "tv-game-night.firebaseapp.com",
+  databaseURL: "https://tv-game-night-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "tv-game-night",
+  storageBucket: "tv-game-night.firebasestorage.app",
+  messagingSenderId: "570468387403",
+  appId: "1:570468387403:web:1bcd29c85f8e8d00539bce"
+};
+
+// Inizializza Firebase
+firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
+const gameStateRef = database.ref('currentGameState');
+
+let tabooTimer = null;
+let tabooTimeLeft = 60;
 let auaAudio=null,auaErrorAudio=null,auaAutoStartListener=null,auaAutoStarted=false,auaThemeResumeTime=0;
 let rdfAudio=null,rdfAutoStartListener=null,rdfAutoStarted=false;
 let ttsVoices=[];
@@ -813,6 +271,7 @@ function goTo(id){
   if(id!=='s-aua'&&id!=='s-eredita')stopQuestionSpeech();
   if(id!=='s-pick-wheel'&&id!=='s-wheel')stopRdfAudio();
   if(id!=='s-chain')clearChainTimer();
+  if(id!=='s-taboo') { if(tabooTimer) clearInterval(tabooTimer); }
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   if(id==='s-setup')initTtsControls();
@@ -1121,6 +580,11 @@ function startGame(game){
     document.getElementById('btn-pick2-go').textContent='APRI GIOCO ›';
     document.getElementById('btn-pick2-go').onclick=()=>beginIntesa();
     goTo('s-pick2');
+    return;
+  }
+  if(game==='taboo'){
+    goTo('s-taboo');
+    startTaboo();
     return;
   }
   if(game==='aua'){
@@ -2107,5 +1571,31 @@ function awardAndWin(pid,points=1,subText=null){
   stopAuaAudio();
   goTo('s-win');
 }
-</script>
-</body></html>
+
+function startTaboo(){
+  tabooTimeLeft = getTimer('taboo');
+  document.getElementById('taboo-timer').textContent = tabooTimeLeft;
+  // Ascolta cambiamenti
+  gameStateRef.on('value', (snapshot) => {
+    const data = snapshot.val();
+    if (data && data.mode === 'taboo') {
+      document.getElementById('taboo-player').textContent = data.player || '—';
+      document.getElementById('taboo-word').textContent = data.word || '—';
+      // Resetta timer se nuova parola
+      tabooTimeLeft = getTimer('taboo');
+      document.getElementById('taboo-timer').textContent = tabooTimeLeft;
+      if (tabooTimer) clearInterval(tabooTimer);
+      tabooTimer = setInterval(() => {
+        tabooTimeLeft--;
+        document.getElementById('taboo-timer').textContent = tabooTimeLeft;
+        if (tabooTimeLeft <= 0) {
+          clearInterval(tabooTimer);
+          // Forse vai a hero o qualcosa
+        }
+      }, 1000);
+    } else {
+      // Non taboo, mostra attesa o vai a hero
+      goTo('s-hero');
+    }
+  });
+}

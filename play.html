@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Taboo Player - TV Game Night</title>
+  <style>
+    :root{--bg:#05050f;--surface:#111124;--surface2:#1d1d36;--gold:#F5C518;--txt:#F7F4EB;--mut:#9ea1b3;--danger:#E74C3C;--success:#2ECC71}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{min-height:100vh;background:linear-gradient(180deg,#05050f 0%,#090918 55%,#10102d 100%);color:var(--txt);font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;display:flex;justify-content:center;align-items:center;padding:1rem}
+    .screen{width:min(100%,720px);text-align:center}
+    .status{position:fixed;top:1rem;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:.6rem 1rem;font-size:.88rem;font-weight:700;letter-spacing:.08em;display:inline-flex;align-items:center;gap:.5rem;z-index:10}
+    .status-dot{width:10px;height:10px;border-radius:50%;background:var(--danger)}
+    .status-dot.connected{background:var(--success)}
+    .screen-inner{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:32px;padding:2.2rem 1.4rem;box-shadow:0 40px 120px rgba(0,0,0,.45)}
+    .title{font-size:1rem;font-weight:900;letter-spacing:.35em;text-transform:uppercase;color:var(--gold);margin-bottom:1.1rem}
+    .word-box{font-size:3.8rem;font-weight:900;line-height:1;letter-spacing:.1em;margin-bottom:1.1rem;color:#fff}
+    .subtitle{font-size:.95rem;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--mut);margin-bottom:.9rem}
+    .taboo-list{display:grid;gap:.85rem;text-align:left}
+    .taboo-item{background:rgba(231,76,60,.15);border:1px solid rgba(231,76,60,.22);border-radius:18px;padding:1rem 1.1rem;font-size:1.05rem;font-weight:800;color:#fff}
+    .waiting{padding:2.5rem 1rem}
+    .waiting h2{font-size:2.4rem;line-height:1.05;margin-bottom:.75rem}
+    .waiting p{font-size:1.05rem;color:var(--mut);line-height:1.7}
+    .setup-row{display:grid;gap:.65rem;margin:1.2rem 0}
+    .setup-row label{font-size:.82rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--gold)}
+    .setup-inline{display:flex;align-items:center;gap:.6rem;max-width:320px;margin-top:.45rem}
+    .setup-inline input{width:100%;border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:.95rem 1rem;background:rgba(255,255,255,.04);color:#fff;font-size:1rem}
+    .players-list{display:grid;gap:.65rem;margin-top:.6rem}
+    .player-choice{display:flex;align-items:center;gap:.75rem;padding:1rem 1rem;border:1px solid rgba(255,255,255,.12);border-radius:16px;background:rgba(255,255,255,.04)}
+    .player-choice input{width:18px;height:18px}
+    .player-choice span{font-size:1rem;font-weight:700;color:#fff}
+    .setup-note{margin-top:1rem;color:var(--mut);font-size:.95rem;line-height:1.45}
+    .btn{border:none;border-radius:18px;padding:1rem 1.2rem;font-size:1rem;font-weight:800;cursor:pointer;transition:transform .18s,filter .18s;background:var(--gold);color:#08081A}
+    .btn:hover{transform:translateY(-1px);filter:brightness(1.05)}
+    .btn-setup{margin-top:1rem;min-width:220px}
+    .note{margin-top:1.3rem;color:var(--mut);font-size:.92rem;line-height:1.6}
+    @media(max-width:520px){.word-box{font-size:3rem}.screen-inner{padding:2rem 1.1rem}.taboo-item{font-size:.98rem;}}
+  </style>
+</head>
+<body>
+  <div class="status" id="connection-status"><span class="status-dot" id="status-dot"></span><span id="status-text">disconnesso</span></div>
+  <main class="screen">
+    <div class="screen-inner" id="waiting-screen">
+      <div class="waiting">
+        <h2>PRONTO PER TABOO</h2>
+        <p>Imposta il timer e seleziona i giocatori prima dell'inizio della partita. Queste impostazioni sono locali e ti aiutano a prepararti.</p>
+        <div class="setup-row">
+          <label for="setup-timer">Timer turno</label>
+          <div class="setup-inline">
+            <input id="setup-timer" type="number" min="10" max="180" value="60" />
+            <span>secondi</span>
+          </div>
+        </div>
+        <div class="setup-row">
+          <label>Seleziona giocatori</label>
+          <div class="players-list" id="players-list"></div>
+        </div>
+        <button class="btn btn-primary btn-setup" id="btn-apply-setup">Salva impostazioni</button>
+        <p class="setup-note" id="setup-summary">Timer: 60s · Giocatori: nessuno selezionato</p>
+        <p class="note">Chiedi all'host di premere NEXT per avviare il turno e mostrare la parola segreta.</p>
+      </div>
+    </div>
+
+    <div class="screen-inner" id="taboo-screen" style="display:none;">
+      <div class="title">PAROLA</div>
+      <div class="word-box" id="word-text">CARICAMENTO...</div>
+      <div class="subtitle">NON DIRE:</div>
+      <div class="taboo-list" id="taboo-list"></div>
+      <p class="note" id="player-note">Giocatore: -</p>
+    </div>
+  </main>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script>
+    // Sostituisci questi valori con le tue credenziali Firebase.
+    const firebaseConfig = {
+        apiKey: "AIzaSyAs9kwrZnnBTOaBzkLn6ZhLN5mfWWmXcl4",
+        authDomain: "tv-game-night.firebaseapp.com",
+        databaseURL: "https://tv-game-night-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "tv-game-night",
+        storageBucket: "tv-game-night.firebasestorage.app",
+        messagingSenderId: "570468387403",
+        appId: "1:570468387403:web:1bcd29c85f8e8d00539bce"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    const gameStateRef = database.ref('currentGameState');
+    const connectedRef = database.ref('.info/connected');
+
+    const waitingScreen = document.getElementById('waiting-screen');
+    const tabooScreen = document.getElementById('taboo-screen');
+    const wordText = document.getElementById('word-text');
+    const tabooList = document.getElementById('taboo-list');
+    const playerNote = document.getElementById('player-note');
+    const statusDot = document.getElementById('status-dot');
+    const statusText = document.getElementById('status-text');
+
+    const defaultState = {
+      mode: null,
+      wordIndex: -1,
+      word: '',
+      taboo: [],
+      currentPlayer: '',
+      updatedAt: 0
+    };
+
+    function setConnection(connected){
+      statusDot.className = `status-dot ${connected ? 'connected' : ''}`;
+      statusText.textContent = connected ? 'connesso' : 'disconnesso';
+    }
+
+    function showWaiting(){
+      waitingScreen.style.display = 'block';
+      tabooScreen.style.display = 'none';
+    }
+
+    function showTaboo(state){
+      waitingScreen.style.display = 'none';
+      tabooScreen.style.display = 'block';
+      wordText.textContent = state.word || '---';
+      playerNote.textContent = `Giocatore: ${state.currentPlayer || '-'}`;
+      tabooList.innerHTML = (state.taboo || []).map(word => `<div class="taboo-item">${word}</div>`).join('');
+    }
+
+    function renderState(state){
+      const currentState = {...defaultState, ...state};
+      if (currentState.mode === 'taboo') {
+        showTaboo(currentState);
+      } else {
+        showWaiting();
+      }
+    }
+
+    function init(){
+      gameStateRef.on('value', snap => {
+        renderState(snap.val() || defaultState);
+      });
+      connectedRef.on('value', snap => {
+        setConnection(Boolean(snap.val()));
+      });
+    }
+
+    window.addEventListener('load', init);
+  </script>
+</body>
+</html>
