@@ -60,6 +60,11 @@
     </section>
 
     <section class="section">
+      <div class="section">
+        <div class="qr-block">
+          <img src="qr-code.jpg" alt="QR code per play.html" />
+          <p class="hint">Scansiona il QR per aprire la pagina giocatore.</p>
+        </div>
       <div class="info-grid">
         <div class="info-card">
           <h2>Stato attuale</h2>
@@ -74,11 +79,6 @@
           <p id="host-summary">In attesa del prossimo turno</p>
         </div>
       </div>
-      <div class="section">
-        <div class="qr-block">
-          <img src="qr-code.jpg" alt="QR code per play.html" />
-          <p class="hint">Scansiona il QR per aprire la pagina giocatore.</p>
-        </div>
       </div>
       <button class="btn-back" onclick="window.location.href='index.html'">← Menu</button>
       <p class="hint">Per il telefono giocatore usa <strong>play.html</strong> o un QR code puntato a questa pagina.</p>
@@ -183,7 +183,13 @@
     }
 
     function init(){
-      controls.playerName.value = getSavedPlayerName();
+      const selectedPlayer = localStorage.getItem('taboo-selected-player');
+      if (selectedPlayer) {
+        controls.playerName.value = selectedPlayer;
+        localStorage.removeItem('taboo-selected-player'); // Rimuovi dopo averlo usato
+      } else {
+        controls.playerName.value = getSavedPlayerName();
+      }
       controls.btnNext.addEventListener('click', handleNext);
       controls.btnStop.addEventListener('click', handleStop);
 
