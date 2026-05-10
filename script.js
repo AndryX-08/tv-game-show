@@ -1,3 +1,4 @@
+// GAME RULES
 const TC=[
   {hex:'#3498DB',light:'rgba(52,152,219,.22)'},
   {hex:'#E74C3C',light:'rgba(231,76,60,.22)'},
@@ -10,6 +11,11 @@ let players=[],teams=[],nPid=1,nTid=1;
 let selPid=null,selP1=null,selP2=null,selWheelPid=null,selChainP1=null,selChainP2=null,selTabooPid=null;
 let intesaWinner=null;
 let intesaPlayers={p1:null,p2:null};
+let globalLeaderboard=[];
+let registeredUsers=[];
+let currentUserProfile=null;
+let unsubscribeLeaderboard=null,unsubscribeRegisteredUsers=null,unsubscribeCurrentUserProfile=null;
+let tabooScoreEventsRef=null,tabooScoreEventsStartedAt=Date.now(),processedTabooScoreEvents=new Set();
 let auaAudio=null,auaErrorAudio=null,auaAutoStartListener=null,auaAutoStarted=false,auaThemeResumeTime=0;
 let rdfAudio=null,rdfAutoStartListener=null,rdfAutoStarted=false;
 let ttsVoices=[];
@@ -168,17 +174,13 @@ const WHEEL_SEGMENTS=[
   {label:"100",points:100},
   {label:"200",points:200},
   {label:"400",points:400},
-  {label:"600",points:600},
   {label:"800",points:800},
   {label:"500",points:500},
   {label:"PASSA",points:0,pass:true},
   {label:"300",points:300},
-  {label:"700",points:700},
   {label:"1000",points:1000},
   {label:"BANK",points:0,bankrupt:true},
   {label:"400",points:400},
-  {label:"600",points:600},
-  {label:"PASSA",points:0,pass:true},
   {label:"800",points:800},
   {label:"JOLLY",points:1200}
 ];
@@ -274,7 +276,17 @@ function goTo(id){
   if(id==='s-setup')initTtsControls();
 }
 function initials(n){return n.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)}
+function escapeHtml(value){
+  return String(value??'').replace(/[&<>"']/g,ch=>({
+    '&':'&amp;',
+    '<':'&lt;',
+    '>':'&gt;',
+    '"':'&quot;',
+    "'":'&#39;'
+  }[ch]));
+}
 function getTimer(g){return parseInt(document.getElementById('timer-'+g).value)||30}
+function getTabooTimer(){return parseInt(document.getElementById('timer-taboo')?.value)||60}
 function initTtsControls(){
   const rate=document.getElementById('tts-rate');
   if(rate)rate.value=ttsRate;
@@ -421,18 +433,13 @@ function beginIntesa(){
 function saveIntesaScores(){
   const v1=parseInt(document.getElementById('intesa-p1-score')?.value)||0;
   const v2=parseInt(document.getElementById('intesa-p2-score')?.value)||0;
-  const p1=players.find(p=>p.id===intesaPlayers.p1);
-  const p2=players.find(p=>p.id===intesaPlayers.p2);
-  if(p1) p1.score += v1;
-  if(p2) p2.score += v2;
-  const t1=teams.find(t=>t.mids.includes(intesaPlayers.p1));
-  const t2=teams.find(t=>t.mids.includes(intesaPlayers.p2));
-  if(t1) t1.score += v1;
-  if(t2) t2.score += v2;
+  awardPlayerPoints(intesaPlayers.p1,v1,'intesa');
+  awardPlayerPoints(intesaPlayers.p2,v2,'intesa');
   intesaPlayers={p1:null,p2:null};
   renderPlayers();
   renderTeamSection();
   renderHomeLeaderboard();
+  
   goTo('s-hero');
 }
 
@@ -441,14 +448,35 @@ function addPlayer(){
   const inp=document.getElementById('inp-player');
   const name=inp.value.trim();
   if(!name||players.find(p=>p.name.toLowerCase()===name.toLowerCase()))return;
-  players.push({id:nPid++,name,teamId:null,score:0,ci:players.length%TC.length});
+  players.push({id:nPid++,name,teamId:null,score:0,ci:players.length%TC.length,uid:null});
   inp.value='';inp.focus();
   renderPlayers();renderTeamSection();
+}
+function addRegisteredPlayer(){
+  const select=document.getElementById('registered-player-select');
+  const uid=select?.value;
+  if(!uid)return;
+  const user=registeredUsers.find(u=>u.uid===uid||u.id===uid);
+  if(!user||players.some(p=>p.uid===uid))return;
+  players.push({
+    id:nPid++,
+    name:user.name||`Anonimo ${uid.slice(0,4).toUpperCase()}`,
+    teamId:null,
+    score:0,
+    ci:players.length%TC.length,
+    uid,
+    isAnonymous:!!user.isAnonymous,
+    photoURL:user.photoURL||null
+  });
+  select.value='';
+  renderPlayers();
+  renderTeamSection();
+  renderRegisteredUserSelect();
 }
 function removePlayer(id){
   players=players.filter(p=>p.id!==id);
   teams.forEach(t=>{t.mids=t.mids.filter(m=>m!==id)});
-  renderPlayers();renderTeamSection();
+  renderPlayers();renderTeamSection();renderRegisteredUserSelect();
 }
 function renderPlayers(){
   const el=document.getElementById('list-players');
@@ -456,13 +484,31 @@ function renderPlayers(){
   el.innerHTML=players.map(p=>{
     const t=teams.find(t=>t.mids.includes(p.id));
     const c=TC[p.ci%TC.length];
-    const tag=t?`<span class="chip-tag" style="background:${t.color.light};color:${t.color.hex}">${t.name}</span>`:'';
+    const tag=t?`<span class="chip-tag" style="background:${t.color.light};color:${t.color.hex}">${escapeHtml(t.name)}</span>`:'';
+    const onlineTag=p.uid?`<span class="chip-tag" style="background:rgba(46,204,113,.14);color:#2ECC71">Firestore</span>`:'';
     return `<div class="chip"><div class="chip-left">
       <div class="avatar" style="background:${c.light};color:${c.hex}">${initials(p.name)}</div>
-      <span class="chip-name">${p.name}</span>${tag}
+      <span class="chip-name">${escapeHtml(p.name)}</span>${onlineTag}${tag}
     </div><button class="btn-rm" onclick="removePlayer(${p.id})">✕</button></div>`;
   }).join('');
   renderHomeLeaderboard();
+}
+function renderRegisteredUserSelect(){
+  const select=document.getElementById('registered-player-select');
+  if(!select)return;
+  const available=registeredUsers
+    .filter(u=>!players.some(p=>p.uid===(u.uid||u.id)))
+    .sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+  if(!currentUser){
+    select.innerHTML='<option value="">Accedi per caricare profili</option>';
+    return;
+  }
+  if(!available.length){
+    select.innerHTML='<option value="">Nessun altro profilo disponibile</option>';
+    return;
+  }
+  select.innerHTML='<option value="">Aggiungi giocatore registrato...</option>'+
+    available.map(u=>`<option value="${escapeHtml(u.uid||u.id)}">${escapeHtml(u.name||'Anonimo')}${u.isAnonymous?' (anonimo)':''}</option>`).join('');
 }
 function addTeam(){
   const inp=document.getElementById('inp-team');if(!inp)return;
@@ -502,16 +548,25 @@ function renderTeamSection(){
 function renderHomeLeaderboard(){
   const el=document.getElementById('home-leaderboard');
   if(!el){return;}
-  if(!players.length){el.innerHTML='';return;}
   const sortedPlayers=[...players].sort((a,b)=>b.score-a.score).slice(0,3);
   const sortedTeams=[...teams].sort((a,b)=>b.score-a.score).slice(0,3);
+  if(!sortedPlayers.length&&!sortedTeams.length&&!globalLeaderboard.length){el.innerHTML='';return;}
   let html='<div style="font-size:.78rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--mut);margin-bottom:.8rem">Classifica punti</div>';
   if(sortedPlayers.length){
     html+='<div style="margin-bottom:.85rem"><strong style="display:block;margin-bottom:.35rem;color:#fff">Giocatori</strong>';
     html+=sortedPlayers.map((p,i)=>`<div class="sc-row">
       <div class="sc-rank">${i+1}</div>
-      <div class="sc-name">${p.name}</div>
+      <div class="sc-name">${escapeHtml(p.name)}</div>
       <div class="sc-pts">${p.score}</div>
+    </div>`).join('');
+    html+='</div>';
+  }
+  if(globalLeaderboard.length){
+    html+='<div style="margin-bottom:.85rem"><strong style="display:block;margin-bottom:.35rem;color:#fff">Online</strong>';
+    html+=globalLeaderboard.map((u,i)=>`<div class="sc-row">
+      <div class="sc-rank">${i+1}</div>
+      <div class="sc-name">${escapeHtml(u.name)}${u.isAnonymous?' <span style="font-size:.68rem;color:var(--mut)">(anonimo)</span>':''}</div>
+      <div class="sc-pts">${u.totalScore||0}</div>
     </div>`).join('');
     html+='</div>';
   }
@@ -519,12 +574,227 @@ function renderHomeLeaderboard(){
     html+='<div><strong style="display:block;margin-bottom:.35rem;color:#fff">Squadre</strong>';
     html+=sortedTeams.map((t,i)=>`<div class="sc-row">
       <div class="sc-rank">${i+1}</div>
-      <div class="sc-name">${t.name}</div>
+      <div class="sc-name">${escapeHtml(t.name)}</div>
       <div class="sc-pts">${t.score}</div>
     </div>`).join('');
     html+='</div>';
   }
   el.innerHTML=html;
+  
+}
+
+function awardPlayerPoints(pid,points=1,source='game',scoreTeam=true){
+  const value=Number(points)||0;
+  if(!pid||!value)return;
+  const p=players.find(pl=>pl.id===pid);
+  if(!p)return;
+  p.score+=value;
+  const t=scoreTeam?teams.find(tm=>tm.mids.includes(pid)):null;
+  if(t)t.score+=value;
+  savePlayerScoreOnline(p,value,source);
+}
+
+function getUserDisplayName(user){
+  if(!user)return 'Anonimo';
+  if(user.displayName)return user.displayName;
+  if(user.email)return user.email.split('@')[0];
+  return user.uid?`Anonimo ${user.uid.slice(0,4).toUpperCase()}`:'Anonimo';
+}
+
+function getProfileDisplayName(profile={},user=currentUser){
+  if(profile.nickname)return profile.nickname.startsWith('@')?profile.nickname:`@${profile.nickname}`;
+  const fullName=[profile.firstName,profile.lastName].filter(Boolean).join(' ').trim();
+  return fullName||profile.name||getUserDisplayName(user);
+}
+
+function addCurrentUserAsPlayer(user=currentUser){
+  if(!user)return;
+  const name=getUserDisplayName(user);
+  const existing=players.find(p=>p.uid===user.uid);
+  if(existing){
+    existing.name=name;
+    existing.isAnonymous=!!user.isAnonymous;
+    existing.photoURL=user.photoURL||null;
+    renderPlayers();
+    renderTeamSection();
+    renderRegisteredUserSelect();
+    return;
+  }
+  players.push({
+    id:nPid++,
+    name,
+    teamId:null,
+    score:0,
+    ci:players.length%TC.length,
+    uid:user.uid,
+    isAnonymous:!!user.isAnonymous,
+    photoURL:user.photoURL||null
+  });
+  renderPlayers();
+  renderTeamSection();
+  renderRegisteredUserSelect();
+}
+
+function savePlayerScoreOnline(player,points,source='game'){
+  if(!player?.uid||!currentUser||!window.db)return;
+  const value=Number(points)||0;
+  if(!value)return;
+  const now=firebase.firestore.FieldValue.serverTimestamp();
+  const inc=firebase.firestore.FieldValue.increment(value);
+  const userData={
+    name:player.name||'Anonimo',
+    isAnonymous:!!player.isAnonymous,
+    photoURL:player.photoURL||null,
+    updatedAt:now
+  };
+  const targetUid=player.uid;
+  const eventRef=db.collection('scoreEvents').doc();
+  const batch=db.batch();
+  batch.set(db.collection('users').doc(targetUid),{
+    ...userData,
+    totalScore:inc
+  },{merge:true});
+  batch.set(db.collection('leaderboard').doc(targetUid),{
+    ...userData,
+    totalScore:inc
+  },{merge:true});
+  batch.set(eventRef,{
+    uid:targetUid,
+    name:userData.name,
+    points:value,
+    source,
+    writtenBy:currentUser.uid,
+    createdAt:now
+  });
+  batch.commit().catch(err=>console.error('Errore salvataggio punti Firestore:',err));
+}
+
+function saveUserIfNew(user){
+  if(!user||!window.db)return Promise.resolve();
+  const now=firebase.firestore.FieldValue.serverTimestamp();
+  const authName=getUserDisplayName(user);
+  const freshData={
+    name:authName,
+    firstName:'',
+    lastName:'',
+    nickname:'',
+    isAnonymous:user.isAnonymous,
+    photoURL:user.photoURL||null,
+    updatedAt:now
+  };
+  const existingData={
+    isAnonymous:user.isAnonymous,
+    photoURL:user.photoURL||null,
+    updatedAt:now
+  };
+  const userRef=db.collection('users').doc(user.uid);
+  const leaderboardRef=db.collection('leaderboard').doc(user.uid);
+  return userRef.get().then(doc=>{
+    const base=doc.exists?existingData:{...freshData,createdAt:now,totalScore:0};
+    return userRef.set(base,{merge:true});
+  }).then(()=>leaderboardRef.get()).then(doc=>{
+    const base=doc.exists?existingData:{...freshData,totalScore:0};
+    return leaderboardRef.set(base,{merge:true});
+  }).catch(err=>console.error('Errore salvataggio utente Firestore:',err));
+}
+
+function loadLeaderboard(){
+  if(!window.db)return;
+  if(unsubscribeLeaderboard)unsubscribeLeaderboard();
+  unsubscribeLeaderboard=db.collection('leaderboard')
+    .orderBy('totalScore','desc')
+    .limit(10)
+    .onSnapshot(snapshot=>{
+      globalLeaderboard=snapshot.docs.map(doc=>({id:doc.id,...doc.data()}));
+      renderHomeLeaderboard();
+    },err=>console.error('Errore classifica Firestore:',err));
+}
+
+function loadRegisteredUsers(){
+  if(!window.db)return;
+  if(unsubscribeRegisteredUsers)unsubscribeRegisteredUsers();
+  unsubscribeRegisteredUsers=db.collection('users')
+    .limit(100)
+    .onSnapshot(snapshot=>{
+      registeredUsers=snapshot.docs.map(doc=>({id:doc.id,uid:doc.id,...doc.data()}));
+      renderRegisteredUserSelect();
+    },err=>{
+      console.error('Errore profili registrati Firestore:',err);
+      renderRegisteredUserSelect();
+    });
+}
+
+function listenCurrentUserProfile(user){
+  if(unsubscribeCurrentUserProfile)unsubscribeCurrentUserProfile();
+  currentUserProfile=null;
+  if(!user||!window.db){
+    updateUserUI(user);
+    return;
+  }
+  unsubscribeCurrentUserProfile=db.collection('users').doc(user.uid).onSnapshot(doc=>{
+    currentUserProfile=doc.exists?{id:doc.id,...doc.data()}:null;
+    const displayName=getProfileDisplayName(currentUserProfile||{},user);
+    const player=players.find(p=>p.uid===user.uid);
+    if(player){
+      player.name=displayName;
+      renderPlayers();
+      renderTeamSection();
+    }
+    updateUserUI(user);
+    hydrateProfilePopup();
+  },err=>console.error('Errore profilo utente Firestore:',err));
+}
+
+function openProfilePopup(){
+  if(!currentUser)return;
+  hydrateProfilePopup();
+  const overlay=document.getElementById('profileOverlay');
+  if(overlay)overlay.classList.remove('hidden');
+}
+
+function closeProfilePopup(){
+  document.getElementById('profileOverlay')?.classList.add('hidden');
+}
+
+function hydrateProfilePopup(){
+  const profile=currentUserProfile||{};
+  const firstName=document.getElementById('profileFirstName');
+  const lastName=document.getElementById('profileLastName');
+  const nickname=document.getElementById('profileNickname');
+  const totalScore=document.getElementById('profileTotalScore');
+  if(firstName)firstName.value=profile.firstName||'';
+  if(lastName)lastName.value=profile.lastName||'';
+  if(nickname)nickname.value=profile.nickname||'';
+  if(totalScore)totalScore.textContent=profile.totalScore||0;
+}
+
+function normalizeNickname(value){
+  const raw=String(value||'').trim().replace(/^@+/,'');
+  if(!raw)return '';
+  return '@'+raw.replace(/\s+/g,'').slice(0,23);
+}
+
+function saveProfilePopup(){
+  if(!currentUser||!window.db)return;
+  const firstName=document.getElementById('profileFirstName')?.value.trim()||'';
+  const lastName=document.getElementById('profileLastName')?.value.trim()||'';
+  const nickname=normalizeNickname(document.getElementById('profileNickname')?.value);
+  const displayName=getProfileDisplayName({firstName,lastName,nickname,name:getUserDisplayName(currentUser)},currentUser);
+  const data={
+    firstName,
+    lastName,
+    nickname,
+    name:displayName,
+    isAnonymous:currentUser.isAnonymous,
+    photoURL:currentUser.photoURL||null,
+    updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+  };
+  const batch=db.batch();
+  batch.set(db.collection('users').doc(currentUser.uid),data,{merge:true});
+  batch.set(db.collection('leaderboard').doc(currentUser.uid),data,{merge:true});
+  batch.commit().then(()=>{
+    return currentUser.updateProfile?currentUser.updateProfile({displayName}):null;
+  }).catch(err=>console.error('Errore salvataggio profilo:',err)).finally(closeProfilePopup);
 }
 
 /* ── GAME START ── */
@@ -697,8 +967,43 @@ function beginChain(){
 function beginTaboo(){
   if(!selTabooPid)return;
   const p=players.find(p=>p.id===selTabooPid);
-  localStorage.setItem('taboo-selected-player', p.name);
+  if(!p)return;
+  const seconds=getTabooTimer();
+  const now=Date.now();
+  database.ref('currentGameState').set({
+    mode:'taboo',
+    status:'ready',
+    wordIndex:-1,
+    word:'',
+    taboo:[],
+    currentPlayer:p.name,
+    currentPlayerId:p.id,
+    currentPlayerUid:p.uid||null,
+    timerSeconds:seconds,
+    startedAt:0,
+    endsAt:0,
+    score:0,
+    updatedAt:now
+  }).catch(err=>console.error('Errore avvio Taboo:',err));
   window.open('host.html', '_blank');
+}
+
+function listenTabooScoreEvents(){
+  if(!database||tabooScoreEventsRef)return;
+  tabooScoreEventsRef=database.ref('tabooScoreEvents');
+  tabooScoreEventsRef.on('child_added',snap=>{
+    const id=snap.key;
+    if(processedTabooScoreEvents.has(id))return;
+    const ev=snap.val()||{};
+    if((ev.createdAt||0)<tabooScoreEventsStartedAt)return;
+    processedTabooScoreEvents.add(id);
+    const points=Number(ev.points)||0;
+    if(!points||!ev.playerId)return;
+    awardPlayerPoints(Number(ev.playerId),points,'taboo');
+    renderPlayers();
+    renderTeamSection();
+    renderHomeLeaderboard();
+  });
 }
 
 function getChainTeamIds(){
@@ -710,8 +1015,7 @@ function getChainTeamIds(){
 
 function addChainPairPoints(points){
   chainState.pids.forEach(pid=>{
-    const p=players.find(pl=>pl.id===pid);
-    if(p)p.score+=points;
+    awardPlayerPoints(pid,points,'reazione-a-catena',false);
   });
   getChainTeamIds().forEach(tid=>{
     const t=teams.find(tm=>tm.id===tid);
@@ -866,6 +1170,7 @@ function completeChain(){
   addChainPairPoints(5);
   renderChainPlayers();
   renderHomeLeaderboard();
+  
   setChainMessage('Catena completata! +5 punti alla coppia.', '#2ECC71');
   setTimeout(()=>{
     const p1=players.find(p=>p.id===chainState.pids[0]);
@@ -1157,9 +1462,7 @@ function onSpacePress(){
 
   const winner=es.p[es.active];
   winner.score++;
-  const pg=players.find(p=>p.id===winner.id);
-  if(pg)pg.score++;
-  if(winner.team)winner.team.score++;
+  awardPlayerPoints(winner.id,1,'eredita');
 
   // reveal full word
   const w=es.words[es.wIdx];
@@ -1203,9 +1506,7 @@ function handleEreditaTimeout(){
   const winnerIdx=1-loserIdx;
   const winner=es.p[winnerIdx];
   winner.score++;
-  const pg=players.find(p=>p.id===winner.id);
-  if(pg)pg.score++;
-  if(winner.team)winner.team.score++;
+  awardPlayerPoints(winner.id,1,'eredita');
 
   // reveal full word
   const w=es.words[es.wIdx];
@@ -1563,8 +1864,7 @@ function completeWheelPhrase(){
 function awardAndWin(pid,points=1,subText=null){
   const p=players.find(p=>p.id===pid);
   const t=teams.find(t=>t.mids.includes(pid));
-  if(p) p.score += points;
-  if(t) t.score += points;
+  awardPlayerPoints(pid,points,'manche');
   document.getElementById('win-name').textContent=p?p.name:'—';
   document.getElementById('win-sub').textContent=subText||(t?`+1 punto per ${t.name}!`:'Ha vinto questa manche!');
   const sorted=[...players].sort((a,b)=>b.score-a.score);
@@ -1589,4 +1889,85 @@ function awardAndWin(pid,points=1,subText=null){
   renderHomeLeaderboard();
   stopAuaAudio();
   goTo('s-win');
+}
+
+// LOGIN
+const firebaseConfig = {
+        apiKey: "AIzaSyAs9kwrZnnBTOaBzkLn6ZhLN5mfWWmXcl4",
+        authDomain: "tv-game-night.firebaseapp.com",
+        databaseURL: "https://tv-game-night-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "tv-game-night",
+        storageBucket: "tv-game-night.firebasestorage.app",
+        messagingSenderId: "570468387403",
+        appId: "1:570468387403:web:1bcd29c85f8e8d00539bce"
+    };
+
+firebase.initializeApp(firebaseConfig);
+
+const auth = firebase.auth();
+const database = firebase.database();
+const db = firebase.firestore();
+window.db = db;
+let currentUser = null;
+listenTabooScoreEvents();
+
+document.addEventListener("DOMContentLoaded", () => {
+  const overlay = document.getElementById("authOverlay");
+  renderRegisteredUserSelect();
+  auth.onAuthStateChanged(user => {
+    console.log("USER:", user);
+    currentUser = user;
+
+    if(user){
+      if(overlay){
+        overlay.style.display = "none"; // forza nascondimento
+      }
+      updateUserUI(user);
+      saveUserIfNew(user);
+      addCurrentUserAsPlayer(user);
+      loadLeaderboard();
+      loadRegisteredUsers();
+      listenCurrentUserProfile(user);
+    } else {
+      if(unsubscribeLeaderboard)unsubscribeLeaderboard();
+      if(unsubscribeRegisteredUsers)unsubscribeRegisteredUsers();
+      if(unsubscribeCurrentUserProfile)unsubscribeCurrentUserProfile();
+      globalLeaderboard=[];
+      registeredUsers=[];
+      currentUserProfile=null;
+      renderRegisteredUserSelect();
+      renderHomeLeaderboard();
+      closeProfilePopup();
+      if(overlay){
+        overlay.style.display = "flex";
+      }
+    }
+  });
+});
+
+function loginWithGoogle(){
+  const provider = new firebase.auth.GoogleAuthProvider();
+  auth.signInWithPopup(provider);
+}
+
+function loginAnonymously(){
+  auth.signInAnonymously();
+}
+
+function updateUserUI(user){
+  const box = document.getElementById("userBox");
+  const name = document.getElementById("userName");
+
+  if(box && name){
+    if(!user){
+      box.classList.add("hidden");
+      return;
+    }
+    box.classList.remove("hidden");
+    name.innerText = getProfileDisplayName(currentUserProfile||{},user);
+  }
+}
+
+function logout(){
+  auth.signOut();
 }

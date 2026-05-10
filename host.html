@@ -7,7 +7,9 @@
   <style>
     :root{--bg:#08081A;--surface:#12122A;--surface2:#1C1C3A;--gold:#F5C518;--txt:#F0EEE4;--mut:#7A7A9A;--red:#E74C3C;--green:#2ECC71}
     *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:Inter,system-ui,sans-serif;background:#08081A;color:#F0EEE4;min-height:100vh;display:flex;justify-content:center;align-items:center;padding:1rem}
+    html{width:100%;overflow-x:hidden}
+    body{font-family:Inter,system-ui,sans-serif;background:#08081A;color:#F0EEE4;min-height:100vh;display:flex;justify-content:center;align-items:center;padding:1rem;overflow-x:hidden}
+    button,input{max-width:100%}
     .card{width:min(100%,550px);background:radial-gradient(circle at top,rgba(245,197,24,.08),transparent 35%),var(--surface);border:1px solid rgba(255,255,255,.08);border-radius:24px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.45)}
     header{padding:1.4rem 1.6rem 1rem}
     header h1{font-size:1.9rem;letter-spacing:2px;margin-bottom:.45rem}
@@ -30,14 +32,31 @@
     .info-grid{display:grid;gap:.95rem;margin-top:1rem}
     .info-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:1rem;min-height:90px}
     .info-card h2{font-size:.92rem;color:var(--mut);letter-spacing:.12em;text-transform:uppercase;margin-bottom:.55rem}
-    .info-card p{font-size:1.1rem;line-height:1.5;word-break:break-word}
+    .info-card p{font-size:1.1rem;line-height:1.5;word-break:break-word;overflow-wrap:anywhere}
     .qr-block{display:flex;flex-direction:column;align-items:center;gap:.9rem;text-align:center;margin-top:1rem}
     .qr-block img{width:100%;max-width:260px;border-radius:18px;border:1px solid rgba(255,255,255,.12);box-shadow:0 16px 30px rgba(0,0,0,.18)}
     .hint{color:var(--mut);font-size:.92rem;line-height:1.5;margin-top:.85rem}
     .btn-back{background:rgba(255,255,255,.08);color:#ccc;border:1.5px solid rgba(255,255,255,.22);border-radius:10px;padding:.6rem 1.3rem;font-family:'Nunito',sans-serif;font-size:.82rem;font-weight:800;cursor:pointer;transition:all .18s;margin-bottom:1.1rem;display:inline-block}
     .btn-back:hover{color:#fff;border-color:rgba(255,255,255,.5)}
     .link-copy{display:inline-flex;gap:.45rem;align-items:center;color:var(--txt);text-decoration:none;background:rgba(255,255,255,.06);padding:.75rem 1rem;border-radius:14px;word-break:break-all}
-    @media(max-width:540px){body{padding:.75rem}.card{border-radius:20px}.buttons{flex-direction:column}}
+    @media(max-width:540px){
+      body{display:block;padding:.75rem;min-height:100vh}
+      .card{width:100%;border-radius:18px}
+      header{padding:1.1rem 1rem .85rem}
+      header h1{font-size:1.55rem;letter-spacing:1px}
+      header p{font-size:.88rem}
+      .section{padding:.9rem 1rem}
+      .section .section{padding:0;border-top:none}
+      .buttons{flex-direction:column}
+      .btn{width:100%;padding:.85rem 1rem;white-space:normal;line-height:1.25}
+      .status-pill{max-width:100%;white-space:normal;border-radius:14px;line-height:1.25}
+      .info-grid{gap:.7rem}
+      .info-card{min-height:auto;padding:.85rem;border-radius:12px}
+      .info-card h2{font-size:.75rem;letter-spacing:.08em;line-height:1.3}
+      .info-card p{font-size:.98rem}
+      .qr-block img{max-width:min(240px,100%)}
+      .btn-back{width:100%;text-align:center;margin-top:.9rem}
+    }
   </style>
 </head>
 <body>
@@ -48,19 +67,14 @@
     </header>
 
     <section class="section">
-      <div class="field">
-        <label for="player-name">Nome giocatore attuale</label>
-        <input id="player-name" type="text" placeholder="Inserisci nome" />
-      </div>
       <div class="buttons">
-        <button class="btn btn-primary" id="btn-next">NEXT</button>
         <button class="btn btn-secondary" id="btn-stop">FERMA</button>
       </div>
       <div id="connection-state" class="status-pill disconnected"><span></span><span>disconnesso</span></div>
     </section>
 
     <section class="section">
-      <div class="section">
+      <div>
         <div class="qr-block">
           <img src="qr-code.jpg" alt="QR code per play.html" />
           <p class="hint">Scansiona il QR per aprire la pagina giocatore.</p>
@@ -73,6 +87,14 @@
         <div class="info-card">
           <h2>Giocatore</h2>
           <p id="host-player">N/A</p>
+        </div>
+        <div class="info-card">
+          <h2>Timer</h2>
+          <p id="host-timer">--</p>
+        </div>
+        <div class="info-card">
+          <h2>Punti turno</h2>
+          <p id="host-score">0</p>
         </div>
         <div class="info-card">
           <h2>Parola pubblica</h2>
@@ -88,6 +110,7 @@
   <!-- Firebase Realtime Database compat SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script>
     // Sostituisci questi valori con le tue credenziali Firebase dal progetto Realtime Database.
     const firebaseConfig = {
@@ -120,78 +143,61 @@
       word: '',
       taboo: [],
       currentPlayer: '',
+      currentPlayerId: null,
+      status: null,
+      timerSeconds: 60,
+      startedAt: 0,
+      endsAt: 0,
+      score: 0,
       updatedAt: 0
     };
 
     const controls = {
-      playerName: document.getElementById('player-name'),
-      btnNext: document.getElementById('btn-next'),
       btnStop: document.getElementById('btn-stop'),
       status: document.getElementById('connection-state'),
       hostMode: document.getElementById('host-mode'),
       hostPlayer: document.getElementById('host-player'),
+      hostTimer: document.getElementById('host-timer'),
+      hostScore: document.getElementById('host-score'),
       hostSummary: document.getElementById('host-summary')
     };
 
     let currentState = {...defaultState};
-
-    function getSavedPlayerName(){
-      return localStorage.getItem('taboo-player-name') || '';
-    }
-
-    function savePlayerName(name){
-      localStorage.setItem('taboo-player-name', name);
-    }
+    let timerInterval=null;
 
     function setConnectionStatus(connected){
       controls.status.className = `status-pill ${connected ? 'connected' : 'disconnected'}`;
       controls.status.querySelector('span:last-child').textContent = connected ? 'connesso' : 'disconnesso';
     }
 
+    function getRemainingSeconds(state=currentState){
+      if(state.status !== 'playing' || !state.endsAt)return state.timerSeconds || 0;
+      return Math.max(0, Math.ceil((state.endsAt - Date.now()) / 1000));
+    }
+
+    function renderTimer(){
+      controls.hostTimer.textContent = `${getRemainingSeconds()}s`;
+    }
+
     function renderState(state){
       currentState = {...defaultState, ...state};
       const isActive = currentState.mode === 'taboo';
-      controls.hostMode.textContent = `Modalità: ${isActive ? 'Taboo attivo' : 'In attesa'}`;
+      const statusLabel = currentState.status === 'playing' ? 'in gioco' : currentState.status === 'ended' ? 'tempo finito' : 'pronto';
+      controls.hostMode.textContent = `Modalità: ${isActive ? `Taboo ${statusLabel}` : 'In attesa'}`;
       controls.hostPlayer.textContent = currentState.currentPlayer || 'Nessun giocatore selezionato';
-      controls.hostSummary.textContent = isActive ? `Turno #${currentState.wordIndex + 1} di ${TABOO_WORDS.length}` : 'In attesa del prossimo gioco';
+      controls.hostScore.textContent = currentState.score || 0;
+      controls.hostSummary.textContent = isActive && currentState.wordIndex >= 0 ? `Turno #${currentState.wordIndex + 1} di ${TABOO_WORDS.length}` : 'Apri play.html e premi Avvia';
       controls.btnStop.disabled = !isActive;
-      controls.playerName.value = currentState.currentPlayer || getSavedPlayerName();
-    }
-
-    function getNextTabooState(){
-      const name = controls.playerName.value.trim() || 'Giocatore';
-      savePlayerName(name);
-      const nextIndex = (Math.max(-1, currentState.wordIndex) + 1) % TABOO_WORDS.length;
-      const nextWord = TABOO_WORDS[nextIndex];
-      return {
-        mode: 'taboo',
-        wordIndex: nextIndex,
-        word: nextWord.word,
-        taboo: nextWord.taboo,
-        currentPlayer: name,
-        updatedAt: Date.now()
-      };
-    }
-
-    function handleNext(){
-      const newState = getNextTabooState();
-      gameStateRef.set(newState).catch(err => console.error('Errore aggiornando lo stato:', err));
+      renderTimer();
     }
 
     function handleStop(){
-      gameStateRef.set({...defaultState, updatedAt: Date.now()}).catch(err => console.error('Errore fermando gioco:', err));
+      gameStateRef.update({status:'ended', mode:'taboo', endsAt:Date.now(), updatedAt:Date.now()}).catch(err => console.error('Errore fermando gioco:', err));
     }
 
     function init(){
-      const selectedPlayer = localStorage.getItem('taboo-selected-player');
-      if (selectedPlayer) {
-        controls.playerName.value = selectedPlayer;
-        localStorage.removeItem('taboo-selected-player'); // Rimuovi dopo averlo usato
-      } else {
-        controls.playerName.value = getSavedPlayerName();
-      }
-      controls.btnNext.addEventListener('click', handleNext);
       controls.btnStop.addEventListener('click', handleStop);
+      timerInterval=setInterval(renderTimer, 500);
 
       gameStateRef.on('value', snap => {
         renderState(snap.val() || defaultState);
