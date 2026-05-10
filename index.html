@@ -383,6 +383,17 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
   </div>
 </div>
 
+<div id="playModeOverlay" class="auth-overlay hidden">
+  <div class="auth-box">
+    <h1>Modalità</h1>
+    <p id="playModeText">Vuoi giocare in locale o online?</p>
+    <div class="profile-actions">
+      <button class="auth-btn anon" style="flex:1" onclick="choosePlayMode('local')">Locale</button>
+      <button class="auth-btn google" style="flex:1" onclick="choosePlayMode('online')">Online</button>
+    </div>
+  </div>
+</div>
+
 <!-- HERO -->
 <div class="screen active" id="s-hero">
   <div style="text-align:center;padding:2.2rem 1rem 1.8rem">

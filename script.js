@@ -15,6 +15,7 @@ let globalLeaderboard=[];
 let registeredUsers=[];
 let currentUserProfile=null;
 let pendingGameInvite=null;
+let pendingPlayModeGame=null,selectedPlayMode='local';
 let unsubscribeLeaderboard=null,unsubscribeRegisteredUsers=null,unsubscribeCurrentUserProfile=null,unsubscribeGameInvites=null;
 let tabooScoreEventsRef=null,tabooScoreEventsStartedAt=Date.now(),processedTabooScoreEvents=new Set();
 let auaAudio=null,auaErrorAudio=null,auaAutoStartListener=null,auaAutoStarted=false,auaThemeResumeTime=0;
@@ -806,6 +807,72 @@ const GAME_LABELS={
   catena:'REAZIONE A CATENA'
 };
 
+const MULTIPLAYER_GAMES=['ruota','eredita','intesa','catena'];
+
+function isMultiplayerGame(game){
+  return MULTIPLAYER_GAMES.includes(game);
+}
+
+function showPlayModePopup(game){
+  pendingPlayModeGame=game;
+  const text=document.getElementById('playModeText');
+  const label=GAME_LABELS[game]||game;
+  if(text)text.textContent=`Vuoi giocare ${label} in locale o online?`;
+  document.getElementById('playModeOverlay')?.classList.remove('hidden');
+}
+
+function closePlayModePopup(){
+  document.getElementById('playModeOverlay')?.classList.add('hidden');
+}
+
+function choosePlayMode(mode){
+  selectedPlayMode=mode==='online'?'online':'local';
+  const game=pendingPlayModeGame;
+  pendingPlayModeGame=null;
+  closePlayModePopup();
+  if(!game)return;
+  if(selectedPlayMode==='online'){
+    const onlinePlayers=getOnlineParticipants();
+    if(!currentUser||onlinePlayers.length<2){
+      alert('Per giocare online servono almeno due giocatori registrati aggiunti alla configurazione.');
+      goTo('s-setup');
+      return;
+    }
+  }
+  startGame(game,{skipModeChoice:true});
+}
+
+async function loadQuestionBank(key,fallback){
+  if(selectedPlayMode!=='online'||!window.db)return fallback;
+  try{
+    const doc=await db.collection('questionBanks').doc(key).get();
+    const data=doc.exists?doc.data():null;
+    return Array.isArray(data?.items)&&data.items.length?data.items:fallback;
+  }catch(err){
+    console.error(`Errore caricamento questionBanks/${key}:`,err);
+    return fallback;
+  }
+}
+
+async function seedQuestionBanksToFirestore(){
+  if(!window.db)return;
+  const now=firebase.firestore.FieldValue.serverTimestamp();
+  const banks={
+    aua:AUA_Q,
+    eredita:ERE_WORDS,
+    ruota:WHEEL_PHRASES,
+    catena:CHAIN_ROUNDS
+  };
+  const batch=db.batch();
+  Object.entries(banks).forEach(([key,items])=>{
+    batch.set(db.collection('questionBanks').doc(key),{
+      items,
+      updatedAt:now
+    },{merge:true});
+  });
+  return batch.commit();
+}
+
 function getCurrentUserName(){
   return getProfileDisplayName(currentUserProfile||{},currentUser);
 }
@@ -822,14 +889,14 @@ function getOnlineParticipants(){
 }
 
 function sendGameInvites(game,payload={}){
-  if(!currentUser||!window.db)return;
+  if(selectedPlayMode!=='online'||!currentUser||!window.db)return;
   const participants=getOnlineParticipants();
   const targets=participants.filter(p=>p.uid!==currentUser.uid);
   if(!targets.length)return;
   const now=firebase.firestore.FieldValue.serverTimestamp();
   const batch=db.batch();
   targets.forEach(target=>{
-    const ref=db.collection('gameInvites').doc();
+    const ref=db.collection('users').doc(target.uid).collection('gameInvites').doc();
     batch.set(ref,{
       game,
       status:'pending',
@@ -849,13 +916,12 @@ function sendGameInvites(game,payload={}){
 function listenGameInvites(user){
   if(unsubscribeGameInvites)unsubscribeGameInvites();
   if(!user||!window.db)return;
-  unsubscribeGameInvites=db.collection('gameInvites')
-    .where('toUid','==',user.uid)
+  unsubscribeGameInvites=db.collection('users').doc(user.uid).collection('gameInvites')
     .where('status','==','pending')
     .onSnapshot(snapshot=>{
       snapshot.docChanges().forEach(change=>{
         if(change.type!=='added')return;
-        pendingGameInvite={id:change.doc.id,...change.doc.data()};
+        pendingGameInvite={id:change.doc.id,_ref:change.doc.ref,...change.doc.data()};
         showGameInvitePopup(pendingGameInvite);
       });
     },err=>console.error('Errore inviti gioco:',err));
@@ -876,8 +942,8 @@ function closeGameInvitePopup(){
 }
 
 function declineGameInvite(){
-  if(pendingGameInvite&&window.db){
-    db.collection('gameInvites').doc(pendingGameInvite.id).update({
+  if(pendingGameInvite?._ref){
+    pendingGameInvite._ref.update({
       status:'declined',
       updatedAt:firebase.firestore.FieldValue.serverTimestamp()
     }).catch(err=>console.error('Errore rifiuto invito:',err));
@@ -889,11 +955,12 @@ function declineGameInvite(){
 function acceptGameInvite(){
   if(!pendingGameInvite||!window.db)return;
   const invite=pendingGameInvite;
-  db.collection('gameInvites').doc(invite.id).update({
+  invite._ref?.update({
     status:'accepted',
     updatedAt:firebase.firestore.FieldValue.serverTimestamp()
   }).catch(err=>console.error('Errore accettazione invito:',err));
   pendingGameInvite=null;
+  selectedPlayMode='online';
   closeGameInvitePopup();
   joinInvitedGame(invite);
 }
@@ -940,7 +1007,7 @@ function joinInvitedGame(invite){
   if(invite.game==='eredita'){
     selP1=getPlayerIdByUid(payload.p1Uid);
     selP2=getPlayerIdByUid(payload.p2Uid);
-    if(selP1&&selP2&&selP1!==selP2)beginEredita({fromInvite:true});
+    if(selP1&&selP2&&selP1!==selP2)beginEredita({fromInvite:true,words:payload.words});
     else startGame('eredita');
     return;
   }
@@ -954,15 +1021,19 @@ function joinInvitedGame(invite){
   if(invite.game==='catena'){
     selChainP1=getPlayerIdByUid(payload.p1Uid);
     selChainP2=getPlayerIdByUid(payload.p2Uid);
-    if(selChainP1&&selChainP2&&selChainP1!==selChainP2)beginChain({fromInvite:true});
+    if(selChainP1&&selChainP2&&selChainP1!==selChainP2)beginChain({fromInvite:true,round:payload.round});
     else startGame('catena');
   }
 }
 
 /* ── GAME START ── */
-function startGame(game){
+function startGame(game,options={}){
   if(!players.length){goTo('s-setup');return;}
-  if(['eredita','intesa','ruota'].includes(game)&&players.length<2){
+  if(isMultiplayerGame(game)&&!options.skipModeChoice){
+    showPlayModePopup(game);
+    return;
+  }
+  if(['eredita','intesa','ruota','catena'].includes(game)&&players.length<2){
     stopAuaAudio();
     stopRdfAudio();
     goTo('s-setup');
@@ -1105,14 +1176,15 @@ function normalizeChainWord(text){
     .toUpperCase();
 }
 
-function beginChain(options={}){
+async function beginChain(options={}){
   if(!selChainP1||!selChainP2||selChainP1===selChainP2)return;
   clearChainTimer();
   const p1=players.find(p=>p.id===selChainP1);
   const p2=players.find(p=>p.id===selChainP2);
   if(!p1||!p2)return;
-  if(!options.fromInvite)sendGameInvites('catena',{p1Uid:p1.uid||null,p2Uid:p2.uid||null});
-  const round=CHAIN_ROUNDS[Math.floor(Math.random()*CHAIN_ROUNDS.length)];
+  const rounds=await loadQuestionBank('catena',CHAIN_ROUNDS);
+  const round=options.round||rounds[Math.floor(Math.random()*rounds.length)];
+  if(!options.fromInvite)sendGameInvites('catena',{p1Uid:p1.uid||null,p2Uid:p2.uid||null,round});
   chainState={
     pids:[selChainP1,selChainP2],
     start:round.start,
@@ -1372,13 +1444,14 @@ function completeChain(){
    AUA GAME
 ══════════════════════════════ */
 let auaState={};let auaInt=null;
-function beginAUA(){
+async function beginAUA(){
   clearAuaAutoStart();
   hideAuaIntroEffects();
   if(!selPid)return;
   const p=players.find(p=>p.id===selPid);
   document.getElementById('aua-pname').textContent=p.name;
-  const shuffledQuestions = shuffleArray([...AUA_Q]).slice(0, 21);
+  const questions=await loadQuestionBank('aua',AUA_Q);
+  const shuffledQuestions = shuffleArray([...questions]).slice(0, 21);
   auaState={qIdx:0,answered:0,total:21,pid:selPid,max:getTimer('aua'),left:getTimer('aua'),paused:false,questions:shuffledQuestions};
   renderAUATrack();renderAUAQ();startAUATimer();goTo('s-aua');
 }
@@ -1471,7 +1544,7 @@ function restartAUA(){
 ══════════════════════════════ */
 let ereState={};let ereInt=null;let spaceKH=null;
 
-function beginEredita(options={}){
+async function beginEredita(options={}){
   if(!selP1||!selP2)return;
   clearInterval(ereInt);
   if(spaceKH){document.removeEventListener('keydown',spaceKH);spaceKH=null;}
@@ -1481,9 +1554,10 @@ function beginEredita(options={}){
   const t1=teams.find(t=>t.mids.includes(selP1));
   const t2=teams.find(t=>t.mids.includes(selP2));
   if(!p1||!p2)return;
-  if(!options.fromInvite)sendGameInvites('eredita',{p1Uid:p1.uid||null,p2Uid:p2.uid||null});
 
-  const wordList=[...ERE_WORDS].sort(()=>Math.random()-.5);
+  const words=options.words||await loadQuestionBank('eredita',ERE_WORDS);
+  const wordList=[...words].sort(()=>Math.random()-.5);
+  if(!options.fromInvite)sendGameInvites('eredita',{p1Uid:p1.uid||null,p2Uid:p2.uid||null,words:wordList});
 
   ereState={
     p:[
@@ -1731,7 +1805,7 @@ function selPickWheel(id){
   document.getElementById('pp-wheel-'+id)?.classList.add('selected');
 }
 
-function beginWheel(options={}){
+async function beginWheel(options={}){
   if(!selWheelPid)return;
   hideWheelIntroEffects();
   const wheelPlayersSource=Array.isArray(options.participantUids)&&options.participantUids.length
@@ -1739,9 +1813,10 @@ function beginWheel(options={}){
     : players;
   const startIdx=wheelPlayersSource.findIndex(p=>p.id===selWheelPid);
   if(startIdx<0)return;
+  const phrases=await loadQuestionBank('ruota',WHEEL_PHRASES);
   const phrase=options.phrase&&options.category
     ? {text:options.phrase,cat:options.category}
-    : WHEEL_PHRASES[Math.floor(Math.random()*WHEEL_PHRASES.length)];
+    : phrases[Math.floor(Math.random()*phrases.length)];
   wheelState={
     players:wheelPlayersSource.map(p=>{
       const t=teams.find(t=>t.mids.includes(p.id));
@@ -2094,6 +2169,7 @@ const auth = firebase.auth();
 const database = firebase.database();
 const db = firebase.firestore();
 window.db = db;
+window.seedQuestionBanksToFirestore = seedQuestionBanksToFirestore;
 let currentUser = null;
 listenTabooScoreEvents();
 
