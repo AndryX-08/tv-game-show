@@ -16,6 +16,7 @@ let registeredUsers=[];
 let currentUserProfile=null;
 let pendingGameInvite=null;
 let pendingPlayModeGame=null,selectedPlayMode='local';
+let activeGameSessionId=null,activeGameSessionGame=null,unsubscribeGameSession=null,applyingRemoteWheelState=false,applyingRemoteSessionState=false;
 let unsubscribeLeaderboard=null,unsubscribeRegisteredUsers=null,unsubscribeCurrentUserProfile=null,unsubscribeGameInvites=null;
 let tabooScoreEventsRef=null,tabooScoreEventsStartedAt=Date.now(),processedTabooScoreEvents=new Set();
 let auaAudio=null,auaErrorAudio=null,auaAutoStartListener=null,auaAutoStarted=false,auaThemeResumeTime=0;
@@ -420,13 +421,23 @@ function stopRdfAudio(){
   rdfAudio.currentTime=0;
 }
 
-function beginIntesa(options={}){
+async function beginIntesa(options={}){
   if(!selP1||!selP2||selP1===selP2) return;
+  if(options.sessionId)listenGameSession(options.sessionId);
   intesaPlayers={p1:selP1,p2:selP2};
   const p1=players.find(p=>p.id===selP1);
   const p2=players.find(p=>p.id===selP2);
   if(!p1||!p2) return;
-  if(!options.fromInvite)sendGameInvites('intesa',{p1Uid:p1.uid||null,p2Uid:p2.uid||null});
+  if(!options.fromInvite&&selectedPlayMode==='online'){
+    const sessionId=await createGameSession('intesa',{
+      p1Uid:p1.uid||null,
+      p2Uid:p2.uid||null,
+      p1Name:p1.name,
+      p2Name:p2.name,
+      status:'scoring'
+    });
+    sendGameInvites('intesa',{p1Uid:p1.uid||null,p2Uid:p2.uid||null,sessionId});
+  }
   document.getElementById('intesa-p1-input').innerHTML=`<span style="flex:1;font-weight:800">${p1.name}</span><input class="tf" id="intesa-p1-score" type="number" min="0" value="0" style="width:80px">`;
   document.getElementById('intesa-p2-input').innerHTML=`<span style="flex:1;font-weight:800">${p2.name}</span><input class="tf" id="intesa-p2-score" type="number" min="0" value="0" style="width:80px">`;
   window.open('https://www.ed0.it/games/intesavincente/','_blank');
@@ -442,6 +453,7 @@ function saveIntesaScores(){
   renderPlayers();
   renderTeamSection();
   renderHomeLeaderboard();
+  cleanupOnlineGameArtifacts();
   
   goTo('s-hero');
 }
@@ -888,7 +900,7 @@ function getOnlineParticipants(){
     }));
 }
 
-function sendGameInvites(game,payload={}){
+async function sendGameInvites(game,payload={}){
   if(selectedPlayMode!=='online'||!currentUser||!window.db)return;
   const participants=getOnlineParticipants();
   const targets=participants.filter(p=>p.uid!==currentUser.uid);
@@ -910,7 +922,7 @@ function sendGameInvites(game,payload={}){
       updatedAt:now
     });
   });
-  batch.commit().catch(err=>console.error('Errore invio inviti gioco:',err));
+  return batch.commit().catch(err=>console.error('Errore invio inviti gioco:',err));
 }
 
 function listenGameInvites(user){
@@ -988,6 +1000,78 @@ function getPlayerIdByUid(uid){
   return players.find(p=>p.uid===uid)?.id||null;
 }
 
+function stopGameSessionListener(){
+  if(unsubscribeGameSession)unsubscribeGameSession();
+  unsubscribeGameSession=null;
+  activeGameSessionId=null;
+  activeGameSessionGame=null;
+}
+
+async function createGameSession(game,state={}){
+  if(selectedPlayMode!=='online'||!currentUser||!window.db)return null;
+  const ref=await db.collection('gameSessions').add({
+    game,
+    state,
+    createdBy:currentUser.uid,
+    updatedBy:currentUser.uid,
+    createdAt:firebase.firestore.FieldValue.serverTimestamp(),
+    updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+  });
+  activeGameSessionId=ref.id;
+  activeGameSessionGame=game;
+  return ref.id;
+}
+
+function updateGameSession(state){
+  if(!activeGameSessionId||!currentUser||!window.db||applyingRemoteWheelState||applyingRemoteSessionState)return;
+  db.collection('gameSessions').doc(activeGameSessionId).set({
+    state,
+    updatedBy:currentUser.uid,
+    updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+  },{merge:true}).catch(err=>console.error('Errore sync sessione gioco:',err));
+}
+
+function listenGameSession(sessionId){
+  if(!sessionId||!window.db)return;
+  if(unsubscribeGameSession)unsubscribeGameSession();
+  activeGameSessionId=sessionId;
+  unsubscribeGameSession=db.collection('gameSessions').doc(sessionId).onSnapshot(doc=>{
+    if(!doc.exists)return;
+    const data=doc.data();
+    if(data.updatedBy&&data.updatedBy===currentUser?.uid)return;
+    activeGameSessionGame=data.game||activeGameSessionGame;
+    if(data.game==='ruota'&&data.state)applyRemoteWheelState(data.state);
+    if(data.game==='catena'&&data.state)applyRemoteChainState(data.state);
+    if(data.game==='eredita'&&data.state)applyRemoteEreditaState(data.state);
+  },err=>console.error('Errore ascolto sessione gioco:',err));
+}
+
+async function cleanupOnlineGameArtifacts(){
+  if(!activeGameSessionId||!window.db)return;
+  const sessionId=activeGameSessionId;
+  const participantUids=[
+    ...new Set([
+      ...getOnlineParticipants().map(p=>p.uid),
+      currentUser?.uid
+    ].filter(Boolean))
+  ];
+  try{
+    const batch=db.batch();
+    batch.delete(db.collection('gameSessions').doc(sessionId));
+    for(const uid of participantUids){
+      const snap=await db.collection('users').doc(uid).collection('gameInvites')
+        .where('payload.sessionId','==',sessionId)
+        .get();
+      snap.docs.forEach(doc=>batch.delete(doc.ref));
+    }
+    await batch.commit();
+  }catch(err){
+    console.error('Errore pulizia sessione online:',err);
+  }finally{
+    stopGameSessionListener();
+  }
+}
+
 function joinInvitedGame(invite){
   ensureInviteParticipants(invite);
   const payload=invite.payload||{};
@@ -999,29 +1083,33 @@ function joinInvitedGame(invite){
         fromInvite:true,
         phrase:payload.phrase,
         category:payload.category,
-        participantUids:payload.participantUids
+        participantUids:payload.participantUids,
+        sessionId:payload.sessionId
       });
     }
     return;
   }
   if(invite.game==='eredita'){
+    if(payload.sessionId)listenGameSession(payload.sessionId);
     selP1=getPlayerIdByUid(payload.p1Uid);
     selP2=getPlayerIdByUid(payload.p2Uid);
-    if(selP1&&selP2&&selP1!==selP2)beginEredita({fromInvite:true,words:payload.words});
+    if(selP1&&selP2&&selP1!==selP2)beginEredita({fromInvite:true,words:payload.words,revOrders:payload.revOrders,sessionId:payload.sessionId});
     else startGame('eredita');
     return;
   }
   if(invite.game==='intesa'){
+    if(payload.sessionId)listenGameSession(payload.sessionId);
     selP1=getPlayerIdByUid(payload.p1Uid);
     selP2=getPlayerIdByUid(payload.p2Uid);
-    if(selP1&&selP2&&selP1!==selP2)beginIntesa({fromInvite:true});
+    if(selP1&&selP2&&selP1!==selP2)beginIntesa({fromInvite:true,sessionId:payload.sessionId});
     else startGame('intesa');
     return;
   }
   if(invite.game==='catena'){
+    if(payload.sessionId)listenGameSession(payload.sessionId);
     selChainP1=getPlayerIdByUid(payload.p1Uid);
     selChainP2=getPlayerIdByUid(payload.p2Uid);
-    if(selChainP1&&selChainP2&&selChainP1!==selChainP2)beginChain({fromInvite:true,round:payload.round});
+    if(selChainP1&&selChainP2&&selChainP1!==selChainP2)beginChain({fromInvite:true,round:payload.round,sessionId:payload.sessionId});
     else startGame('catena');
   }
 }
@@ -1179,14 +1267,15 @@ function normalizeChainWord(text){
 async function beginChain(options={}){
   if(!selChainP1||!selChainP2||selChainP1===selChainP2)return;
   clearChainTimer();
+  if(options.sessionId)listenGameSession(options.sessionId);
   const p1=players.find(p=>p.id===selChainP1);
   const p2=players.find(p=>p.id===selChainP2);
   if(!p1||!p2)return;
   const rounds=await loadQuestionBank('catena',CHAIN_ROUNDS);
   const round=options.round||rounds[Math.floor(Math.random()*rounds.length)];
-  if(!options.fromInvite)sendGameInvites('catena',{p1Uid:p1.uid||null,p2Uid:p2.uid||null,round});
   chainState={
     pids:[selChainP1,selChainP2],
+    puids:[p1.uid||null,p2.uid||null],
     start:round.start,
     words:round.words,
     idx:0,
@@ -1196,6 +1285,11 @@ async function beginChain(options={}){
     solved:round.words.map(()=>false),
     blocked:false
   };
+  if(!options.fromInvite&&selectedPlayMode==='online'){
+    const sessionId=await createGameSession('catena',serializeChainState());
+    if(sessionId)listenGameSession(sessionId);
+    sendGameInvites('catena',{p1Uid:p1.uid||null,p2Uid:p2.uid||null,round,sessionId});
+  }
   document.getElementById('chain-pair').textContent=`${p1.name} + ${p2.name}`;
   document.getElementById('chain-start-word').textContent=round.start;
   renderChainPlayers();
@@ -1203,6 +1297,62 @@ async function beginChain(options={}){
   setChainMessage('Partite dalla parola data e trovate il primo collegamento.');
   goTo('s-chain');
   startChainTimer();
+  syncChainState();
+}
+
+function serializeChainState(){
+  if(!chainState?.words)return null;
+  return {
+    puids:chainState.puids||chainState.pids?.map(pid=>players.find(p=>p.id===pid)?.uid||null)||[],
+    names:(chainState.pids||[]).map(pid=>players.find(p=>p.id===pid)?.name||'Giocatore'),
+    start:chainState.start,
+    words:chainState.words,
+    idx:chainState.idx||0,
+    max:chainState.max,
+    left:chainState.left,
+    revealed:chainState.revealed||[],
+    solved:chainState.solved||[],
+    blocked:!!chainState.blocked,
+    message:document.getElementById('chain-message')?.textContent||''
+  };
+}
+
+function syncChainState(){
+  const state=serializeChainState();
+  if(state)updateGameSession(state);
+}
+
+function applyRemoteChainState(state){
+  if(!state)return;
+  applyingRemoteSessionState=true;
+  chainState={
+    pids:(state.puids||[]).map((uid,i)=>getPlayerIdByUid(uid)||players[i]?.id||i+1),
+    puids:state.puids||[],
+    start:state.start,
+    words:state.words||[],
+    idx:state.idx||0,
+    max:state.max||getTimer('chain'),
+    left:state.left||0,
+    revealed:state.revealed||[],
+    solved:state.solved||[],
+    blocked:!!state.blocked
+  };
+  clearChainTimer();
+  document.getElementById('chain-pair').textContent=(state.names||[]).join(' + ');
+  document.getElementById('chain-start-word').textContent=state.start||'';
+  renderChainPlayers();
+  renderChainRows();
+  updateChainTimer();
+  setChainMessage(state.message||'Partita online aggiornata.');
+  goTo('s-chain');
+  applyingRemoteSessionState=false;
+  if(canControlChainOnline()&&!chainState.blocked&&chainState.idx<chainState.words.length)startChainTimer();
+}
+
+function canControlChainOnline(){
+  if(selectedPlayMode!=='online'||!activeGameSessionId)return true;
+  const uid=chainState.puids?.[0]||currentUser?.uid;
+  return !uid||uid===currentUser?.uid;
 }
 
 function beginTaboo(){
@@ -1244,6 +1394,7 @@ function listenTabooScoreEvents(){
     renderPlayers();
     renderTeamSection();
     renderHomeLeaderboard();
+    snap.ref.remove().catch(err=>console.error('Errore pulizia evento Taboo:',err));
   });
 }
 
@@ -1323,12 +1474,14 @@ function setChainMessage(text,color='var(--txt)'){
 
 function startChainTimer(){
   clearChainTimer();
+  if(!canControlChainOnline())return;
   chainState.left=chainState.max;
   updateChainTimer();
   chainInt=setInterval(()=>{
     if(chainState.blocked)return;
     chainState.left--;
     updateChainTimer();
+    syncChainState();
     if(chainState.left<=0){
       missChainWord(true);
     }
@@ -1347,6 +1500,7 @@ function updateChainTimer(){
 
 function submitChainWord(){
   const cs=chainState;
+  if(!canControlChainOnline())return;
   if(cs.blocked||cs.idx>=cs.words.length)return;
   const input=document.getElementById(`chain-input-${cs.idx}`);
   const guess=normalizeChainWord(input?.value);
@@ -1364,6 +1518,7 @@ function submitChainWord(){
   setChainMessage(`Giusto: ${cs.words[cs.idx]}!`, '#2ECC71');
   cs.idx++;
   renderChainRows();
+  syncChainState();
   if(cs.idx>=cs.words.length){
     completeChain();
     return;
@@ -1376,6 +1531,7 @@ function submitChainWord(){
 
 function missChainWord(fromTimer=false){
   const cs=chainState;
+  if(!canControlChainOnline())return;
   if(cs.blocked||cs.idx>=cs.words.length)return;
   clearChainTimer();
   addChainPairPoints(-2);
@@ -1384,6 +1540,7 @@ function missChainWord(fromTimer=false){
   renderChainPlayers();
   renderHomeLeaderboard();
   renderChainHint();
+  syncChainState();
   const input=document.getElementById(`chain-input-${cs.idx}`);
   if(input){
     input.value='';
@@ -1396,6 +1553,7 @@ function missChainWord(fromTimer=false){
     cs.idx++;
     setTimeout(()=>{
       renderChainRows();
+      syncChainState();
       if(cs.idx>=cs.words.length)completeChain();
       else startChainTimer();
     },1000);
@@ -1413,6 +1571,7 @@ function completeChain(){
   renderHomeLeaderboard();
   
   setChainMessage('Catena completata! +5 punti alla coppia.', '#2ECC71');
+  syncChainState();
   setTimeout(()=>{
     const p1=players.find(p=>p.id===chainState.pids[0]);
     const p2=players.find(p=>p.id===chainState.pids[1]);
@@ -1437,6 +1596,7 @@ function completeChain(){
     }
     document.getElementById('win-scores').innerHTML=html;
     goTo('s-win');
+    cleanupOnlineGameArtifacts();
   },900);
 }
 
@@ -1547,6 +1707,7 @@ let ereState={};let ereInt=null;let spaceKH=null;
 async function beginEredita(options={}){
   if(!selP1||!selP2)return;
   clearInterval(ereInt);
+  if(options.sessionId)listenGameSession(options.sessionId);
   if(spaceKH){document.removeEventListener('keydown',spaceKH);spaceKH=null;}
 
   const p1=players.find(p=>p.id===selP1);
@@ -1556,16 +1717,17 @@ async function beginEredita(options={}){
   if(!p1||!p2)return;
 
   const words=options.words||await loadQuestionBank('eredita',ERE_WORDS);
-  const wordList=[...words].sort(()=>Math.random()-.5);
-  if(!options.fromInvite)sendGameInvites('eredita',{p1Uid:p1.uid||null,p2Uid:p2.uid||null,words:wordList});
+  const wordList=options.words?[...words]:[...words].sort(()=>Math.random()-.5);
+  const revOrders=options.revOrders||wordList.map(w=>w.word.split('').map((l,i)=>({l,i})).filter(x=>x.l!==' ').sort(()=>Math.random()-.5).map(x=>x.i));
 
   ereState={
     p:[
-      {id:selP1,name:p1.name,color:t1?t1.color:TC[p1.ci%TC.length],team:t1,score:0},
-      {id:selP2,name:p2.name,color:t2?t2.color:TC[p2.ci%TC.length],team:t2,score:0},
+      {id:selP1,uid:p1.uid||null,name:p1.name,color:t1?t1.color:TC[p1.ci%TC.length],team:t1,score:0},
+      {id:selP2,uid:p2.uid||null,name:p2.name,color:t2?t2.color:TC[p2.ci%TC.length],team:t2,score:0},
     ],
     active:0,
     words:wordList,
+    revOrders,
     wIdx:0,
     max:getTimer('ere'),
     left:[getTimer('ere'),getTimer('ere')],
@@ -1574,6 +1736,11 @@ async function beginEredita(options={}){
     totalWords:wordList.length,
     blocked:false,
   };
+  if(!options.fromInvite&&selectedPlayMode==='online'){
+    const sessionId=await createGameSession('eredita',serializeEreditaState());
+    if(sessionId)listenGameSession(sessionId);
+    sendGameInvites('eredita',{p1Uid:p1.uid||null,p2Uid:p2.uid||null,words:wordList,revOrders,sessionId});
+  }
 
   spaceKH=function(e){
     if(e.code==='Space'&&document.getElementById('s-eredita').classList.contains('active')){
@@ -1585,6 +1752,69 @@ async function beginEredita(options={}){
 
   goTo('s-eredita');
   loadEreditaWord();
+  syncEreditaState();
+}
+
+function serializeEreditaState(){
+  if(!ereState?.p)return null;
+  return {
+    p:ereState.p.map(p=>({uid:p.uid||null,name:p.name,color:p.color,score:p.score||0})),
+    active:ereState.active||0,
+    words:ereState.words||[],
+    revOrders:ereState.revOrders||[],
+    wIdx:ereState.wIdx||0,
+    max:ereState.max,
+    left:ereState.left||[],
+    revealed:ereState.revealed||[],
+    revOrder:ereState.revOrder||[],
+    totalWords:ereState.totalWords,
+    blocked:!!ereState.blocked
+  };
+}
+
+function syncEreditaState(){
+  const state=serializeEreditaState();
+  if(state)updateGameSession(state);
+}
+
+function applyRemoteEreditaState(state){
+  if(!state)return;
+  applyingRemoteSessionState=true;
+  clearInterval(ereInt);
+  ereState={
+    p:(state.p||[]).map((rp,i)=>{
+      const local=players.find(p=>p.uid&&p.uid===rp.uid);
+      return {
+        id:local?.id||i+1,
+        uid:rp.uid||null,
+        name:rp.name||local?.name||'Giocatore',
+        color:rp.color||TC[i%TC.length],
+        team:local?teams.find(t=>t.mids.includes(local.id)):null,
+        score:rp.score||0
+      };
+    }),
+    active:state.active||0,
+    words:state.words||[],
+    revOrders:state.revOrders||[],
+    wIdx:state.wIdx||0,
+    max:state.max||getTimer('ere'),
+    left:state.left||[getTimer('ere'),getTimer('ere')],
+    revealed:state.revealed||[],
+    revOrder:state.revOrder||[],
+    totalWords:state.totalWords||state.words?.length||0,
+    blocked:!!state.blocked
+  };
+  goTo('s-eredita');
+  renderEreditaPanels();
+  renderWordCard(false);
+  applyingRemoteSessionState=false;
+  if(canControlEreditaOnline()&&!ereState.blocked)startEreditaTimer();
+}
+
+function canControlEreditaOnline(){
+  if(selectedPlayMode!=='online'||!activeGameSessionId)return true;
+  const uid=ereState.p?.[ereState.active]?.uid;
+  return !uid||uid===currentUser?.uid;
 }
 
 function loadEreditaWord(){
@@ -1596,7 +1826,7 @@ function loadEreditaWord(){
 
   const word=es.words[es.wIdx].word;
   const letters=word.split('').map((l,i)=>({l,i})).filter(x=>x.l!==' ');
-  es.revOrder=letters.sort(()=>Math.random()-.5).map(x=>x.i);
+  es.revOrder=es.revOrders?.[es.wIdx]||letters.sort(()=>Math.random()-.5).map(x=>x.i);
   es.revealed=[];
   es.blocked=false;
 
@@ -1631,7 +1861,7 @@ function renderEreditaPanels(){
   }
 }
 
-function renderWordCard(){
+function renderWordCard(shouldSpeak=true){
   const es=ereState;
   const w=es.words[es.wIdx];
   const letters=w.word.split('');
@@ -1645,11 +1875,12 @@ function renderWordCard(){
     <div class="word-clue">${w.clue}</div>
     <div class="letter-row">${boxes}</div>
     <div class="rev-count" id="ere-rev-count">${es.revealed.length} / ${totalLetters} lettere rivelate</div>`;
-  speakQuestion(w.clue);
+  if(shouldSpeak)speakQuestion(w.clue);
 }
 
 function startEreditaTimer(){
   clearInterval(ereInt);
+  if(!canControlEreditaOnline())return;
   const es=ereState;
   const totalLetters=es.revOrder.length;
 
@@ -1689,6 +1920,7 @@ function startEreditaTimer(){
       const rc=document.getElementById('ere-rev-count');
       if(rc)rc.textContent=`${es.revealed.length} / ${totalLetters} lettere rivelate`;
     }
+    syncEreditaState();
 
     if(es.left[ai]<=0){
       clearInterval(ereInt);
@@ -1699,6 +1931,7 @@ function startEreditaTimer(){
 
 function onSpacePress(){
   const es=ereState;
+  if(!canControlEreditaOnline())return;
   if(es.blocked)return;
   stopQuestionSpeech();
   // current active player guessed correctly
@@ -1734,6 +1967,7 @@ function onSpacePress(){
 
   // alternate starting player for next word
   es.active = 1 - es.active;
+  syncEreditaState();
 
   setTimeout(()=>{
     if(ereState.wIdx+1>=ereState.words.length){
@@ -1747,6 +1981,7 @@ function onSpacePress(){
 function handleEreditaTimeout(){
   stopQuestionSpeech();
   const es=ereState;
+  if(!canControlEreditaOnline())return;
   const loserIdx=es.active;
   const winnerIdx=1-loserIdx;
   const winner=es.p[winnerIdx];
@@ -1775,6 +2010,7 @@ function handleEreditaTimeout(){
 
   es.blocked=true;
   clearInterval(ereInt);
+  syncEreditaState();
   endEredita();
 }
 
@@ -1783,6 +2019,7 @@ function nextEreditaWord(){
   es.wIdx++;
   document.getElementById('ere-controls').innerHTML='';
   loadEreditaWord();
+  syncEreditaState();
 }
 
 function endEredita(){
@@ -1791,6 +2028,7 @@ function endEredita(){
   const es=ereState;
   const winner=es.p[0].score>=es.p[1].score?es.p[0]:es.p[1];
   awardAndWin(winner.id);
+  cleanupOnlineGameArtifacts();
 }
 
 /* ══════════════════════════════
@@ -1808,8 +2046,9 @@ function selPickWheel(id){
 async function beginWheel(options={}){
   if(!selWheelPid)return;
   hideWheelIntroEffects();
+  if(options.sessionId)listenGameSession(options.sessionId);
   const wheelPlayersSource=Array.isArray(options.participantUids)&&options.participantUids.length
-    ? players.filter(p=>options.participantUids.includes(p.uid))
+    ? options.participantUids.map(uid=>players.find(p=>p.uid===uid)).filter(Boolean)
     : players;
   const startIdx=wheelPlayersSource.findIndex(p=>p.id===selWheelPid);
   if(startIdx<0)return;
@@ -1820,7 +2059,7 @@ async function beginWheel(options={}){
   wheelState={
     players:wheelPlayersSource.map(p=>{
       const t=teams.find(t=>t.mids.includes(p.id));
-      return {id:p.id,name:p.name,color:TC[p.ci%TC.length],team:t,bank:0};
+      return {id:p.id,uid:p.uid||null,name:p.name,color:TC[p.ci%TC.length],team:t,bank:0};
     }),
     active:startIdx,
     phrase:phrase.text,
@@ -1849,9 +2088,15 @@ async function beginWheel(options={}){
   if(!options.fromInvite){
     const starter=players.find(p=>p.id===selWheelPid);
     const participants=getOnlineParticipants();
+    let sessionId=null;
+    if(selectedPlayMode==='online'){
+      sessionId=await createGameSession('ruota',serializeWheelState());
+      if(sessionId)listenGameSession(sessionId);
+    }
     sendGameInvites('ruota',{
       starterUid:starter?.uid||null,
       participantUids:participants.map(p=>p.uid),
+      sessionId,
       phrase:phrase.text,
       category:phrase.cat
     });
@@ -1936,8 +2181,74 @@ function renderWheelLetterPanel(){
 }
 
 function setWheelMessage(text){
+  if(wheelState)wheelState.message=text;
   const el=document.getElementById('wheel-message');
   if(el)el.textContent=text;
+}
+
+function serializeWheelState(){
+  if(!wheelState?.players)return null;
+  return {
+    players:wheelState.players.map(p=>({
+      uid:p.uid||null,
+      name:p.name,
+      color:p.color,
+      bank:p.bank||0
+    })),
+    active:wheelState.active||0,
+    phrase:wheelState.phrase,
+    category:wheelState.category,
+    revealed:[...(wheelState.revealed||new Set())],
+    spinning:!!wheelState.spinning,
+    lastPrize:wheelState.lastPrize||null,
+    pendingPrize:wheelState.pendingPrize||null,
+    completed:!!wheelState.completed,
+    message:wheelState.message||''
+  };
+}
+
+function syncWheelState(){
+  const state=serializeWheelState();
+  if(state)updateGameSession(state);
+}
+
+function canControlWheelOnline(){
+  if(selectedPlayMode!=='online'||!activeGameSessionId)return true;
+  const uid=getActiveWheelPlayer()?.uid;
+  return !uid||uid===currentUser?.uid;
+}
+
+function applyRemoteWheelState(state){
+  if(!state||!document.getElementById('s-wheel'))return;
+  applyingRemoteWheelState=true;
+  wheelState={
+    players:(state.players||[]).map((rp,i)=>{
+      const local=players.find(p=>p.uid&&p.uid===rp.uid);
+      const color=rp.color||TC[i%TC.length];
+      return {
+        id:local?.id||i+1,
+        uid:rp.uid||local?.uid||null,
+        name:rp.name||local?.name||'Giocatore',
+        color,
+        team:local?teams.find(t=>t.mids.includes(local.id)):null,
+        bank:rp.bank||0
+      };
+    }),
+    active:state.active||0,
+    phrase:state.phrase||'',
+    category:state.category||'',
+    revealed:new Set(state.revealed||[]),
+    spinning:!!state.spinning,
+    lastPrize:state.lastPrize||null,
+    pendingPrize:state.pendingPrize||null,
+    completed:!!state.completed,
+    message:state.message||''
+  };
+  goTo('s-wheel');
+  renderWheelLabels();
+  renderWheelGame();
+  setWheelMessage(wheelState.message||'Partita online aggiornata.');
+  applyingRemoteWheelState=false;
 }
 
 function showWheelTurnNotice(){
@@ -1960,6 +2271,7 @@ function passWheelTurn(reason){
   renderWheelGame();
   setWheelMessage(`${reason} Tocca a ${active.name}.`);
   showWheelTurnNotice();
+  syncWheelState();
 }
 
 function normalizeWheelSolution(text){
@@ -1979,6 +2291,7 @@ function getHiddenWheelConsonants(){
 
 function spinWheel(){
   const ws=wheelState;
+  if(!canControlWheelOnline())return;
   if(ws.spinning||ws.pendingPrize)return;
   const hidden=getHiddenWheelLetters();
   const hiddenConsonants=getHiddenWheelConsonants();
@@ -1993,6 +2306,7 @@ function spinWheel(){
   ws.pendingPrize=null;
   renderWheelLetterPanel();
   setWheelMessage('La ruota gira...');
+  syncWheelState();
 
   const idx=Math.floor(Math.random()*WHEEL_SEGMENTS.length);
   const prize=WHEEL_SEGMENTS[idx];
@@ -2020,11 +2334,13 @@ function spinWheel(){
     }
     ws.spinning=false;
     renderWheelGame();
+    syncWheelState();
   },4200);
 }
 
 function submitWheelLetter(){
   const ws=wheelState;
+  if(!canControlWheelOnline())return;
   const prize=ws.pendingPrize;
   if(!prize||ws.spinning)return;
   const input=document.getElementById('wheel-letter-input');
@@ -2052,6 +2368,7 @@ function submitWheelLetter(){
     passWheelTurn(`${letter} non c'è nella frase.`);
   }
   renderWheelGame();
+  syncWheelState();
   if(!getHiddenWheelLetters().length){
     setTimeout(()=>completeWheelPhrase(),700);
   }
@@ -2059,6 +2376,7 @@ function submitWheelLetter(){
 
 function buyWheelVowel(vowel){
   const ws=wheelState;
+  if(!canControlWheelOnline())return;
   const active=getActiveWheelPlayer();
   if(ws.spinning||ws.pendingPrize||!active||active.bank<=400||ws.completed)return;
   if(ws.revealed.has(vowel))return;
@@ -2068,6 +2386,7 @@ function buyWheelVowel(vowel){
   ws.revealed.add(vowel);
   setWheelMessage(`Hai comprato la vocale ${vowel}: ${count} ${count===1?'presenza':'presenze'}. -400 punti.`);
   renderWheelGame();
+  syncWheelState();
   if(!getHiddenWheelLetters().length){
     setTimeout(()=>completeWheelPhrase(),700);
   }
@@ -2075,6 +2394,7 @@ function buyWheelVowel(vowel){
 
 function submitWheelSolution(){
   const ws=wheelState;
+  if(!canControlWheelOnline())return;
   if(!ws.phrase||ws.spinning||ws.completed)return;
   const input=document.getElementById('wheel-solution-input');
   const guess=input?.value||'';
@@ -2097,6 +2417,7 @@ function solveWheelPhrase(){
   wheelState.pendingPrize=null;
   [...wheelState.phrase].forEach(ch=>{if(isWheelLetter(ch))wheelState.revealed.add(ch);});
   renderWheelGame();
+  syncWheelState();
   completeWheelPhrase();
 }
 
@@ -2117,6 +2438,7 @@ function completeWheelPhrase(){
   if(!active)return;
   const bonus=Math.max(1,active?active.bank:0);
   setWheelMessage(`Frase completata! +${bonus} punti in classifica.`);
+  syncWheelState();
   renderHomeLeaderboard();
   setTimeout(()=>awardAndWin(active.id,bonus,`+${bonus} punti con la ruota!`),900);
 }
@@ -2150,6 +2472,7 @@ function awardAndWin(pid,points=1,subText=null){
   renderHomeLeaderboard();
   stopAuaAudio();
   goTo('s-win');
+  cleanupOnlineGameArtifacts();
 }
 
 // LOGIN
@@ -2196,6 +2519,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if(unsubscribeRegisteredUsers)unsubscribeRegisteredUsers();
       if(unsubscribeCurrentUserProfile)unsubscribeCurrentUserProfile();
       if(unsubscribeGameInvites)unsubscribeGameInvites();
+      stopGameSessionListener();
       globalLeaderboard=[];
       registeredUsers=[];
       currentUserProfile=null;
