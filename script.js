@@ -1009,17 +1009,22 @@ function stopGameSessionListener(){
 
 async function createGameSession(game,state={}){
   if(selectedPlayMode!=='online'||!currentUser||!window.db)return null;
-  const ref=await db.collection('gameSessions').add({
-    game,
-    state,
-    createdBy:currentUser.uid,
-    updatedBy:currentUser.uid,
-    createdAt:firebase.firestore.FieldValue.serverTimestamp(),
-    updatedAt:firebase.firestore.FieldValue.serverTimestamp()
-  });
-  activeGameSessionId=ref.id;
-  activeGameSessionGame=game;
-  return ref.id;
+  try{
+    const ref=await db.collection('gameSessions').add({
+      game,
+      state,
+      createdBy:currentUser.uid,
+      updatedBy:currentUser.uid,
+      createdAt:firebase.firestore.FieldValue.serverTimestamp(),
+      updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    activeGameSessionId=ref.id;
+    activeGameSessionGame=game;
+    return ref.id;
+  }catch(err){
+    console.error('Errore creazione sessione online:',err);
+    return null;
+  }
 }
 
 function updateGameSession(state){
@@ -1718,6 +1723,10 @@ async function beginEredita(options={}){
 
   const words=options.words||await loadQuestionBank('eredita',ERE_WORDS);
   const wordList=options.words?[...words]:[...words].sort(()=>Math.random()-.5);
+  if(!wordList.length){
+    alert('Non ci sono parole disponibili per avviare L’Eredità.');
+    return;
+  }
   const revOrders=options.revOrders||wordList.map(w=>w.word.split('').map((l,i)=>({l,i})).filter(x=>x.l!==' ').sort(()=>Math.random()-.5).map(x=>x.i));
 
   ereState={
@@ -1864,6 +1873,10 @@ function renderEreditaPanels(){
 function renderWordCard(shouldSpeak=true){
   const es=ereState;
   const w=es.words[es.wIdx];
+  if(!w){
+    document.getElementById('ere-word-card').innerHTML='<div class="word-clue">Nessuna parola disponibile</div>';
+    return;
+  }
   const letters=w.word.split('');
   const boxes=letters.map((l,i)=>{
     if(l===' ')return `<div class="lbox spc"></div>`;
