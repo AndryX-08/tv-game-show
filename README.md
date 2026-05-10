@@ -10,6 +10,7 @@ Web app per organizzare una serata di giochi TV in locale oppure online, con log
 - La Ruota
 - Reazione a Catena
 - Sarabanda
+- Indovina Chi
 - Taboo con pagina giocatore separata
 
 ## Funzionalita
@@ -20,8 +21,9 @@ Web app per organizzare una serata di giochi TV in locale oppure online, con log
 - Classifica online tra utenti registrati/anonimi.
 - Modalita locale oppure online per i giochi multiplayer.
 - Inviti online tra utenti registrati.
-- Sessioni multiplayer sincronizzate tramite Firestore per Ruota, Eredita e Reazione a Catena.
+- Sessioni multiplayer sincronizzate tramite Firestore per Ruota, Eredita, Reazione a Catena, Sarabanda e Indovina Chi.
 - Sarabanda con playlist audio configurabile e punteggio automatico.
+- Indovina Chi con personaggi famosi, indizi progressivi e punti automatici.
 - Taboo con `host.html` e `play.html` per usare un secondo dispositivo come controller/schermo giocatore.
 - Layout responsive per desktop e mobile.
 
@@ -72,6 +74,7 @@ questionBanks/eredita
 questionBanks/ruota
 questionBanks/catena
 questionBanks/sarabanda
+questionBanks/guesswho
 ```
 
 Per Sarabanda puoi aggiungere file audio nella cartella:

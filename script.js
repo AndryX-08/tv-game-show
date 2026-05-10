@@ -227,6 +227,29 @@ const SARABANDA_TRACKS=[
   {title:"Chuck Norris",artist:"Kid Yugi",src:"Sarabanda/chuck-norris-feat-papa-v-rrari-dal-tacco-nerissima-serpe-spotdownorg_aL0dv8Hv.mp3"}
 ];
 
+const GUESS_WHO_CHARACTERS=[
+  {name:"Leonardo da Vinci",aliases:["Leonardo","Da Vinci"],category:"Arte e genio",clues:["Sono nato in Toscana nel Rinascimento.","Ho studiato arte, anatomia, macchine e volo.","Uno dei miei dipinti e conservato al Louvre.","Ho dipinto anche L'Ultima Cena.","La Gioconda e la mia opera piu famosa."]},
+  {name:"Albert Einstein",aliases:["Einstein"],category:"Scienza",clues:["Sono nato in Germania.","Il mio nome e legato alla fisica moderna.","Avevo capelli bianchi molto riconoscibili.","Ho ricevuto il Nobel per la fisica.","La formula E=mc2 e associata a me."]},
+  {name:"Cristiano Ronaldo",aliases:["Ronaldo","CR7","Cristiano"],category:"Sport",clues:["Sono un calciatore portoghese.","Ho giocato in Inghilterra, Spagna e Italia.","Il mio numero iconico e il 7.","Ho vinto piu Palloni d'Oro.","Sono conosciuto anche come CR7."]},
+  {name:"Lionel Messi",aliases:["Messi","Leo Messi"],category:"Sport",clues:["Sono un calciatore argentino.","Sono cresciuto calcisticamente a Barcellona.","Ho vinto il Mondiale con la mia nazionale.","Il mio nome e spesso confrontato con Ronaldo.","Mi chiamano anche Leo."]},
+  {name:"Taylor Swift",aliases:["Taylor","Swift"],category:"Musica",clues:["Sono una cantante statunitense.","Ho iniziato nel country e poi sono passata al pop.","I miei fan si chiamano Swifties.","Ho pubblicato album come 1989 e Midnights.","Il mio cognome significa veloce in inglese."]},
+  {name:"Michael Jackson",aliases:["Jackson","MJ"],category:"Musica",clues:["Sono stato una star mondiale del pop.","Ho iniziato a cantare da bambino con i miei fratelli.","Il moonwalk e una mia mossa iconica.","Thriller e uno dei miei album piu famosi.","Sono conosciuto come il Re del Pop."]},
+  {name:"Harry Potter",aliases:["Harry","Potter"],category:"Cinema e libri",clues:["Sono un personaggio di fantasia.","Ho una cicatrice molto riconoscibile sulla fronte.","Studio magia in una scuola speciale.","I miei amici piu stretti sono Ron ed Hermione.","Sono il protagonista della saga creata da J.K. Rowling."]},
+  {name:"Super Mario",aliases:["Mario","Mario Bros"],category:"Videogiochi",clues:["Sono un personaggio dei videogiochi.","Indosso spesso salopette e cappello rosso.","Il mio mestiere e collegato ai tubi.","Mio fratello si chiama Luigi.","Sono la mascotte piu famosa di Nintendo."]},
+  {name:"Elon Musk",aliases:["Musk","Elon"],category:"Tecnologia",clues:["Sono un imprenditore nato in Sudafrica.","Il mio nome e legato ad auto elettriche e razzi.","Ho guidato aziende come Tesla e SpaceX.","Ho acquistato una grande piattaforma social.","Il mio nome e Elon."]},
+  {name:"Dua Lipa",aliases:["Dua","Lipa"],category:"Musica",clues:["Sono una cantante britannica.","Le mie origini familiari sono albanesi-kosovare.","Ho pubblicato hit pop e dance.","Future Nostalgia e uno dei miei album.","Il mio nome di battesimo e Dua."]},
+  {name:"Marracash",aliases:["Marra","Fabio Bartolo Rizzo"],category:"Musica italiana",clues:["Sono un rapper italiano.","Sono nato a Nicosia e cresciuto a Milano.","Il mio vero nome e Fabio Bartolo Rizzo.","Ho pubblicato album come Persona.","Il mio nome d'arte richiama Marrakech."]},
+  {name:"Sfera Ebbasta",aliases:["Sfera","Gionata Boschetti"],category:"Musica italiana",clues:["Sono un trapper italiano.","Vengo da Cinisello Balsamo.","Il mio vero nome e Gionata Boschetti.","Ho collaborato spesso con Charlie Charles.","Il mio nome d'arte contiene la parola Sfera."]},
+  {name:"Mina",aliases:["Mina Mazzini"],category:"Musica italiana",clues:["Sono una cantante italiana leggendaria.","La mia voce e considerata tra le piu riconoscibili.","Da anni non appaio spesso in pubblico.","Sono chiamata anche la Tigre di Cremona.","Il mio nome artistico e formato da quattro lettere."]},
+  {name:"Paolo Bonolis",aliases:["Bonolis"],category:"TV italiana",clues:["Sono un conduttore televisivo italiano.","Sono noto per ritmo, ironia e improvvisazione.","Ho condotto programmi Mediaset molto popolari.","Uno dei miei programmi e Avanti un Altro.","Il mio storico compagno di scena e Luca Laurenti."]},
+  {name:"Gerry Scotti",aliases:["Scotti","Virginio Scotti"],category:"TV italiana",clues:["Sono un conduttore televisivo italiano.","La mia risata e molto riconoscibile.","Ho condotto quiz e talent in TV.","Sono legato a programmi come Chi vuol essere milionario.","Il mio nome d'arte e Gerry Scotti."]},
+  {name:"Raffaella Carra",aliases:["Carra","Raffaella"],category:"TV e musica italiana",clues:["Sono stata cantante, ballerina e conduttrice.","Sono una icona dello spettacolo italiano.","Il caschetto biondo era parte del mio look.","Una mia canzone diceva Tuca Tuca.","Il mio nome e Raffaella Carra."]},
+  {name:"Francesco Totti",aliases:["Totti","Er Pupone"],category:"Sport italiano",clues:["Sono un ex calciatore italiano.","Ho giocato quasi tutta la carriera nella stessa squadra.","Ho vinto il Mondiale nel 2006.","Sono un simbolo della Roma.","Il mio soprannome e Er Pupone."]},
+  {name:"Federica Pellegrini",aliases:["Pellegrini","Divina"],category:"Sport italiano",clues:["Sono una campionessa italiana di nuoto.","La mia specialita e stata lo stile libero.","Ho vinto medaglie olimpiche e mondiali.","Sono soprannominata la Divina.","Il mio nome e Federica Pellegrini."]},
+  {name:"Greta Thunberg",aliases:["Greta","Thunberg"],category:"Attualita",clues:["Sono un'attivista svedese.","Sono diventata famosa da adolescente.","Il mio tema principale e il clima.","Ho ispirato scioperi studenteschi globali.","Il mio nome e Greta Thunberg."]},
+  {name:"Barack Obama",aliases:["Obama"],category:"Politica",clues:["Sono un politico statunitense.","Ho ricevuto il Premio Nobel per la pace.","Sono stato senatore dell'Illinois.","Sono stato presidente degli Stati Uniti.","Il mio cognome e Obama."]}
+];
+
 const WHEEL_SEGMENTS=[
   {label:"100",points:100},
   {label:"200",points:200},
@@ -870,10 +893,11 @@ const GAME_LABELS={
   eredita:"L'EREDITA",
   intesa:"INTESA VINCENTE",
   catena:'REAZIONE A CATENA',
-  sarabanda:'SARABANDA'
+  sarabanda:'SARABANDA',
+  guesswho:'INDOVINA CHI'
 };
 
-const MULTIPLAYER_GAMES=['ruota','eredita','intesa','catena','sarabanda'];
+const MULTIPLAYER_GAMES=['ruota','eredita','intesa','catena','sarabanda','guesswho'];
 
 function isMultiplayerGame(game){
   return MULTIPLAYER_GAMES.includes(game);
@@ -928,7 +952,8 @@ async function seedQuestionBanksToFirestore(){
     eredita:ERE_WORDS,
     ruota:WHEEL_PHRASES,
     catena:CHAIN_ROUNDS,
-    sarabanda:SARABANDA_TRACKS
+    sarabanda:SARABANDA_TRACKS,
+    guesswho:GUESS_WHO_CHARACTERS
   };
   const batch=db.batch();
   Object.entries(banks).forEach(([key,items])=>{
@@ -1104,6 +1129,7 @@ function listenGameSession(sessionId){
     if(data.game==='catena'&&data.state)applyRemoteChainState(data.state);
     if(data.game==='eredita'&&data.state)applyRemoteEreditaState(data.state);
     if(data.game==='sarabanda'&&data.state)applyRemoteSarabandaState(data.state);
+    if(data.game==='guesswho'&&data.state)applyRemoteGuessWhoState(data.state);
   },err=>console.error('Errore ascolto sessione gioco:',err));
 }
 
@@ -1177,6 +1203,11 @@ function joinInvitedGame(invite){
   if(invite.game==='sarabanda'){
     if(payload.sessionId)listenGameSession(payload.sessionId);
     beginSarabanda({fromInvite:true,tracks:payload.tracks,sessionId:payload.sessionId});
+    return;
+  }
+  if(invite.game==='guesswho'){
+    if(payload.sessionId)listenGameSession(payload.sessionId);
+    beginGuessWho({fromInvite:true,characters:payload.characters,participantUids:payload.participantUids,sessionId:payload.sessionId});
   }
 }
 
@@ -1196,6 +1227,10 @@ function startGame(game,options={}){
   if(game==='sarabanda'){
     if(players.length<2){goTo('s-setup');return;}
     beginSarabanda();
+    return;
+  }
+  if(game==='guesswho'){
+    beginGuessWho();
     return;
   }
   if(game==='catena'){
@@ -1961,6 +1996,229 @@ function endSarabanda(){
     document.getElementById('win-sub').textContent='Ha vinto Sarabanda!';
     document.getElementById('win-scores').innerHTML='<div style="font-size:.68rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--mut);margin-bottom:.6rem">Classifica Sarabanda</div>'+
       sarabandaState.players.sort((a,b)=>(b.score||0)-(a.score||0)).map((p,i)=>`<div class="sc-row">
+        <div class="sc-rank">${i+1}</div>
+        <div class="sc-name">${escapeHtml(p.name)}</div>
+        <div class="sc-pts">${p.score||0}</div>
+      </div>`).join('');
+  }
+  goTo('s-win');
+  cleanupOnlineGameArtifacts();
+}
+
+/* ══════════════════════════════
+   INDOVINA CHI
+══════════════════════════════ */
+let guessWhoState={};
+const GUESS_WHO_ROUNDS=5;
+
+async function beginGuessWho(options={}){
+  if(!players.length){goTo('s-setup');return;}
+  if(options.sessionId)listenGameSession(options.sessionId);
+  const bank=options.characters||await loadQuestionBank('guesswho',GUESS_WHO_CHARACTERS);
+  const characters=options.characters?[...bank].slice(0,GUESS_WHO_ROUNDS):shuffleArray([...bank]).slice(0,GUESS_WHO_ROUNDS);
+  if(!characters.length){
+    alert('Aggiungi almeno un personaggio per Indovina Chi.');
+    return;
+  }
+  const gamePlayers=Array.isArray(options.participantUids)&&options.participantUids.length
+    ? options.participantUids.map(uid=>players.find(p=>p.uid===uid)).filter(Boolean)
+    : players;
+  guessWhoState={
+    players:gamePlayers.map(p=>({id:p.id,uid:p.uid||null,name:p.name,color:TC[p.ci%TC.length],score:0})),
+    characters,
+    idx:0,
+    clueIdx:0,
+    activePid:gamePlayers[0]?.id||null,
+    revealed:false,
+    completed:false,
+    message:`Turno di ${gamePlayers[0]?.name||'Giocatore'}. Indovina con meno indizi possibile.`
+  };
+  if(!options.fromInvite&&selectedPlayMode==='online'){
+    const sessionId=await createGameSession('guesswho',serializeGuessWhoState());
+    if(sessionId)listenGameSession(sessionId);
+    sendGameInvites('guesswho',{
+      sessionId,
+      characters,
+      participantUids:guessWhoState.players.map(p=>p.uid).filter(Boolean)
+    });
+  }
+  renderGuessWho();
+  goTo('s-guesswho');
+  syncGuessWhoState();
+}
+
+function serializeGuessWhoState(){
+  if(!guessWhoState?.players)return null;
+  return {
+    players:guessWhoState.players.map(p=>({uid:p.uid||null,name:p.name,color:p.color,score:p.score||0})),
+    characters:guessWhoState.characters||[],
+    idx:guessWhoState.idx||0,
+    clueIdx:guessWhoState.clueIdx||0,
+    activeUid:guessWhoState.players.find(p=>p.id===guessWhoState.activePid)?.uid||null,
+    activeName:guessWhoState.players.find(p=>p.id===guessWhoState.activePid)?.name||null,
+    revealed:!!guessWhoState.revealed,
+    completed:!!guessWhoState.completed,
+    message:guessWhoState.message||''
+  };
+}
+
+function syncGuessWhoState(){
+  const state=serializeGuessWhoState();
+  if(state)updateGameSession(state);
+}
+
+function applyRemoteGuessWhoState(state){
+  if(!state)return;
+  applyingRemoteSessionState=true;
+  const mappedPlayers=(state.players||[]).map((rp,i)=>{
+    const local=players.find(p=>p.uid&&p.uid===rp.uid);
+    return {
+      id:local?.id||i+1,
+      uid:rp.uid||null,
+      name:rp.name||local?.name||'Giocatore',
+      color:rp.color||TC[i%TC.length],
+      score:rp.score||0
+    };
+  });
+  const active=state.activeUid
+    ? mappedPlayers.find(p=>p.uid===state.activeUid)
+    : mappedPlayers.find(p=>p.name===state.activeName);
+  guessWhoState={
+    players:mappedPlayers,
+    characters:state.characters||[],
+    idx:state.idx||0,
+    clueIdx:state.clueIdx||0,
+    activePid:active?.id||mappedPlayers[0]?.id||null,
+    revealed:!!state.revealed,
+    completed:!!state.completed,
+    message:state.message||''
+  };
+  renderGuessWho();
+  goTo('s-guesswho');
+  applyingRemoteSessionState=false;
+}
+
+function getCurrentGuessWhoCharacter(){
+  return guessWhoState.characters?.[guessWhoState.idx]||null;
+}
+
+function isGuessWhoAnswerCorrect(guess,character){
+  const normalized=normalizeSarabandaText(guess);
+  if(!normalized)return false;
+  const answers=[character.name,...(character.aliases||[])].map(normalizeSarabandaText).filter(Boolean);
+  return answers.some(answer=>{
+    const tolerance=answer.length>=10?2:1;
+    return answer.includes(normalized)||
+      normalized.includes(answer)||
+      getSarabandaTextDistance(normalized,answer)<=tolerance;
+  });
+}
+
+function renderGuessWho(){
+  const character=getCurrentGuessWhoCharacter();
+  if(!character)return;
+  const active=guessWhoState.players.find(p=>p.id===guessWhoState.activePid);
+  const clues=(character.clues||[]).slice(0,(guessWhoState.clueIdx||0)+1);
+  const points=Math.max(1,(character.clues?.length||5)-(guessWhoState.clueIdx||0));
+  document.getElementById('gw-counter').textContent=`${guessWhoState.idx+1} / ${guessWhoState.characters.length}`;
+  document.getElementById('gw-active').textContent=active?.name||'Giocatore';
+  document.getElementById('gw-category').textContent=character.category||'Personaggio famoso';
+  document.getElementById('gw-points').textContent=`${points} pt`;
+  document.getElementById('gw-answer').value='';
+  document.getElementById('gw-name').textContent=guessWhoState.revealed?character.name:'???';
+  document.getElementById('gw-clues').innerHTML=clues.map((clue,i)=>`
+    <div class="gw-clue">
+      <span>${i+1}</span>
+      <div>${escapeHtml(clue)}</div>
+    </div>
+  `).join('');
+  document.getElementById('gw-players').innerHTML=guessWhoState.players.map(p=>`
+    <div class="gw-player${p.id===guessWhoState.activePid?' active':''}">
+      <div class="gw-player-name" style="color:${p.color.hex}">${escapeHtml(p.name)}</div>
+      <div class="gw-player-score">${p.score||0}</div>
+    </div>
+  `).join('');
+  setGuessWhoMessage(guessWhoState.message||'');
+}
+
+function setGuessWhoMessage(text){
+  guessWhoState.message=text;
+  const el=document.getElementById('gw-message');
+  if(el)el.textContent=text;
+}
+
+function submitGuessWhoAnswer(){
+  const character=getCurrentGuessWhoCharacter();
+  if(!character||guessWhoState.revealed)return;
+  const guess=document.getElementById('gw-answer')?.value||'';
+  if(isGuessWhoAnswerCorrect(guess,character))awardGuessWhoPoint();
+  else nextGuessWhoClue(true);
+}
+
+function awardGuessWhoPoint(){
+  const character=getCurrentGuessWhoCharacter();
+  const p=guessWhoState.players.find(pl=>pl.id===guessWhoState.activePid);
+  if(!character||!p)return;
+  const points=Math.max(1,(character.clues?.length||5)-(guessWhoState.clueIdx||0));
+  p.score=(p.score||0)+points;
+  const local=players.find(pl=>pl.uid&&pl.uid===p.uid)||players.find(pl=>pl.id===p.id);
+  if(local)awardPlayerPoints(local.id,points,'indovina-chi');
+  guessWhoState.revealed=true;
+  setGuessWhoMessage(`${p.name} ha indovinato: ${character.name}. +${points} punti!`);
+  renderGuessWho();
+  syncGuessWhoState();
+}
+
+function nextGuessWhoClue(fromWrong=false){
+  const character=getCurrentGuessWhoCharacter();
+  if(!character||guessWhoState.revealed)return;
+  const maxIdx=(character.clues?.length||1)-1;
+  if((guessWhoState.clueIdx||0)>=maxIdx){
+    setGuessWhoMessage(fromWrong?'Risposta sbagliata. Non ci sono altri indizi.':'Hai gia tutti gli indizi.');
+    renderGuessWho();
+    syncGuessWhoState();
+    return;
+  }
+  guessWhoState.clueIdx++;
+  const prefix=fromWrong?'Risposta sbagliata. ':'';
+  setGuessWhoMessage(`${prefix}Indizio ${guessWhoState.clueIdx+1} sbloccato.`);
+  renderGuessWho();
+  syncGuessWhoState();
+}
+
+function revealGuessWhoCharacter(){
+  const character=getCurrentGuessWhoCharacter();
+  if(!character)return;
+  guessWhoState.revealed=true;
+  setGuessWhoMessage(`Era ${character.name}. Nessun punto assegnato.`);
+  renderGuessWho();
+  syncGuessWhoState();
+}
+
+function nextGuessWhoCharacter(){
+  if(guessWhoState.idx+1>=guessWhoState.characters.length){
+    endGuessWho();
+    return;
+  }
+  guessWhoState.idx++;
+  guessWhoState.clueIdx=0;
+  guessWhoState.revealed=false;
+  const nextPlayer=guessWhoState.players[guessWhoState.idx%guessWhoState.players.length];
+  guessWhoState.activePid=nextPlayer?.id||null;
+  guessWhoState.message=`Turno di ${nextPlayer?.name||'Giocatore'}.`;
+  renderGuessWho();
+  syncGuessWhoState();
+}
+
+function endGuessWho(){
+  guessWhoState.completed=true;
+  syncGuessWhoState();
+  const winner=[...(guessWhoState.players||[])].sort((a,b)=>(b.score||0)-(a.score||0))[0];
+  if(winner){
+    document.getElementById('win-name').textContent=winner.name;
+    document.getElementById('win-sub').textContent='Ha vinto Indovina Chi!';
+    document.getElementById('win-scores').innerHTML='<div style="font-size:.68rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--mut);margin-bottom:.6rem">Classifica Indovina Chi</div>'+
+      guessWhoState.players.sort((a,b)=>(b.score||0)-(a.score||0)).map((p,i)=>`<div class="sc-row">
         <div class="sc-rank">${i+1}</div>
         <div class="sc-name">${escapeHtml(p.name)}</div>
         <div class="sc-pts">${p.score||0}</div>
