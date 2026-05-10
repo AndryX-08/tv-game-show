@@ -372,6 +372,17 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
   </div>
 </div>
 
+<div id="gameInviteOverlay" class="auth-overlay hidden">
+  <div class="auth-box">
+    <h1>Invito</h1>
+    <p id="gameInviteText">Ti hanno invitato a giocare.</p>
+    <div class="profile-actions">
+      <button class="auth-btn anon" style="flex:1" onclick="declineGameInvite()">Rifiuta</button>
+      <button class="auth-btn google" style="flex:1" onclick="acceptGameInvite()">Partecipa</button>
+    </div>
+  </div>
+</div>
+
 <!-- HERO -->
 <div class="screen active" id="s-hero">
   <div style="text-align:center;padding:2.2rem 1rem 1.8rem">

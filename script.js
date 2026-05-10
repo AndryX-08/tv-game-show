@@ -14,7 +14,8 @@ let intesaPlayers={p1:null,p2:null};
 let globalLeaderboard=[];
 let registeredUsers=[];
 let currentUserProfile=null;
-let unsubscribeLeaderboard=null,unsubscribeRegisteredUsers=null,unsubscribeCurrentUserProfile=null;
+let pendingGameInvite=null;
+let unsubscribeLeaderboard=null,unsubscribeRegisteredUsers=null,unsubscribeCurrentUserProfile=null,unsubscribeGameInvites=null;
 let tabooScoreEventsRef=null,tabooScoreEventsStartedAt=Date.now(),processedTabooScoreEvents=new Set();
 let auaAudio=null,auaErrorAudio=null,auaAutoStartListener=null,auaAutoStarted=false,auaThemeResumeTime=0;
 let rdfAudio=null,rdfAutoStartListener=null,rdfAutoStarted=false;
@@ -418,12 +419,13 @@ function stopRdfAudio(){
   rdfAudio.currentTime=0;
 }
 
-function beginIntesa(){
+function beginIntesa(options={}){
   if(!selP1||!selP2||selP1===selP2) return;
   intesaPlayers={p1:selP1,p2:selP2};
   const p1=players.find(p=>p.id===selP1);
   const p2=players.find(p=>p.id===selP2);
   if(!p1||!p2) return;
+  if(!options.fromInvite)sendGameInvites('intesa',{p1Uid:p1.uid||null,p2Uid:p2.uid||null});
   document.getElementById('intesa-p1-input').innerHTML=`<span style="flex:1;font-weight:800">${p1.name}</span><input class="tf" id="intesa-p1-score" type="number" min="0" value="0" style="width:80px">`;
   document.getElementById('intesa-p2-input').innerHTML=`<span style="flex:1;font-weight:800">${p2.name}</span><input class="tf" id="intesa-p2-score" type="number" min="0" value="0" style="width:80px">`;
   window.open('https://www.ed0.it/games/intesavincente/','_blank');
@@ -797,9 +799,175 @@ function saveProfilePopup(){
   }).catch(err=>console.error('Errore salvataggio profilo:',err)).finally(closeProfilePopup);
 }
 
+const GAME_LABELS={
+  ruota:'la RUOTA',
+  eredita:"L'EREDITA",
+  intesa:"INTESA VINCENTE",
+  catena:'REAZIONE A CATENA'
+};
+
+function getCurrentUserName(){
+  return getProfileDisplayName(currentUserProfile||{},currentUser);
+}
+
+function getOnlineParticipants(){
+  return players
+    .filter(p=>p.uid)
+    .map(p=>({
+      uid:p.uid,
+      name:p.name,
+      isAnonymous:!!p.isAnonymous,
+      photoURL:p.photoURL||null
+    }));
+}
+
+function sendGameInvites(game,payload={}){
+  if(!currentUser||!window.db)return;
+  const participants=getOnlineParticipants();
+  const targets=participants.filter(p=>p.uid!==currentUser.uid);
+  if(!targets.length)return;
+  const now=firebase.firestore.FieldValue.serverTimestamp();
+  const batch=db.batch();
+  targets.forEach(target=>{
+    const ref=db.collection('gameInvites').doc();
+    batch.set(ref,{
+      game,
+      status:'pending',
+      fromUid:currentUser.uid,
+      fromName:getCurrentUserName(),
+      toUid:target.uid,
+      toName:target.name,
+      participants,
+      payload,
+      createdAt:now,
+      updatedAt:now
+    });
+  });
+  batch.commit().catch(err=>console.error('Errore invio inviti gioco:',err));
+}
+
+function listenGameInvites(user){
+  if(unsubscribeGameInvites)unsubscribeGameInvites();
+  if(!user||!window.db)return;
+  unsubscribeGameInvites=db.collection('gameInvites')
+    .where('toUid','==',user.uid)
+    .where('status','==','pending')
+    .onSnapshot(snapshot=>{
+      snapshot.docChanges().forEach(change=>{
+        if(change.type!=='added')return;
+        pendingGameInvite={id:change.doc.id,...change.doc.data()};
+        showGameInvitePopup(pendingGameInvite);
+      });
+    },err=>console.error('Errore inviti gioco:',err));
+}
+
+function showGameInvitePopup(invite){
+  const text=document.getElementById('gameInviteText');
+  const overlay=document.getElementById('gameInviteOverlay');
+  if(text){
+    const label=GAME_LABELS[invite.game]||invite.game||'un gioco';
+    text.textContent=`${invite.fromName||'Un giocatore'} ti ha invitato a giocare ${label}. Vuoi partecipare?`;
+  }
+  if(overlay)overlay.classList.remove('hidden');
+}
+
+function closeGameInvitePopup(){
+  document.getElementById('gameInviteOverlay')?.classList.add('hidden');
+}
+
+function declineGameInvite(){
+  if(pendingGameInvite&&window.db){
+    db.collection('gameInvites').doc(pendingGameInvite.id).update({
+      status:'declined',
+      updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+    }).catch(err=>console.error('Errore rifiuto invito:',err));
+  }
+  pendingGameInvite=null;
+  closeGameInvitePopup();
+}
+
+function acceptGameInvite(){
+  if(!pendingGameInvite||!window.db)return;
+  const invite=pendingGameInvite;
+  db.collection('gameInvites').doc(invite.id).update({
+    status:'accepted',
+    updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+  }).catch(err=>console.error('Errore accettazione invito:',err));
+  pendingGameInvite=null;
+  closeGameInvitePopup();
+  joinInvitedGame(invite);
+}
+
+function ensureInviteParticipants(invite){
+  (invite.participants||[]).forEach(participant=>{
+    if(players.some(p=>p.uid===participant.uid))return;
+    players.push({
+      id:nPid++,
+      name:participant.name||`Anonimo ${participant.uid.slice(0,4).toUpperCase()}`,
+      teamId:null,
+      score:0,
+      ci:players.length%TC.length,
+      uid:participant.uid,
+      isAnonymous:!!participant.isAnonymous,
+      photoURL:participant.photoURL||null
+    });
+  });
+  renderPlayers();
+  renderTeamSection();
+  renderRegisteredUserSelect();
+}
+
+function getPlayerIdByUid(uid){
+  return players.find(p=>p.uid===uid)?.id||null;
+}
+
+function joinInvitedGame(invite){
+  ensureInviteParticipants(invite);
+  const payload=invite.payload||{};
+  if(invite.game==='ruota'){
+    const starterId=getPlayerIdByUid(payload.starterUid)||players[0]?.id;
+    if(starterId){
+      selWheelPid=starterId;
+      beginWheel({
+        fromInvite:true,
+        phrase:payload.phrase,
+        category:payload.category,
+        participantUids:payload.participantUids
+      });
+    }
+    return;
+  }
+  if(invite.game==='eredita'){
+    selP1=getPlayerIdByUid(payload.p1Uid);
+    selP2=getPlayerIdByUid(payload.p2Uid);
+    if(selP1&&selP2&&selP1!==selP2)beginEredita({fromInvite:true});
+    else startGame('eredita');
+    return;
+  }
+  if(invite.game==='intesa'){
+    selP1=getPlayerIdByUid(payload.p1Uid);
+    selP2=getPlayerIdByUid(payload.p2Uid);
+    if(selP1&&selP2&&selP1!==selP2)beginIntesa({fromInvite:true});
+    else startGame('intesa');
+    return;
+  }
+  if(invite.game==='catena'){
+    selChainP1=getPlayerIdByUid(payload.p1Uid);
+    selChainP2=getPlayerIdByUid(payload.p2Uid);
+    if(selChainP1&&selChainP2&&selChainP1!==selChainP2)beginChain({fromInvite:true});
+    else startGame('catena');
+  }
+}
+
 /* ── GAME START ── */
 function startGame(game){
   if(!players.length){goTo('s-setup');return;}
+  if(['eredita','intesa','ruota'].includes(game)&&players.length<2){
+    stopAuaAudio();
+    stopRdfAudio();
+    goTo('s-setup');
+    return;
+  }
   if(game==='catena'){
     if(players.length<2){goTo('s-setup');return;}
     stopAuaAudio();
@@ -937,12 +1105,13 @@ function normalizeChainWord(text){
     .toUpperCase();
 }
 
-function beginChain(){
+function beginChain(options={}){
   if(!selChainP1||!selChainP2||selChainP1===selChainP2)return;
   clearChainTimer();
   const p1=players.find(p=>p.id===selChainP1);
   const p2=players.find(p=>p.id===selChainP2);
   if(!p1||!p2)return;
+  if(!options.fromInvite)sendGameInvites('catena',{p1Uid:p1.uid||null,p2Uid:p2.uid||null});
   const round=CHAIN_ROUNDS[Math.floor(Math.random()*CHAIN_ROUNDS.length)];
   chainState={
     pids:[selChainP1,selChainP2],
@@ -1302,7 +1471,7 @@ function restartAUA(){
 ══════════════════════════════ */
 let ereState={};let ereInt=null;let spaceKH=null;
 
-function beginEredita(){
+function beginEredita(options={}){
   if(!selP1||!selP2)return;
   clearInterval(ereInt);
   if(spaceKH){document.removeEventListener('keydown',spaceKH);spaceKH=null;}
@@ -1311,6 +1480,8 @@ function beginEredita(){
   const p2=players.find(p=>p.id===selP2);
   const t1=teams.find(t=>t.mids.includes(selP1));
   const t2=teams.find(t=>t.mids.includes(selP2));
+  if(!p1||!p2)return;
+  if(!options.fromInvite)sendGameInvites('eredita',{p1Uid:p1.uid||null,p2Uid:p2.uid||null});
 
   const wordList=[...ERE_WORDS].sort(()=>Math.random()-.5);
 
@@ -1560,14 +1731,19 @@ function selPickWheel(id){
   document.getElementById('pp-wheel-'+id)?.classList.add('selected');
 }
 
-function beginWheel(){
+function beginWheel(options={}){
   if(!selWheelPid)return;
   hideWheelIntroEffects();
-  const startIdx=players.findIndex(p=>p.id===selWheelPid);
+  const wheelPlayersSource=Array.isArray(options.participantUids)&&options.participantUids.length
+    ? players.filter(p=>options.participantUids.includes(p.uid))
+    : players;
+  const startIdx=wheelPlayersSource.findIndex(p=>p.id===selWheelPid);
   if(startIdx<0)return;
-  const phrase=WHEEL_PHRASES[Math.floor(Math.random()*WHEEL_PHRASES.length)];
+  const phrase=options.phrase&&options.category
+    ? {text:options.phrase,cat:options.category}
+    : WHEEL_PHRASES[Math.floor(Math.random()*WHEEL_PHRASES.length)];
   wheelState={
-    players:players.map(p=>{
+    players:wheelPlayersSource.map(p=>{
       const t=teams.find(t=>t.mids.includes(p.id));
       return {id:p.id,name:p.name,color:TC[p.ci%TC.length],team:t,bank:0};
     }),
@@ -1595,6 +1771,16 @@ function beginWheel(){
   document.getElementById('wheel-solution-input').value='';
   goTo('s-wheel');
   showWheelTurnNotice();
+  if(!options.fromInvite){
+    const starter=players.find(p=>p.id===selWheelPid);
+    const participants=getOnlineParticipants();
+    sendGameInvites('ruota',{
+      starterUid:starter?.uid||null,
+      participantUids:participants.map(p=>p.uid),
+      phrase:phrase.text,
+      category:phrase.cat
+    });
+  }
 }
 
 function isWheelLetter(ch){
@@ -1928,16 +2114,20 @@ document.addEventListener("DOMContentLoaded", () => {
       loadLeaderboard();
       loadRegisteredUsers();
       listenCurrentUserProfile(user);
+      listenGameInvites(user);
     } else {
       if(unsubscribeLeaderboard)unsubscribeLeaderboard();
       if(unsubscribeRegisteredUsers)unsubscribeRegisteredUsers();
       if(unsubscribeCurrentUserProfile)unsubscribeCurrentUserProfile();
+      if(unsubscribeGameInvites)unsubscribeGameInvites();
       globalLeaderboard=[];
       registeredUsers=[];
       currentUserProfile=null;
+      pendingGameInvite=null;
       renderRegisteredUserSelect();
       renderHomeLeaderboard();
       closeProfilePopup();
+      closeGameInvitePopup();
       if(overlay){
         overlay.style.display = "flex";
       }
