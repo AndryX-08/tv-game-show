@@ -14,10 +14,11 @@ let intesaPlayers={p1:null,p2:null};
 let globalLeaderboard=[];
 let registeredUsers=[];
 let currentUserProfile=null;
+let currentUserLeaderboard=null;
 let pendingGameInvite=null;
 let pendingPlayModeGame=null,selectedPlayMode='local';
 let activeGameSessionId=null,activeGameSessionGame=null,unsubscribeGameSession=null,applyingRemoteWheelState=false,applyingRemoteSessionState=false;
-let unsubscribeLeaderboard=null,unsubscribeRegisteredUsers=null,unsubscribeCurrentUserProfile=null,unsubscribeGameInvites=null;
+let unsubscribeLeaderboard=null,unsubscribeRegisteredUsers=null,unsubscribeCurrentUserProfile=null,unsubscribeCurrentUserLeaderboard=null,unsubscribeGameInvites=null;
 let tabooScoreEventsRef=null,tabooScoreEventsStartedAt=Date.now(),processedTabooScoreEvents=new Set();
 let auaAudio=null,auaErrorAudio=null,auaAutoStartListener=null,auaAutoStarted=false,auaThemeResumeTime=0;
 let rdfAudio=null,rdfAutoStartListener=null,rdfAutoStarted=false;
@@ -173,6 +174,59 @@ const CHAIN_ROUNDS=[
   {start:"FESTA",words:["TORTA","CANDELA","LUCE","STELLA"]}
 ];
 
+const SARABANDA_TRACKS=[
+  {title:"40 Gradi",artist:"Simba la Rue",src:"Sarabanda/40-gradi-spotdownorg_NdFO2YGS.mp3"},
+  {title:"Soldi In Nero",artist:"Shiva feat. Sfera Ebbasta",src:"Sarabanda/soldi-in-nero-feat-sfera-ebbasta-spotdownorg_OeJNjolX.mp3"},
+  {title:"Tran Tran",artist:"Sfera Ebbasta",src:"Sarabanda/tran-tran-spotdownorg_B78eu9SP.mp3"},
+  {title:"Mirandote",artist:"",src:"Sarabanda/mirandote-spotdownorg_OJDsAMH9.mp3"},
+  {title:"Nuevayol",artist:"Bad Bunny",src:"Sarabanda/nuevayol-spotdownorg_O6bqnvIK.mp3"},
+  {title:"Obsessed",artist:"Shiva",src:"Sarabanda/obsessed-spotdownorg_xfKTnGZT.mp3"},
+  {title:"Dodge Durango",artist:"Artie 5ive",src:"Sarabanda/dodge-durango-spotdownorg_A1IIquP0.mp3"},
+  {title:"Eoo",artist:"Bad Bunny",src:"Sarabanda/eoo-spotdownorg_R3s93Tzw.mp3"},
+  {title:"Visiera A Becco",artist:"Sfera Ebbasta",src:"Sarabanda/visiera-a-becco-spotdownorg_oGUVigMu.mp3"},
+  {title:"Hoodrich",artist:"Artie 5ive feat. Rondo",src:"Sarabanda/hoodrich-spotdownorg_YQKq8VsT.mp3"},
+  {title:"Slatt",artist:"Rondo feat. Capo Plaza",src:"Sarabanda/slatt-feat-capo-plaza-spotdownorg_A9k6udvk.mp3"},
+  {title:"Take 6",artist:"Shiva",src:"Sarabanda/take-6-spotdownorg_H4hLIkm9.mp3"},
+  {title:"Star",artist:"Paky feat. Shiva",src:"Sarabanda/star-feat-shiva-spotdownorg_GKes0eff.mp3"},
+  {title:"Wop Wop",artist:"Nerissima Serpe feat. Shiva",src:"Sarabanda/wop-wop-feat-shiva-spotdownorg_ysKnIkjV.mp3"},
+  {title:"Duomo",artist:"Rondo",src:"Sarabanda/duomo-spotdownorg_0xM5I9NX.mp3"},
+  {title:"Mu Ammar Gheddafi",artist:"Kid Yugi feat. Simba La Rue",src:"Sarabanda/mu-ammar-gheddafi-feat-simba-la-rue-spotdownorg_RT8ye2pj.mp3"},
+  {title:"Vrp",artist:"Simba la Rue",src:"Sarabanda/vrp-spotdownorg_LDQ6R2d5.mp3"},
+  {title:"Kriminal",artist:"Baby Gang",src:"Sarabanda/kriminal-prod-by-roberto-ferrante-spotdownorg_UaY6SkYw.mp3"},
+  {title:"Titi Me Pregunto",artist:"Bad Bunny",src:"Sarabanda/titi-me-pregunto-spotdownorg_eKPTgu8m.mp3"},
+  {title:"Pura Purissima",artist:"PapaV feat. Nerissima Serpe",src:"Sarabanda/pura-purissima-feat-nerissima-serpe-spotdownorg_A14efeYT.mp3"},
+  {title:"Lo So Che",artist:"Capo Plaza",src:"Sarabanda/lo-so-che-spotdownorg_OQrSe6FU.mp3"},
+  {title:"Serpenti A Sonagli",artist:"Sfera Ebbasta",src:"Sarabanda/serpenti-a-sonagli-spotdownorg_2RlEGL2t.mp3"},
+  {title:"Diego Armando Maradona",artist:"Dark Polo Gang",src:"Sarabanda/diego-armando-maradona-spotdownorg_YjnSVhZG.mp3"},
+  {title:"Bullet Ballet",artist:"Kid Yugifeat. Artie 5ive",src:"Sarabanda/bullet-ballet-feat-artie-5ive-spotdownorg_udtb7zPG.mp3"},
+  {title:"7eleven",artist:"Artie 5ive",src:"Sarabanda/7eleven-spotdownorg_96rBRsEg.mp3"},
+  {title:"Berserker",artist:"Kid Yugi",src:"Sarabanda/berserker-spotdownorg_21oW21Ad.mp3"},
+  {title:"Guarda Come Flexo",artist:"Mambolosco",src:"Sarabanda/guarda-come-flexo-spotdownorg_vHZd4xjM.mp3"},
+  {title:"Gilgamesh",artist:"Kid Yugi",src:"Sarabanda/gilgamesh-spotdownorg_Sa9vkHAB.mp3"},
+  {title:"Tranne Te",artist:"Fabri Fibra",src:"Sarabanda/tranne-te-spotdownorg_j8t5XIf4.mp3"},
+  {title:"Rollercoaster",artist:"",src:"Sarabanda/rollercoaster-spotdownorg_I1JSCQQ1.mp3"},
+  {title:"Dende",artist:"Ghali",src:"Sarabanda/dende-spotdownorg_4NO55bBS.mp3"},
+  {title:"4k",artist:"",src:"Sarabanda/4k-spotdownorg_p27mFjnu.mp3"},
+  {title:"Highest In The Room",artist:"Travis Scott",src:"Sarabanda/highest-in-the-room-spotdownorg_iqeLCYXa.mp3"},
+  {title:"4 Gambe",artist:"Nerissima Serpe",src:"Sarabanda/4-gambe-spotdownorg_ahdpSiQy.mp3"},
+  {title:"Cambiare Adesso",artist:"Dark Polo Gang",src:"Sarabanda/cambiare-adesso-spotdownorg_pKZLqjvg.mp3"},
+  {title:"Sicko Mode",artist:"Travis Scott",src:"Sarabanda/sicko-mode-spotdownorg_LKj1Fu0c.mp3"},
+  {title:"Spie",artist:"Shiva",src:"Sarabanda/spie-spotdownorg_nosI7WU5.mp3"},
+  {title:"Sogno Americano",artist:"Artie 5ive",src:"Sarabanda/sogno-americano-spotdownorg_D8jDPuZH.mp3"},
+  {title:"Apparecchiato",artist:"PapaV feat. Nerissima Serpe",src:"Sarabanda/apparecchiato-feat-nerissima-serpe-spotdownorg_UHztB2in.mp3"},
+  {title:"Tuta Black",artist:"Paky feat. Shiva",src:"Sarabanda/tuta-black-spotdownorg_BLjCb5Df.mp3"},
+  {title:"Cupido",artist:"Sfera Ebbasta",src:"Sarabanda/cupido-feat-quavo-spotdownorg_laJDpsUu.mp3"},
+  {title:"Auto Tedesca",artist:"Paky",src:"Sarabanda/auto-tedesca-spotdownorg_nLKFBkge.mp3"},
+  {title:"Sportswear",artist:"Dark Polo Gang",src:"Sarabanda/sportswear-spotdownorg_7pC8nc6q.mp3"},
+  {title:"Nisida",artist:"Capo Plaza",src:"Sarabanda/nisida-spotdownorg_zvNUfiBE.mp3"},
+  {title:"Rozzi",artist:"Paky",src:"Sarabanda/rozzi-spotdownorg_TKPb0hKz.mp3"},
+  {title:"Assistente Sociale",artist:"Baby Gang feat. Simba La Rue",src:"Sarabanda/assistente-sociale-feat-simba-la-rue-spotdownorg_gSiDlMe6.mp3"},
+  {title:"64 Barre In Faccia",artist:"Artie 5ive",src:"Sarabanda/64-barre-in-faccia-red-bull-64-bars-spotdownorg_PzuleJn6.mp3"},
+  {title:"Davverodavvero",artist:"Artie 5ive",src:"Sarabanda/davverodavvero-spotdownorg_ggk0EC8Y.mp3"},
+  {title:"Warzone",artist:"Capo Plaza",src:"Sarabanda/warzone-feat-artie-5ive-capo-plaza-nerissima-serpe-spotdownorg_YMIfakiN.mp3"},
+  {title:"Chuck Norris",artist:"Kid Yugi",src:"Sarabanda/chuck-norris-feat-papa-v-rrari-dal-tacco-nerissima-serpe-spotdownorg_aL0dv8Hv.mp3"}
+];
+
 const WHEEL_SEGMENTS=[
   {label:"100",points:100},
   {label:"200",points:200},
@@ -274,6 +328,7 @@ function goTo(id){
   if(id!=='s-aua'&&id!=='s-eredita')stopQuestionSpeech();
   if(id!=='s-pick-wheel'&&id!=='s-wheel')stopRdfAudio();
   if(id!=='s-chain')clearChainTimer();
+  if(id!=='s-sarabanda')stopSarabandaAudio();
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   if(id==='s-setup')initTtsControls();
@@ -663,7 +718,6 @@ function savePlayerScoreOnline(player,points,source='game'){
     updatedAt:now
   };
   const targetUid=player.uid;
-  const eventRef=db.collection('scoreEvents').doc();
   const batch=db.batch();
   batch.set(db.collection('users').doc(targetUid),{
     ...userData,
@@ -673,14 +727,6 @@ function savePlayerScoreOnline(player,points,source='game'){
     ...userData,
     totalScore:inc
   },{merge:true});
-  batch.set(eventRef,{
-    uid:targetUid,
-    name:userData.name,
-    points:value,
-    source,
-    writtenBy:currentUser.uid,
-    createdAt:now
-  });
   batch.commit().catch(err=>console.error('Errore salvataggio punti Firestore:',err));
 }
 
@@ -741,7 +787,9 @@ function loadRegisteredUsers(){
 
 function listenCurrentUserProfile(user){
   if(unsubscribeCurrentUserProfile)unsubscribeCurrentUserProfile();
+  if(unsubscribeCurrentUserLeaderboard)unsubscribeCurrentUserLeaderboard();
   currentUserProfile=null;
+  currentUserLeaderboard=null;
   if(!user||!window.db){
     updateUserUI(user);
     return;
@@ -758,6 +806,10 @@ function listenCurrentUserProfile(user){
     updateUserUI(user);
     hydrateProfilePopup();
   },err=>console.error('Errore profilo utente Firestore:',err));
+  unsubscribeCurrentUserLeaderboard=db.collection('leaderboard').doc(user.uid).onSnapshot(doc=>{
+    currentUserLeaderboard=doc.exists?{id:doc.id,...doc.data()}:null;
+    hydrateProfilePopup();
+  },err=>console.error('Errore punteggio profilo Firestore:',err));
 }
 
 function openProfilePopup(){
@@ -773,6 +825,7 @@ function closeProfilePopup(){
 
 function hydrateProfilePopup(){
   const profile=currentUserProfile||{};
+  const leaderboard=currentUserLeaderboard||{};
   const firstName=document.getElementById('profileFirstName');
   const lastName=document.getElementById('profileLastName');
   const nickname=document.getElementById('profileNickname');
@@ -780,7 +833,7 @@ function hydrateProfilePopup(){
   if(firstName)firstName.value=profile.firstName||'';
   if(lastName)lastName.value=profile.lastName||'';
   if(nickname)nickname.value=profile.nickname||'';
-  if(totalScore)totalScore.textContent=profile.totalScore||0;
+  if(totalScore)totalScore.textContent=leaderboard.totalScore ?? profile.totalScore ?? 0;
 }
 
 function normalizeNickname(value){
@@ -816,10 +869,11 @@ const GAME_LABELS={
   ruota:'la RUOTA',
   eredita:"L'EREDITA",
   intesa:"INTESA VINCENTE",
-  catena:'REAZIONE A CATENA'
+  catena:'REAZIONE A CATENA',
+  sarabanda:'SARABANDA'
 };
 
-const MULTIPLAYER_GAMES=['ruota','eredita','intesa','catena'];
+const MULTIPLAYER_GAMES=['ruota','eredita','intesa','catena','sarabanda'];
 
 function isMultiplayerGame(game){
   return MULTIPLAYER_GAMES.includes(game);
@@ -873,7 +927,8 @@ async function seedQuestionBanksToFirestore(){
     aua:AUA_Q,
     eredita:ERE_WORDS,
     ruota:WHEEL_PHRASES,
-    catena:CHAIN_ROUNDS
+    catena:CHAIN_ROUNDS,
+    sarabanda:SARABANDA_TRACKS
   };
   const batch=db.batch();
   Object.entries(banks).forEach(([key,items])=>{
@@ -1048,6 +1103,7 @@ function listenGameSession(sessionId){
     if(data.game==='ruota'&&data.state)applyRemoteWheelState(data.state);
     if(data.game==='catena'&&data.state)applyRemoteChainState(data.state);
     if(data.game==='eredita'&&data.state)applyRemoteEreditaState(data.state);
+    if(data.game==='sarabanda'&&data.state)applyRemoteSarabandaState(data.state);
   },err=>console.error('Errore ascolto sessione gioco:',err));
 }
 
@@ -1116,6 +1172,11 @@ function joinInvitedGame(invite){
     selChainP2=getPlayerIdByUid(payload.p2Uid);
     if(selChainP1&&selChainP2&&selChainP1!==selChainP2)beginChain({fromInvite:true,round:payload.round,sessionId:payload.sessionId});
     else startGame('catena');
+    return;
+  }
+  if(invite.game==='sarabanda'){
+    if(payload.sessionId)listenGameSession(payload.sessionId);
+    beginSarabanda({fromInvite:true,tracks:payload.tracks,sessionId:payload.sessionId});
   }
 }
 
@@ -1130,6 +1191,11 @@ function startGame(game,options={}){
     stopAuaAudio();
     stopRdfAudio();
     goTo('s-setup');
+    return;
+  }
+  if(game==='sarabanda'){
+    if(players.length<2){goTo('s-setup');return;}
+    beginSarabanda();
     return;
   }
   if(game==='catena'){
@@ -1603,6 +1669,305 @@ function completeChain(){
     goTo('s-win');
     cleanupOnlineGameArtifacts();
   },900);
+}
+
+/* ══════════════════════════════
+   SARABANDA
+══════════════════════════════ */
+let sarabandaState={};
+let sarabandaPreviewHandler=null;
+const SARABANDA_PREVIEW_SECONDS=6;
+
+async function beginSarabanda(options={}){
+  if(players.length<2){goTo('s-setup');return;}
+  if(options.sessionId)listenGameSession(options.sessionId);
+  const tracks=(options.tracks||await loadQuestionBank('sarabanda',SARABANDA_TRACKS)).filter(t=>t&&t.src);
+  const playlist=options.tracks?[...tracks].slice(0,5):shuffleArray([...tracks]).slice(0,5);
+  if(!playlist.length){
+    alert('Aggiungi almeno un brano per Sarabanda.');
+    return;
+  }
+  const saraPlayers=Array.isArray(options.participantUids)&&options.participantUids.length
+    ? options.participantUids.map(uid=>players.find(p=>p.uid===uid)).filter(Boolean)
+    : players;
+  sarabandaState={
+    players:saraPlayers.map(p=>({id:p.id,uid:p.uid||null,name:p.name,color:TC[p.ci%TC.length],score:0})),
+    tracks:playlist,
+    idx:0,
+    activePid:saraPlayers[0]?.id||null,
+    revealed:false,
+    fullPlay:false,
+    message:`Turno di ${saraPlayers[0]?.name||'Giocatore'}. Premi play quando siete pronti.`,
+    completed:false
+  };
+  if(!options.fromInvite&&selectedPlayMode==='online'){
+    const sessionId=await createGameSession('sarabanda',serializeSarabandaState());
+    if(sessionId)listenGameSession(sessionId);
+    sendGameInvites('sarabanda',{
+      sessionId,
+      tracks:playlist,
+      participantUids:sarabandaState.players.map(p=>p.uid).filter(Boolean)
+    });
+  }
+  renderSarabanda();
+  goTo('s-sarabanda');
+  syncSarabandaState();
+}
+
+function serializeSarabandaState(){
+  if(!sarabandaState?.players)return null;
+  return {
+    players:sarabandaState.players.map(p=>({uid:p.uid||null,name:p.name,color:p.color,score:p.score||0})),
+    tracks:sarabandaState.tracks||[],
+    idx:sarabandaState.idx||0,
+    activeUid:sarabandaState.players.find(p=>p.id===sarabandaState.activePid)?.uid||null,
+    activeName:sarabandaState.players.find(p=>p.id===sarabandaState.activePid)?.name||null,
+    revealed:!!sarabandaState.revealed,
+    fullPlay:!!sarabandaState.fullPlay,
+    message:sarabandaState.message||'',
+    completed:!!sarabandaState.completed
+  };
+}
+
+function syncSarabandaState(){
+  const state=serializeSarabandaState();
+  if(state)updateGameSession(state);
+}
+
+function applyRemoteSarabandaState(state){
+  if(!state)return;
+  const previousIdx=sarabandaState?.idx;
+  const previousSrc=getCurrentSarabandaTrack()?.src;
+  const wasRevealed=!!sarabandaState?.revealed;
+  applyingRemoteSessionState=true;
+  const mappedPlayers=(state.players||[]).map((rp,i)=>{
+    const local=players.find(p=>p.uid&&p.uid===rp.uid);
+    return {
+      id:local?.id||i+1,
+      uid:rp.uid||null,
+      name:rp.name||local?.name||'Giocatore',
+      color:rp.color||TC[i%TC.length],
+      score:rp.score||0
+    };
+  });
+  const active=state.activeUid
+    ? mappedPlayers.find(p=>p.uid===state.activeUid)
+    : mappedPlayers.find(p=>p.name===state.activeName);
+  sarabandaState={
+    players:mappedPlayers,
+    tracks:state.tracks||[],
+    idx:state.idx||0,
+    activePid:active?.id||null,
+    revealed:!!state.revealed,
+    fullPlay:!!state.fullPlay,
+    message:state.message||'',
+    completed:!!state.completed
+  };
+  renderSarabanda();
+  goTo('s-sarabanda');
+  const currentSrc=getCurrentSarabandaTrack()?.src;
+  if(previousIdx!==undefined&&(previousIdx!==sarabandaState.idx||previousSrc!==currentSrc)){
+    playSarabandaPreview();
+  }else if(!wasRevealed&&sarabandaState.revealed&&sarabandaState.fullPlay){
+    playFullSarabandaTrack();
+  }
+  applyingRemoteSessionState=false;
+}
+
+function getCurrentSarabandaTrack(){
+  return sarabandaState.tracks?.[sarabandaState.idx]||null;
+}
+
+function normalizeSarabandaText(text){
+  return (text||'')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^A-Z0-9]/gi,'')
+    .toUpperCase();
+}
+
+function getSarabandaTextDistance(a,b){
+  if(a===b)return 0;
+  if(!a)return b.length;
+  if(!b)return a.length;
+  const prev=Array.from({length:b.length+1},(_,i)=>i);
+  const curr=Array(b.length+1).fill(0);
+  for(let i=1;i<=a.length;i++){
+    curr[0]=i;
+    for(let j=1;j<=b.length;j++){
+      const cost=a[i-1]===b[j-1]?0:1;
+      curr[j]=Math.min(curr[j-1]+1,prev[j]+1,prev[j-1]+cost);
+    }
+    for(let j=0;j<=b.length;j++)prev[j]=curr[j];
+  }
+  return prev[b.length];
+}
+
+function isSarabandaGuessCorrect(guess,track){
+  const normalized=normalizeSarabandaText(guess);
+  if(!normalized)return false;
+  const answers=[track.title,track.artist].map(normalizeSarabandaText).filter(Boolean);
+  return answers.some(answer=>{
+    const tolerance=answer.length>=10?2:1;
+    return answer.includes(normalized)||
+      normalized.includes(answer)||
+      getSarabandaTextDistance(normalized,answer)<=tolerance;
+  });
+}
+
+function renderSarabanda(){
+  const track=getCurrentSarabandaTrack();
+  const audio=document.getElementById('sara-audio');
+  if(!track||!audio)return;
+  document.getElementById('sara-counter').textContent=`${sarabandaState.idx+1} / ${sarabandaState.tracks.length}`;
+  document.getElementById('sara-hidden-title').textContent=sarabandaState.revealed?track.title:'???';
+  const active=sarabandaState.players.find(p=>p.id===sarabandaState.activePid);
+  document.getElementById('sara-hidden-artist').textContent=sarabandaState.revealed?track.artist:`Turno di ${active?.name||'Giocatore'}`;
+  document.getElementById('sara-status').textContent=sarabandaState.revealed?'Soluzione':'Ascolta e indovina';
+  if(audio.getAttribute('src')!==track.src){
+    audio.src=track.src;
+    audio.load();
+  }
+  setupSarabandaAudioPreview();
+  audio.onerror=()=>setSarabandaMessage(`Audio non trovato: ${track.src}`);
+  document.getElementById('sara-players').innerHTML=sarabandaState.players.map(p=>`
+    <div class="sara-player${p.id===sarabandaState.activePid?' active':''}">
+      <div class="sara-player-name" style="color:${p.color.hex}">${escapeHtml(p.name)}</div>
+      <div class="sara-player-score">${p.score||0}</div>
+    </div>
+  `).join('');
+  document.getElementById('sara-answer').value='';
+  setSarabandaMessage(sarabandaState.message||'');
+}
+
+function setupSarabandaAudioPreview(){
+  const audio=document.getElementById('sara-audio');
+  if(!audio)return;
+  if(sarabandaPreviewHandler){
+    audio.removeEventListener('timeupdate',sarabandaPreviewHandler);
+  }
+  sarabandaPreviewHandler=()=>{
+    if(sarabandaState.fullPlay||sarabandaState.revealed)return;
+    if(audio.currentTime>=SARABANDA_PREVIEW_SECONDS){
+      audio.pause();
+      audio.currentTime=0;
+      setSarabandaMessage(`Anteprima finita: ${SARABANDA_PREVIEW_SECONDS} secondi ascoltati.`);
+    }
+  };
+  audio.addEventListener('timeupdate',sarabandaPreviewHandler);
+}
+
+function playFullSarabandaTrack(){
+  const audio=document.getElementById('sara-audio');
+  if(!audio)return;
+  sarabandaState.fullPlay=true;
+  audio.currentTime=0;
+  audio.play().catch(()=>{});
+}
+
+function playSarabandaPreview(){
+  const audio=document.getElementById('sara-audio');
+  if(!audio)return;
+  sarabandaState.fullPlay=false;
+  audio.currentTime=0;
+  audio.play().catch(()=>{});
+}
+
+function stopSarabandaAudio(){
+  const audio=document.getElementById('sara-audio');
+  if(!audio)return;
+  audio.pause();
+  try{audio.currentTime=0;}catch(e){}
+}
+
+function setSarabandaMessage(text){
+  sarabandaState.message=text;
+  const el=document.getElementById('sara-message');
+  if(el)el.textContent=text;
+}
+
+function selectSarabandaPlayer(pid){
+  const p=sarabandaState.players.find(pl=>pl.id===pid);
+  setSarabandaMessage(p?`Ora il turno e' automatico: sta giocando ${p.name}.`:'');
+}
+
+function submitSarabandaAnswer(){
+  const track=getCurrentSarabandaTrack();
+  if(!track)return;
+  const guess=document.getElementById('sara-answer')?.value||'';
+  const ok=isSarabandaGuessCorrect(guess,track);
+  if(ok)awardSarabandaPoint();
+  else wrongSarabandaAnswer();
+}
+
+function awardSarabandaPoint(){
+  const p=sarabandaState.players.find(pl=>pl.id===sarabandaState.activePid);
+  if(!p){
+    setSarabandaMessage('Seleziona prima il giocatore che ha risposto.');
+    return;
+  }
+  p.score=(p.score||0)+1;
+  const local=players.find(pl=>pl.uid&&pl.uid===p.uid)||players.find(pl=>pl.id===p.id);
+  if(local)awardPlayerPoints(local.id,1,'sarabanda');
+  sarabandaState.revealed=true;
+  sarabandaState.fullPlay=true;
+  setSarabandaMessage(`Punto a ${p.name}!`);
+  renderSarabanda();
+  playFullSarabandaTrack();
+  syncSarabandaState();
+}
+
+function wrongSarabandaAnswer(){
+  const p=sarabandaState.players.find(pl=>pl.id===sarabandaState.activePid);
+  setSarabandaMessage(p?`${p.name} ha sbagliato. Riprova o passa alla prossima canzone.`:'Risposta sbagliata.');
+  renderSarabanda();
+  syncSarabandaState();
+}
+
+function revealSarabandaTrack(){
+  const track=getCurrentSarabandaTrack();
+  if(!track)return;
+  sarabandaState.revealed=true;
+  sarabandaState.fullPlay=true;
+  setSarabandaMessage(`${track.title} - ${track.artist}`);
+  renderSarabanda();
+  playFullSarabandaTrack();
+  syncSarabandaState();
+}
+
+function nextSarabandaTrack(){
+  if(sarabandaState.idx+1>=sarabandaState.tracks.length){
+    endSarabanda();
+    return;
+  }
+  sarabandaState.idx++;
+  const nextPlayer=sarabandaState.players[sarabandaState.idx%sarabandaState.players.length];
+  sarabandaState.activePid=nextPlayer?.id||null;
+  sarabandaState.revealed=false;
+  sarabandaState.fullPlay=false;
+  sarabandaState.message=`Turno di ${nextPlayer?.name||'Giocatore'}.`;
+  renderSarabanda();
+  playSarabandaPreview();
+  syncSarabandaState();
+}
+
+function endSarabanda(){
+  stopSarabandaAudio();
+  sarabandaState.completed=true;
+  syncSarabandaState();
+  const winner=[...(sarabandaState.players||[])].sort((a,b)=>(b.score||0)-(a.score||0))[0];
+  if(winner){
+    document.getElementById('win-name').textContent=winner.name;
+    document.getElementById('win-sub').textContent='Ha vinto Sarabanda!';
+    document.getElementById('win-scores').innerHTML='<div style="font-size:.68rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--mut);margin-bottom:.6rem">Classifica Sarabanda</div>'+
+      sarabandaState.players.sort((a,b)=>(b.score||0)-(a.score||0)).map((p,i)=>`<div class="sc-row">
+        <div class="sc-rank">${i+1}</div>
+        <div class="sc-name">${escapeHtml(p.name)}</div>
+        <div class="sc-pts">${p.score||0}</div>
+      </div>`).join('');
+  }
+  goTo('s-win');
+  cleanupOnlineGameArtifacts();
 }
 
 /* ══════════════════════════════
@@ -2511,6 +2876,7 @@ listenTabooScoreEvents();
 
 document.addEventListener("DOMContentLoaded", () => {
   const overlay = document.getElementById("authOverlay");
+  window.addEventListener('beforeunload',stopSarabandaAudio);
   renderRegisteredUserSelect();
   auth.onAuthStateChanged(user => {
     console.log("USER:", user);
@@ -2531,11 +2897,13 @@ document.addEventListener("DOMContentLoaded", () => {
       if(unsubscribeLeaderboard)unsubscribeLeaderboard();
       if(unsubscribeRegisteredUsers)unsubscribeRegisteredUsers();
       if(unsubscribeCurrentUserProfile)unsubscribeCurrentUserProfile();
+      if(unsubscribeCurrentUserLeaderboard)unsubscribeCurrentUserLeaderboard();
       if(unsubscribeGameInvites)unsubscribeGameInvites();
       stopGameSessionListener();
       globalLeaderboard=[];
       registeredUsers=[];
       currentUserProfile=null;
+      currentUserLeaderboard=null;
       pendingGameInvite=null;
       renderRegisteredUserSelect();
       renderHomeLeaderboard();
@@ -2572,5 +2940,6 @@ function updateUserUI(user){
 }
 
 function logout(){
+  stopSarabandaAudio();
   auth.signOut();
 }

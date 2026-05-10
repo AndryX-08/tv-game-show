@@ -230,6 +230,21 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
 .chain-player-name{font-size:.78rem;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .chain-player-score{font-family:'Bebas Neue',sans-serif;font-size:1.35rem;color:var(--gold)}
 
+/* SARABANDA */
+.sara-stage{background:var(--surf);border:1px solid var(--bord);border-radius:16px;padding:1rem;margin-bottom:1rem}
+.sara-now{display:grid;gap:.35rem;text-align:center;margin-bottom:1rem}
+.sara-kicker{font-size:.68rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--mut)}
+.sara-title{font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:3px;color:var(--gold)}
+.sara-sub{font-size:.82rem;color:var(--mut)}
+.sara-audio{width:100%;margin:.8rem 0 1rem}
+.sara-players{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:.55rem;margin-bottom:1rem}
+.sara-player{background:var(--surf2);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:.7rem;text-align:center}
+.sara-player.active{border-color:var(--gold);background:rgba(245,197,24,.12)}
+.sara-player-name{font-weight:900;font-size:.82rem;overflow-wrap:anywhere}
+.sara-player-score{font-family:'Bebas Neue',sans-serif;font-size:1.35rem;color:var(--gold)}
+.sara-actions{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-top:.7rem}
+.sara-message{min-height:28px;text-align:center;font-weight:900;color:var(--txt);font-size:.9rem;margin-top:.75rem}
+
 @media(max-width:620px){
   .game-cards{grid-template-columns:repeat(2,1fr)}
   .wheel-status{grid-template-columns:1fr}
@@ -302,6 +317,7 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
   .chain-timer-line{grid-template-columns:1fr;gap:.45rem}
   .chain-time{text-align:left}
   .chain-penalty{grid-template-columns:1fr}
+  .sara-actions{grid-template-columns:1fr}
   .sc-row{gap:.45rem}
   .sc-rank{width:18px;flex-shrink:0}
   .sc-name{font-size:.82rem}
@@ -424,6 +440,11 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
         <div class="gc-emoji">⛓️</div>
         <div class="gc-name">Reazione a Catena</div>
         <div class="gc-sub">Collega le parole!</div>
+      </div>
+      <div class="game-card" onclick="startGame('sarabanda')">
+        <div class="gc-emoji">🎵</div>
+        <div class="gc-name">Sarabanda</div>
+        <div class="gc-sub">Indovina la canzone</div>
       </div>
       <div class="game-card" onclick="startGame('taboo')">
         <div class="gc-emoji">🚫</div>
@@ -709,6 +730,36 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
   <div style="display:flex;gap:.75rem">
     <button class="btn-ghost" style="flex:1" onclick="goTo('s-hero')">Menu</button>
     <button class="btn-ghost" style="flex:1" onclick="beginChain()">Nuova catena</button>
+  </div>
+</div>
+
+<!-- SARABANDA GAME -->
+<div class="screen" id="s-sarabanda">
+  <div class="chain-head">
+    <div class="chain-title">🎵 Sarabanda</div>
+    <div class="chain-team">Brano <span id="sara-counter" style="color:var(--txt);font-weight:900">1 / 1</span></div>
+  </div>
+  <div class="sara-stage">
+    <div class="sara-now">
+      <div class="sara-kicker" id="sara-status">Ascolta e indovina</div>
+      <div class="sara-title" id="sara-hidden-title">???</div>
+      <div class="sara-sub" id="sara-hidden-artist">Premi play quando siete pronti</div>
+    </div>
+    <audio class="sara-audio" id="sara-audio" controls preload="metadata"></audio>
+    <div class="sara-players" id="sara-players"></div>
+    <div class="field-row">
+      <input class="tf" id="sara-answer" placeholder="Titolo o artista..." onkeydown="if(event.key==='Enter')submitSarabandaAnswer()">
+      <button class="btn-gold" onclick="submitSarabandaAnswer()">CONFERMA</button>
+    </div>
+    <div class="sara-actions">
+      <button class="btn-ghost" onclick="revealSarabandaTrack()">RIVELA</button>
+      <button class="btn-gold" onclick="nextSarabandaTrack()">PROSSIMA</button>
+    </div>
+    <div class="sara-message" id="sara-message"></div>
+  </div>
+  <div style="display:flex;gap:.75rem">
+    <button class="btn-ghost" style="flex:1" onclick="endSarabanda()">Termina</button>
+    <button class="btn-ghost" style="flex:1" onclick="goTo('s-hero')">Menu</button>
   </div>
 </div>
 

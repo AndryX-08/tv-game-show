@@ -9,6 +9,7 @@ Web app per organizzare una serata di giochi TV in locale oppure online, con log
 - Intesa Vincente
 - La Ruota
 - Reazione a Catena
+- Sarabanda
 - Taboo con pagina giocatore separata
 
 ## Funzionalita
@@ -20,6 +21,7 @@ Web app per organizzare una serata di giochi TV in locale oppure online, con log
 - Modalita locale oppure online per i giochi multiplayer.
 - Inviti online tra utenti registrati.
 - Sessioni multiplayer sincronizzate tramite Firestore per Ruota, Eredita e Reazione a Catena.
+- Sarabanda con playlist audio configurabile e punteggio automatico.
 - Taboo con `host.html` e `play.html` per usare un secondo dispositivo come controller/schermo giocatore.
 - Layout responsive per desktop e mobile.
 
@@ -69,6 +71,23 @@ questionBanks/aua
 questionBanks/eredita
 questionBanks/ruota
 questionBanks/catena
+questionBanks/sarabanda
+```
+
+Per Sarabanda puoi aggiungere file audio nella cartella:
+
+```txt
+Sarabanda/
+```
+
+La playlist placeholder nel codice usa:
+
+```txt
+Sarabanda/brano1.mp3
+Sarabanda/brano2.mp3
+Sarabanda/brano3.mp3
+Sarabanda/brano4.mp3
+Sarabanda/brano5.mp3
 ```
 
 ## Regole Firestore consigliate
