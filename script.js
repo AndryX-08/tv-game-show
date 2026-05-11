@@ -1,3 +1,20 @@
+// ===== OPENING INTRO GUARANTEE =====
+(function(){
+  function closeIntro(){
+    var intro=document.getElementById('openingIntro');
+    if(intro){
+      intro.classList.add('hidden','force-remove');
+      intro.style.setProperty('display','none','important');
+      intro.style.setProperty('opacity','0','important');
+      intro.style.setProperty('visibility','hidden','important');
+      intro.style.setProperty('pointer-events','none','important');
+      if(intro.parentNode) intro.parentNode.removeChild(intro);
+    }
+  }
+  window.skipOpeningIntro = window.skipOpeningIntro || closeIntro;
+  setTimeout(function(){ if(window.skipOpeningIntro) window.skipOpeningIntro(); else closeIntro(); }, 6200);
+})();
+
 // GAME RULES
 const TC=[
   {hex:'#3498DB',light:'rgba(52,152,219,.22)'},
@@ -264,6 +281,7 @@ const WHEEL_SEGMENTS=[
   {label:"800",points:800},
   {label:"JOLLY",points:1200}
 ];
+
 
 function shuffleArray(array) {
   for (let i = array.length - 1; i > 0; i--) {
