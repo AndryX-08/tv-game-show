@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
+  <title id="title">TV Game Night</title>
+  <desc id="desc">Logo TV Game Night con schermo televisivo e testo Game Show.</desc>
+  <defs>
+    <linearGradient id="gold" x1="12" y1="6" x2="52" y2="58" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff3a6"/>
+      <stop offset=".42" stop-color="#f5c518"/>
+      <stop offset="1" stop-color="#c68b00"/>
+    </linearGradient>
+    <linearGradient id="screen" x1="14" y1="17" x2="50" y2="48" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1f1f45"/>
+      <stop offset="1" stop-color="#08081a"/>
+    </linearGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="1.8" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="#08081a"/>
+  <circle cx="32" cy="32" r="27" fill="none" stroke="#f5c518" stroke-opacity=".18" stroke-width="2"/>
+  <path d="M22 12h20" stroke="url(#gold)" stroke-width="4" stroke-linecap="round"/>
+  <path d="M26 12l6 7 6-7" fill="none" stroke="url(#gold)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="11" y="18" width="42" height="30" rx="7" fill="url(#screen)" stroke="url(#gold)" stroke-width="3"/>
+  <text x="32" y="36.5" fill="#f5c518" font-family="Arial Black, Impact, sans-serif" font-size="15.5" font-weight="900" text-anchor="middle" letter-spacing="-.8">TV</text>
+  <text x="32" y="44.8" fill="#ffffff" font-family="Arial, sans-serif" font-size="4.4" font-weight="900" text-anchor="middle" letter-spacing=".2">GAME SHOW</text>
+  <path d="M16.5 51h31" stroke="url(#gold)" stroke-width="4" stroke-linecap="round"/>
+  <path d="M31.5 7l1.4 3.2 3.5.3-2.6 2.3.8 3.4-3.1-1.8-3 1.8.8-3.4-2.7-2.3 3.6-.3z" fill="#fff6bf" filter="url(#glow)"/>
+</svg>

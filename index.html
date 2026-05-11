@@ -2,6 +2,8 @@
 <html lang="it"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>TV Game Night</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800;900&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
@@ -32,6 +34,9 @@ button,input,select{max-width:100%}
 .profile-score-label{font-size:.72rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--mut);margin-bottom:.25rem}
 .profile-score-value{font-family:'Bebas Neue',sans-serif;font-size:2.4rem;letter-spacing:2px;color:var(--gold);line-height:1}
 .profile-actions{display:flex;gap:.7rem}
+.profile-legal{display:grid;grid-template-columns:1fr 1fr;gap:.55rem;margin:.35rem 0 1rem}
+.profile-legal a{display:flex;align-items:center;justify-content:center;min-height:40px;padding:.58rem .75rem;border:1.5px solid rgba(245,197,24,.28);border-radius:10px;background:rgba(245,197,24,.08);color:var(--gold);font-size:.78rem;font-weight:900;text-decoration:none;text-align:center}
+.profile-legal a:hover{background:rgba(245,197,24,.16);border-color:rgba(245,197,24,.5)}
 .auth-btn {width: 100%;padding: 12px;margin: 8px 0;border: none;border-radius: 10px;font-size: 16px;cursor: pointer;transition: 0.2s;}
 .auth-btn.google {background: rgba(20,20,30,0.9);color:#fdfdfd;border:1.5px solid rgba(245,197,24,.4);border-radius:12px;padding:.85rem 2.2rem;font-family:'Nunito',sans-serif;font-size:.95rem;font-weight:900;cursor:pointer;transition:transform .15s,background .15s}
 .auth-btn.anon {background:none; color: #dadada; text-decoration: underline;}
@@ -301,6 +306,7 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
   .auth-overlay{align-items:flex-start;padding:1rem;overflow:auto}
   .auth-box{width:min(100%,420px);padding:1.25rem;border-radius:16px;margin:auto 0}
   .profile-actions{flex-direction:column}
+  .profile-legal{grid-template-columns:1fr}
   .logo{font-size:2.45rem;letter-spacing:2px}
   .logo-sub{font-size:.66rem;letter-spacing:2.5px;margin-bottom:1.4rem}
   .step-block{padding:.95rem;border-radius:12px}
@@ -405,6 +411,10 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
       <label>Nickname
         <input id="profileNickname" type="text" maxlength="24" placeholder="@nickname">
       </label>
+    </div>
+    <div class="profile-legal" aria-label="Documenti legali">
+      <a href="https://andryx-08.github.io/tv-game-show/termini-condizioni.html" target="_blank" rel="noopener">Termini e condizioni</a>
+      <a href="https://andryx-08.github.io/tv-game-show/privacy-policy.html" target="_blank" rel="noopener">Privacy policy</a>
     </div>
     <div class="profile-actions">
       <button class="auth-btn anon" style="flex:1" onclick="closeProfilePopup()">Annulla</button>
