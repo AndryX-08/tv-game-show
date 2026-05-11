@@ -1711,6 +1711,7 @@ function completeChain(){
 ══════════════════════════════ */
 let sarabandaState={};
 let sarabandaPreviewHandler=null;
+let sarabandaEndedHandler=null;
 const SARABANDA_PREVIEW_SECONDS=6;
 
 async function beginSarabanda(options={}){
@@ -1732,6 +1733,7 @@ async function beginSarabanda(options={}){
     activePid:saraPlayers[0]?.id||null,
     revealed:false,
     fullPlay:false,
+    resumeAt:0,
     message:`Turno di ${saraPlayers[0]?.name||'Giocatore'}. Premi play quando siete pronti.`,
     completed:false
   };
@@ -1759,6 +1761,7 @@ function serializeSarabandaState(){
     activeName:sarabandaState.players.find(p=>p.id===sarabandaState.activePid)?.name||null,
     revealed:!!sarabandaState.revealed,
     fullPlay:!!sarabandaState.fullPlay,
+    resumeAt:Number(sarabandaState.resumeAt)||0,
     message:sarabandaState.message||'',
     completed:!!sarabandaState.completed
   };
@@ -1795,6 +1798,7 @@ function applyRemoteSarabandaState(state){
     activePid:active?.id||null,
     revealed:!!state.revealed,
     fullPlay:!!state.fullPlay,
+    resumeAt:Number(state.resumeAt)||0,
     message:state.message||'',
     completed:!!state.completed
   };
@@ -1804,7 +1808,7 @@ function applyRemoteSarabandaState(state){
   if(previousIdx!==undefined&&(previousIdx!==sarabandaState.idx||previousSrc!==currentSrc)){
     playSarabandaPreview();
   }else if(!wasRevealed&&sarabandaState.revealed&&sarabandaState.fullPlay){
-    playFullSarabandaTrack();
+    playFullSarabandaTrack(true);
   }
   applyingRemoteSessionState=false;
 }
@@ -1881,22 +1885,32 @@ function setupSarabandaAudioPreview(){
   if(sarabandaPreviewHandler){
     audio.removeEventListener('timeupdate',sarabandaPreviewHandler);
   }
+  if(sarabandaEndedHandler){
+    audio.removeEventListener('ended',sarabandaEndedHandler);
+  }
   sarabandaPreviewHandler=()=>{
     if(sarabandaState.fullPlay||sarabandaState.revealed)return;
     if(audio.currentTime>=SARABANDA_PREVIEW_SECONDS){
       audio.pause();
-      audio.currentTime=0;
+      sarabandaState.resumeAt=audio.currentTime;
       setSarabandaMessage(`Anteprima finita: ${SARABANDA_PREVIEW_SECONDS} secondi ascoltati.`);
+      syncSarabandaState();
     }
   };
+  sarabandaEndedHandler=()=>{
+    if(!sarabandaState.fullPlay&&!sarabandaState.revealed)return;
+    nextSarabandaTrack();
+  };
   audio.addEventListener('timeupdate',sarabandaPreviewHandler);
+  audio.addEventListener('ended',sarabandaEndedHandler);
 }
 
-function playFullSarabandaTrack(){
+function playFullSarabandaTrack(fromResume=false){
   const audio=document.getElementById('sara-audio');
   if(!audio)return;
   sarabandaState.fullPlay=true;
-  audio.currentTime=0;
+  const resumeAt=fromResume?Number(sarabandaState.resumeAt)||audio.currentTime||0:0;
+  audio.currentTime=Math.max(0,resumeAt);
   audio.play().catch(()=>{});
 }
 
@@ -1904,6 +1918,7 @@ function playSarabandaPreview(){
   const audio=document.getElementById('sara-audio');
   if(!audio)return;
   sarabandaState.fullPlay=false;
+  sarabandaState.resumeAt=0;
   audio.currentTime=0;
   audio.play().catch(()=>{});
 }
@@ -1912,6 +1927,7 @@ function stopSarabandaAudio(){
   const audio=document.getElementById('sara-audio');
   if(!audio)return;
   audio.pause();
+  sarabandaState.resumeAt=0;
   try{audio.currentTime=0;}catch(e){}
 }
 
@@ -1944,11 +1960,13 @@ function awardSarabandaPoint(){
   p.score=(p.score||0)+1;
   const local=players.find(pl=>pl.uid&&pl.uid===p.uid)||players.find(pl=>pl.id===p.id);
   if(local)awardPlayerPoints(local.id,1,'sarabanda');
+  const audio=document.getElementById('sara-audio');
+  sarabandaState.resumeAt=audio?.currentTime||sarabandaState.resumeAt||0;
   sarabandaState.revealed=true;
   sarabandaState.fullPlay=true;
   setSarabandaMessage(`Punto a ${p.name}!`);
   renderSarabanda();
-  playFullSarabandaTrack();
+  playFullSarabandaTrack(true);
   syncSarabandaState();
 }
 
@@ -1962,11 +1980,13 @@ function wrongSarabandaAnswer(){
 function revealSarabandaTrack(){
   const track=getCurrentSarabandaTrack();
   if(!track)return;
+  const audio=document.getElementById('sara-audio');
+  sarabandaState.resumeAt=audio?.currentTime||sarabandaState.resumeAt||0;
   sarabandaState.revealed=true;
   sarabandaState.fullPlay=true;
   setSarabandaMessage(`${track.title} - ${track.artist}`);
   renderSarabanda();
-  playFullSarabandaTrack();
+  playFullSarabandaTrack(true);
   syncSarabandaState();
 }
 
@@ -1980,6 +2000,7 @@ function nextSarabandaTrack(){
   sarabandaState.activePid=nextPlayer?.id||null;
   sarabandaState.revealed=false;
   sarabandaState.fullPlay=false;
+  sarabandaState.resumeAt=0;
   sarabandaState.message=`Turno di ${nextPlayer?.name||'Giocatore'}.`;
   renderSarabanda();
   playSarabandaPreview();
