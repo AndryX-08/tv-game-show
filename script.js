@@ -1155,6 +1155,10 @@ function chooseHomeMode(mode){
     updatePresenceState({currentGame:'menu'});
     return;
   }
+  if(currentLobbyCode)Promise.resolve(leaveCurrentLobby()).catch(err=>console.error('Errore uscita lobby:',err));
+  currentLobbyCode=null;
+  currentLobby=null;
+  lobbyRef=null;
   document.getElementById('homeChoiceGrid')?.classList.add('hidden');
   document.getElementById('lobbySetupPanel')?.classList.add('hidden');
   document.getElementById('gameCardsSection')?.classList.remove('hidden');
@@ -1490,7 +1494,7 @@ function joinInvitedGame(invite){
 
 /* ── GAME START ── */
 function startGame(game,options={}){
-  if(currentLobbyCode&&currentLobby&&!options.fromLobby){
+  if(selectedPlayMode==='online'&&currentLobbyCode&&currentLobby&&!options.fromLobby){
     startLobbyGame(game);
     return;
   }
@@ -3838,13 +3842,19 @@ async function startLobbyGame(game){
   if(!allReady&&!confirm('Non tutti sono pronti. Avvia comunque?'))return;
   try{
     const launchPayload=await createLobbyLaunchPayload(selectedGame);
-    await lobbyRef.update(stripUndefined({
+    const launchKey=`${Date.now()}-${Math.random().toString(36).slice(2,7)}`;
+    const launchUpdate=stripUndefined({
       selectedGame,
       launchPayload,
       status:'inGame',
-      launchKey:`${Date.now()}-${Math.random().toString(36).slice(2,7)}`,
+      launchKey,
       updatedAt:firebase.database.ServerValue.TIMESTAMP
-    }));
+    });
+    await lobbyRef.update(launchUpdate);
+    currentLobby={...(currentLobby||{}),...launchUpdate};
+    lastHandledLobbyLaunch=launchKey;
+    syncPlayersFromLobby();
+    startLobbyGameDirect(selectedGame);
   }catch(err){
     console.error('Errore avvio gioco lobby:',err);
     alert('Non sono riuscito ad avviare il gioco online. Controlla la connessione e riprova.');
