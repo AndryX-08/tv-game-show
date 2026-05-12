@@ -408,6 +408,18 @@ function escapeHtml(value){
     "'":'&#39;'
   }[ch]));
 }
+function stripUndefined(value){
+  if(Array.isArray(value))return value.map(stripUndefined).filter(v=>v!==undefined);
+  if(value&&typeof value==='object'){
+    return Object.fromEntries(
+      Object.entries(value)
+        .filter(([,v])=>v!==undefined)
+        .map(([k,v])=>[k,stripUndefined(v)])
+        .filter(([,v])=>v!==undefined)
+    );
+  }
+  return value===undefined?undefined:value;
+}
 function getTimer(g){return parseInt(document.getElementById('timer-'+g).value)||30}
 function getTabooTimer(){return parseInt(document.getElementById('timer-taboo')?.value)||60}
 function getGameNameFromScreen(id){
@@ -1146,6 +1158,7 @@ function chooseHomeMode(mode){
   document.getElementById('homeChoiceGrid')?.classList.add('hidden');
   document.getElementById('lobbySetupPanel')?.classList.add('hidden');
   document.getElementById('gameCardsSection')?.classList.remove('hidden');
+  document.querySelectorAll('#gameCardsSection .game-card').forEach(card=>card.classList.remove('disabled'));
   updatePresenceState({currentGame:'menu',currentLobby:''});
   goTo('s-setup');
 }
@@ -3808,24 +3821,34 @@ async function createLobbyLaunchPayload(game){
     const bank=await loadQuestionBank('guesswho',GUESS_WHO_CHARACTERS);
     payload.characters=shuffleArray([...bank]).slice(0,GUESS_WHO_ROUNDS);
   }
-  return payload;
+  return stripUndefined(payload);
 }
 
 async function startLobbyGame(game){
   if(!currentLobby||!lobbyRef||currentLobby.hostUid!==currentUser?.uid)return;
   const lobbyPlayers=Object.values(currentLobby.players||{});
   if(!lobbyPlayers.length)return;
+  const selectedGame=game||currentLobby.selectedGame||'aua';
+  const needsTwo=['eredita','intesa','ruota','catena','sarabanda'].includes(selectedGame);
+  if(needsTwo&&lobbyPlayers.filter(p=>p.online!==false).length<2){
+    alert('Servono almeno due giocatori online in lobby per avviare questo gioco.');
+    return;
+  }
   const allReady=lobbyPlayers.every(p=>p.uid===currentUser.uid||p.ready);
   if(!allReady&&!confirm('Non tutti sono pronti. Avvia comunque?'))return;
-  const selectedGame=game||currentLobby.selectedGame||'aua';
-  const launchPayload=await createLobbyLaunchPayload(selectedGame);
-  lobbyRef.update({
-    selectedGame,
-    launchPayload,
-    status:'inGame',
-    launchKey:`${Date.now()}-${Math.random().toString(36).slice(2,7)}`,
-    updatedAt:firebase.database.ServerValue.TIMESTAMP
-  });
+  try{
+    const launchPayload=await createLobbyLaunchPayload(selectedGame);
+    await lobbyRef.update(stripUndefined({
+      selectedGame,
+      launchPayload,
+      status:'inGame',
+      launchKey:`${Date.now()}-${Math.random().toString(36).slice(2,7)}`,
+      updatedAt:firebase.database.ServerValue.TIMESTAMP
+    }));
+  }catch(err){
+    console.error('Errore avvio gioco lobby:',err);
+    alert('Non sono riuscito ad avviare il gioco online. Controlla la connessione e riprova.');
+  }
 }
 
 function inviteFriendToLobby(uid){
