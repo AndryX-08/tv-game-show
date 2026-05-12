@@ -1362,11 +1362,21 @@ async function createGameSession(game,state={}){
 
 function updateGameSession(state){
   if(!activeGameSessionId||!currentUser||!window.db||applyingRemoteWheelState||applyingRemoteSessionState)return;
-  db.collection('gameSessions').doc(activeGameSessionId).set({
+  const data={
     state,
     updatedBy:currentUser.uid,
     updatedAt:firebase.firestore.FieldValue.serverTimestamp()
-  },{merge:true}).catch(err=>console.error('Errore sync sessione gioco:',err));
+  };
+  const ref=db.collection('gameSessions').doc(activeGameSessionId);
+  ref.update(data).catch(()=>{
+    ref.set(data,{merge:true}).catch(err=>console.error('Errore sync sessione gioco:',err));
+  });
+}
+
+function hasMeaningfulSessionState(state){
+  if(!state||typeof state!=='object')return false;
+  if(state.pendingLaunch)return false;
+  return Object.keys(state).length>0;
 }
 
 function listenGameSession(sessionId){
@@ -1377,6 +1387,7 @@ function listenGameSession(sessionId){
     if(!doc.exists)return;
     const data=doc.data();
     if(data.updatedBy&&data.updatedBy===currentUser?.uid)return;
+    if(!hasMeaningfulSessionState(data.state))return;
     activeGameSessionGame=data.game||activeGameSessionGame;
     if(data.game==='ruota'&&data.state)applyRemoteWheelState(data.state);
     if(data.game==='catena'&&data.state)applyRemoteChainState(data.state);
@@ -3056,6 +3067,7 @@ async function beginWheel(options={}){
   document.getElementById('wheel-solution-input').value='';
   goTo('s-wheel');
   showWheelTurnNotice();
+  syncWheelState();
   if(!options.fromInvite){
     const starter=players.find(p=>p.id===selWheelPid);
     const participants=getOnlineParticipants();
@@ -3769,7 +3781,7 @@ async function createLobbyLaunchPayload(game){
   const payload={participantUids,starterUid:p1Uid,p1Uid,p2Uid};
   let sessionId=null;
   if(['ruota','eredita','intesa','catena','sarabanda','guesswho'].includes(game)){
-    sessionId=await createGameSession(game,{});
+    sessionId=await createGameSession(game,{pendingLaunch:true});
     payload.sessionId=sessionId;
   }
   if(game==='ruota'){
