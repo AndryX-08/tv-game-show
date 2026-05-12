@@ -1599,36 +1599,46 @@ function startLobbyGameDirect(game){
   if(!players.length)return;
   selectedPlayMode='online';
   currentStatsGame=game;
+  const payload=currentLobby?.launchPayload||{};
+  const participantUids=payload.participantUids||players.map(p=>p.uid).filter(Boolean);
   updatePresenceState({currentGame:game,currentLobby:currentLobbyCode||''});
   if(!currentLobbyCode||currentLobby?.hostUid===currentUser?.uid)updateUserGameStats(game);
   if(game==='aua'){
-    selPid=(players.find(p=>p.uid===currentUser?.uid)||players[0])?.id||null;
+    selPid=(players.find(p=>p.uid===payload.starterUid)||players.find(p=>p.uid===currentUser?.uid)||players[0])?.id||null;
     beginAUA();
     return;
   }
   if(game==='taboo'){
-    selTabooPid=(players.find(p=>p.uid===currentUser?.uid)||players[0])?.id||null;
+    selTabooPid=(players.find(p=>p.uid===payload.starterUid)||players.find(p=>p.uid===currentUser?.uid)||players[0])?.id||null;
     beginTaboo();
     return;
   }
   if(game==='ruota'){
-    selWheelPid=(players.find(p=>p.uid===currentUser?.uid)||players[0])?.id||null;
-    beginWheel({fromInvite:true,participantUids:players.map(p=>p.uid).filter(Boolean)});
+    selWheelPid=(players.find(p=>p.uid===payload.starterUid)||players[0])?.id||null;
+    beginWheel({
+      fromInvite:true,
+      sessionId:payload.sessionId,
+      phrase:payload.phrase,
+      category:payload.category,
+      participantUids
+    });
     return;
   }
   if(['eredita','intesa','catena'].includes(game)){
     if(players.length<2){alert('Servono almeno due giocatori in lobby.');return;}
-    selP1=players[0].id;
-    selP2=players[1].id;
-    selChainP1=players[0].id;
-    selChainP2=players[1].id;
-    if(game==='eredita')beginEredita({fromInvite:true});
-    if(game==='intesa')beginIntesa({fromInvite:true});
-    if(game==='catena')beginChain({fromInvite:true});
+    const p1=players.find(p=>p.uid===payload.p1Uid)||players[0];
+    const p2=players.find(p=>p.uid===payload.p2Uid)||players.find(p=>p.id!==p1.id)||players[1];
+    selP1=p1?.id||players[0].id;
+    selP2=p2?.id||players[1].id;
+    selChainP1=selP1;
+    selChainP2=selP2;
+    if(game==='eredita')beginEredita({fromInvite:true,sessionId:payload.sessionId,words:payload.words,revOrders:payload.revOrders});
+    if(game==='intesa')beginIntesa({fromInvite:true,sessionId:payload.sessionId});
+    if(game==='catena')beginChain({fromInvite:true,sessionId:payload.sessionId,round:payload.round});
     return;
   }
-  if(game==='sarabanda')beginSarabanda({fromInvite:true,participantUids:players.map(p=>p.uid).filter(Boolean)});
-  if(game==='guesswho')beginGuessWho({fromInvite:true,participantUids:players.map(p=>p.uid).filter(Boolean)});
+  if(game==='sarabanda')beginSarabanda({fromInvite:true,sessionId:payload.sessionId,tracks:payload.tracks,participantUids});
+  if(game==='guesswho')beginGuessWho({fromInvite:true,sessionId:payload.sessionId,characters:payload.characters,participantUids});
 }
 function selPick1(id){
   selPid=id;
@@ -3751,15 +3761,55 @@ async function leaveCurrentLobby(){
   updatePresenceState({currentLobby:'',currentGame:'menu'});
 }
 
-function startLobbyGame(game){
+async function createLobbyLaunchPayload(game){
+  const lobbyPlayers=Object.values(currentLobby?.players||{});
+  const participantUids=lobbyPlayers.map(p=>p.uid).filter(Boolean);
+  const p1Uid=participantUids[0]||currentUser?.uid||null;
+  const p2Uid=participantUids.find(uid=>uid!==p1Uid)||participantUids[1]||null;
+  const payload={participantUids,starterUid:p1Uid,p1Uid,p2Uid};
+  let sessionId=null;
+  if(['ruota','eredita','intesa','catena','sarabanda','guesswho'].includes(game)){
+    sessionId=await createGameSession(game,{});
+    payload.sessionId=sessionId;
+  }
+  if(game==='ruota'){
+    const phrases=await loadQuestionBank('ruota',WHEEL_PHRASES);
+    const phrase=phrases[Math.floor(Math.random()*phrases.length)]||WHEEL_PHRASES[0];
+    payload.phrase=phrase.text;
+    payload.category=phrase.cat;
+  }
+  if(game==='eredita'){
+    const words=await loadQuestionBank('eredita',ERE_WORDS);
+    const wordList=[...words].sort(()=>Math.random()-.5);
+    payload.words=wordList;
+    payload.revOrders=wordList.map(w=>w.word.split('').map((l,i)=>({l,i})).filter(x=>x.l!==' ').sort(()=>Math.random()-.5).map(x=>x.i));
+  }
+  if(game==='catena'){
+    const rounds=await loadQuestionBank('catena',CHAIN_ROUNDS);
+    payload.round=rounds[Math.floor(Math.random()*rounds.length)]||CHAIN_ROUNDS[0];
+  }
+  if(game==='sarabanda'){
+    const tracks=(await loadQuestionBank('sarabanda',SARABANDA_TRACKS)).filter(t=>t&&t.src);
+    payload.tracks=shuffleArray([...tracks]).slice(0,5);
+  }
+  if(game==='guesswho'){
+    const bank=await loadQuestionBank('guesswho',GUESS_WHO_CHARACTERS);
+    payload.characters=shuffleArray([...bank]).slice(0,GUESS_WHO_ROUNDS);
+  }
+  return payload;
+}
+
+async function startLobbyGame(game){
   if(!currentLobby||!lobbyRef||currentLobby.hostUid!==currentUser?.uid)return;
   const lobbyPlayers=Object.values(currentLobby.players||{});
   if(!lobbyPlayers.length)return;
   const allReady=lobbyPlayers.every(p=>p.uid===currentUser.uid||p.ready);
   if(!allReady&&!confirm('Non tutti sono pronti. Avvia comunque?'))return;
   const selectedGame=game||currentLobby.selectedGame||'aua';
+  const launchPayload=await createLobbyLaunchPayload(selectedGame);
   lobbyRef.update({
     selectedGame,
+    launchPayload,
     status:'inGame',
     launchKey:`${Date.now()}-${Math.random().toString(36).slice(2,7)}`,
     updatedAt:firebase.database.ServerValue.TIMESTAMP
