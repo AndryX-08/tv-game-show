@@ -30,41 +30,18 @@ let intesaWinner=null;
 let intesaPlayers={p1:null,p2:null};
 let globalLeaderboard=[];
 let registeredUsers=[];
-let userPresenceMap={};
 let currentUserProfile=null;
 let currentUserLeaderboard=null;
 let pendingGameInvite=null;
-let pendingPlayModeGame=null,selectedPlayMode='';
+let pendingPlayModeGame=null,selectedPlayMode='local';
 let activeGameSessionId=null,activeGameSessionGame=null,unsubscribeGameSession=null,applyingRemoteWheelState=false,applyingRemoteSessionState=false;
 let unsubscribeLeaderboard=null,unsubscribeRegisteredUsers=null,unsubscribeCurrentUserProfile=null,unsubscribeCurrentUserLeaderboard=null,unsubscribeGameInvites=null;
-let presenceRef=null,presenceConnectedRef=null,presenceConnectedCallback=null,allPresenceRef=null,lobbyRef=null,currentLobbyCode=null,currentLobby=null,lastHandledLobbyLaunch=null;
-let currentStatsGame=null;
 let tabooScoreEventsRef=null,tabooScoreEventsStartedAt=Date.now(),processedTabooScoreEvents=new Set();
 let auaAudio=null,auaErrorAudio=null,auaAutoStartListener=null,auaAutoStarted=false,auaThemeResumeTime=0;
 let rdfAudio=null,rdfAutoStartListener=null,rdfAutoStarted=false;
 let ttsVoices=[];
 let ttsVoiceURI=localStorage.getItem('tvgn-tts-voice')||'';
 let ttsRate=parseFloat(localStorage.getItem('tvgn-tts-rate'))||.9;
-
-const AVATAR_PRESETS=[
-  {label:'TV',bg:'linear-gradient(135deg,#F5C518,#E74C3C)'},
-  {label:'GN',bg:'linear-gradient(135deg,#3498DB,#9B59B6)'},
-  {label:'VIP',bg:'linear-gradient(135deg,#2ECC71,#1ABC9C)'},
-  {label:'QUIZ',bg:'linear-gradient(135deg,#F39C12,#F5C518)'},
-  {label:'STAR',bg:'linear-gradient(135deg,#ECF0F1,#3498DB)'},
-  {label:'PLAY',bg:'linear-gradient(135deg,#E74C3C,#9B59B6)'},
-  {label:'WIN',bg:'linear-gradient(135deg,#2ECC71,#F5C518)'},
-  {label:'GO',bg:'linear-gradient(135deg,#1ABC9C,#3498DB)'}
-];
-
-const DEFAULT_STATS={
-  gamesPlayed:0,
-  wins:0,
-  totalScore:0,
-  gamesByType:{},
-  favoriteGame:'—',
-  lastGame:'—'
-};
 
 const AUA_Q=[
 {q:"Di che colore è il cielo sereno?",a:["Verde","Blu"],wrong:"Verde"},
@@ -396,7 +373,6 @@ function goTo(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   if(id==='s-setup')initTtsControls();
-  updatePresenceState({currentScreen:id,currentGame:getGameNameFromScreen(id)});
 }
 function initials(n){return n.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)}
 function escapeHtml(value){
@@ -408,31 +384,8 @@ function escapeHtml(value){
     "'":'&#39;'
   }[ch]));
 }
-function stripUndefined(value){
-  if(Array.isArray(value))return value.map(stripUndefined).filter(v=>v!==undefined);
-  if(value&&typeof value==='object'){
-    return Object.fromEntries(
-      Object.entries(value)
-        .filter(([,v])=>v!==undefined)
-        .map(([k,v])=>[k,stripUndefined(v)])
-        .filter(([,v])=>v!==undefined)
-    );
-  }
-  return value===undefined?undefined:value;
-}
 function getTimer(g){return parseInt(document.getElementById('timer-'+g).value)||30}
 function getTabooTimer(){return parseInt(document.getElementById('timer-taboo')?.value)||60}
-function getGameNameFromScreen(id){
-  if(['s-hero','s-setup','s-pick','s-pick2','s-pick-wheel','s-pick-chain','s-pick-taboo'].includes(id))return 'menu';
-  if(id==='s-aua')return 'aua';
-  if(id==='s-eredita')return 'eredita';
-  if(id==='s-wheel')return 'ruota';
-  if(id==='s-chain')return 'catena';
-  if(id==='s-sarabanda')return 'sarabanda';
-  if(id==='s-guesswho')return 'guesswho';
-  if(id==='s-intesa-score')return 'intesa';
-  return 'menu';
-}
 function initTtsControls(){
   const rate=document.getElementById('tts-rate');
   if(rate)rate.value=ttsRate;
@@ -624,8 +577,7 @@ function addRegisteredPlayer(){
     ci:players.length%TC.length,
     uid,
     isAnonymous:!!user.isAnonymous,
-    photoURL:user.photoURL||null,
-    avatar:normalizeAvatar(user,user.name||uid)
+    photoURL:user.photoURL||null
   });
   select.value='';
   renderPlayers();
@@ -646,7 +598,7 @@ function renderPlayers(){
     const tag=t?`<span class="chip-tag" style="background:${t.color.light};color:${t.color.hex}">${escapeHtml(t.name)}</span>`:'';
     const onlineTag=p.uid?`<span class="chip-tag" style="background:rgba(46,204,113,.14);color:#2ECC71">Firestore</span>`:'';
     return `<div class="chip"><div class="chip-left">
-      ${p.avatar?renderAvatarHtml(p.avatar,'avatar'):`<div class="avatar" style="background:${c.light};color:${c.hex}">${initials(p.name)}</div>`}
+      <div class="avatar" style="background:${c.light};color:${c.hex}">${initials(p.name)}</div>
       <span class="chip-name">${escapeHtml(p.name)}</span>${onlineTag}${tag}
     </div><button class="btn-rm" onclick="removePlayer(${p.id})">✕</button></div>`;
   }).join('');
@@ -766,69 +718,14 @@ function getProfileDisplayName(profile={},user=currentUser){
   return fullName||profile.name||getUserDisplayName(user);
 }
 
-function randomAvatar(excludeLabel=''){
-  const pool=AVATAR_PRESETS.filter(a=>a.label!==excludeLabel);
-  return {...(pool[Math.floor(Math.random()*pool.length)]||AVATAR_PRESETS[0])};
-}
-
-function stableAvatarPreset(seed='TV'){
-  const text=String(seed||'TV');
-  let hash=0;
-  for(let i=0;i<text.length;i++)hash=(hash*31+text.charCodeAt(i))>>>0;
-  return AVATAR_PRESETS[hash%AVATAR_PRESETS.length]||AVATAR_PRESETS[0];
-}
-
-function normalizeAvatar(profile={},fallbackName='TV'){
-  if(profile.avatar?.label&&profile.avatar?.bg)return profile.avatar;
-  const label=initials(fallbackName||profile.nickname||profile.name||'TV')||randomAvatar().label;
-  return {label,bg:stableAvatarPreset(profile.uid||profile.id||fallbackName||label).bg};
-}
-
-function renderAvatarHtml(avatar={},className='friend-avatar'){
-  const safe=normalizeAvatar({avatar},avatar.label||'TV');
-  return `<div class="${className}" style="background:${escapeHtml(safe.bg)}">${escapeHtml(safe.label)}</div>`;
-}
-
-function getUserStats(profile={},leaderboard={}){
-  const source={...DEFAULT_STATS,...(profile.stats||{})};
-  const totalScore=leaderboard.totalScore ?? profile.totalScore ?? source.totalScore ?? 0;
-  const gamesByType=source.gamesByType||{};
-  const favoriteKey=Object.entries(gamesByType).sort((a,b)=>(b[1]||0)-(a[1]||0))[0]?.[0];
-  return {
-    ...source,
-    totalScore,
-    gamesPlayed:source.gamesPlayed||0,
-    wins:source.wins||0,
-    favoriteGame:favoriteKey?getGameLabel(favoriteKey):source.favoriteGame||'—',
-    lastGame:source.lastGame||'—'
-  };
-}
-
-function getGameLabel(game){
-  const labels={
-    aua:'Avanti un Altro',
-    eredita:"L'Eredita",
-    intesa:"L'Intesa Vincente",
-    ruota:'La Ruota',
-    catena:'Reazione a Catena',
-    sarabanda:'Sarabanda',
-    guesswho:'Indovina Chi',
-    taboo:'Taboo',
-    menu:'Nel menu'
-  };
-  return labels[game]||game||'—';
-}
-
 function addCurrentUserAsPlayer(user=currentUser){
   if(!user)return;
-  const name=getProfileDisplayName(currentUserProfile||{},user);
-  const avatar=normalizeAvatar(currentUserProfile||{},name);
+  const name=getUserDisplayName(user);
   const existing=players.find(p=>p.uid===user.uid);
   if(existing){
     existing.name=name;
     existing.isAnonymous=!!user.isAnonymous;
     existing.photoURL=user.photoURL||null;
-    existing.avatar=avatar;
     renderPlayers();
     renderTeamSection();
     renderRegisteredUserSelect();
@@ -842,8 +739,7 @@ function addCurrentUserAsPlayer(user=currentUser){
     ci:players.length%TC.length,
     uid:user.uid,
     isAnonymous:!!user.isAnonymous,
-    photoURL:user.photoURL||null,
-    avatar
+    photoURL:user.photoURL||null
   });
   renderPlayers();
   renderTeamSection();
@@ -851,7 +747,7 @@ function addCurrentUserAsPlayer(user=currentUser){
 }
 
 function savePlayerScoreOnline(player,points,source='game'){
-  if(selectedPlayMode!=='online'||!player?.uid||!currentUser||!window.db)return;
+  if(!player?.uid||!currentUser||!window.db)return;
   const value=Number(points)||0;
   if(!value)return;
   const now=firebase.firestore.FieldValue.serverTimestamp();
@@ -860,7 +756,6 @@ function savePlayerScoreOnline(player,points,source='game'){
     name:player.name||'Anonimo',
     isAnonymous:!!player.isAnonymous,
     photoURL:player.photoURL||null,
-    avatar:player.avatar||normalizeAvatar({},player.name),
     updatedAt:now
   };
   const targetUid=player.uid;
@@ -876,49 +771,15 @@ function savePlayerScoreOnline(player,points,source='game'){
   batch.commit().catch(err=>console.error('Errore salvataggio punti Firestore:',err));
 }
 
-function updateUserGameStats(game,{winnerUid=null,countPlayed=true}={}){
-  if(!game||!window.db)return;
-  const now=firebase.firestore.FieldValue.serverTimestamp();
-  if(!countPlayed){
-    if(winnerUid){
-      db.collection('users').doc(winnerUid).set({
-        'stats.wins':firebase.firestore.FieldValue.increment(1),
-        updatedAt:now
-      },{merge:true}).catch(err=>console.error('Errore aggiornamento vittorie:',err));
-    }
-    return;
-  }
-  const batch=db.batch();
-  getOnlineParticipants().forEach(participant=>{
-    const profile=participant.uid===currentUser?.uid?currentUserProfile:(registeredUsers.find(u=>u.uid===participant.uid)||{});
-    const stats=getUserStats(profile,{});
-    const gamesByType={...(stats.gamesByType||{})};
-    if(countPlayed)gamesByType[game]=(gamesByType[game]||0)+1;
-    const nextStats={
-      ...stats,
-      gamesPlayed:(stats.gamesPlayed||0)+(countPlayed?1:0),
-      wins:(stats.wins||0)+(participant.uid&&participant.uid===winnerUid?1:0),
-      gamesByType,
-      favoriteGame:getGameLabel(Object.entries(gamesByType).sort((a,b)=>b[1]-a[1])[0]?.[0]),
-      lastGame:getGameLabel(game)
-    };
-    batch.set(db.collection('users').doc(participant.uid),{stats:nextStats,updatedAt:now},{merge:true});
-  });
-  batch.commit().catch(err=>console.error('Errore aggiornamento statistiche:',err));
-}
-
 function saveUserIfNew(user){
   if(!user||!window.db)return Promise.resolve();
   const now=firebase.firestore.FieldValue.serverTimestamp();
   const authName=getUserDisplayName(user);
-  const avatar=randomAvatar();
   const freshData={
     name:authName,
     firstName:'',
     lastName:'',
     nickname:'',
-    avatar,
-    stats:{...DEFAULT_STATS},
     isAnonymous:user.isAnonymous,
     photoURL:user.photoURL||null,
     updatedAt:now
@@ -931,16 +792,10 @@ function saveUserIfNew(user){
   const userRef=db.collection('users').doc(user.uid);
   const leaderboardRef=db.collection('leaderboard').doc(user.uid);
   return userRef.get().then(doc=>{
-    const existing=doc.exists?doc.data():null;
-    const base=doc.exists?{
-      ...existingData,
-      avatar:existing?.avatar||avatar,
-      stats:{...DEFAULT_STATS,...(existing?.stats||{})}
-    }:{...freshData,createdAt:now,totalScore:0};
+    const base=doc.exists?existingData:{...freshData,createdAt:now,totalScore:0};
     return userRef.set(base,{merge:true});
   }).then(()=>leaderboardRef.get()).then(doc=>{
-    const existing=doc.exists?doc.data():null;
-    const base=doc.exists?{...existingData,avatar:existing?.avatar||avatar}:{...freshData,totalScore:0};
+    const base=doc.exists?existingData:{...freshData,totalScore:0};
     return leaderboardRef.set(base,{merge:true});
   }).catch(err=>console.error('Errore salvataggio utente Firestore:',err));
 }
@@ -965,7 +820,6 @@ function loadRegisteredUsers(){
     .onSnapshot(snapshot=>{
       registeredUsers=snapshot.docs.map(doc=>({id:doc.id,uid:doc.id,...doc.data()}));
       renderRegisteredUserSelect();
-      renderFriendsList();
     },err=>{
       console.error('Errore profili registrati Firestore:',err);
       renderRegisteredUserSelect();
@@ -983,23 +837,14 @@ function listenCurrentUserProfile(user){
   }
   unsubscribeCurrentUserProfile=db.collection('users').doc(user.uid).onSnapshot(doc=>{
     currentUserProfile=doc.exists?{id:doc.id,...doc.data()}:null;
-    if(currentUserProfile&&!currentUserProfile.avatar){
-      const avatar=randomAvatar();
-      db.collection('users').doc(user.uid).set({avatar,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
-      db.collection('leaderboard').doc(user.uid).set({avatar,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
-      currentUserProfile.avatar=avatar;
-    }
     const displayName=getProfileDisplayName(currentUserProfile||{},user);
     const player=players.find(p=>p.uid===user.uid);
     if(player){
       player.name=displayName;
-      player.avatar=normalizeAvatar(currentUserProfile||{},displayName);
       renderPlayers();
       renderTeamSection();
     }
     updateUserUI(user);
-    updatePresenceState({name:displayName,avatar:normalizeAvatar(currentUserProfile||{},displayName)});
-    refreshCurrentLobbyPlayer();
     hydrateProfilePopup();
   },err=>console.error('Errore profilo utente Firestore:',err));
   unsubscribeCurrentUserLeaderboard=db.collection('leaderboard').doc(user.uid).onSnapshot(doc=>{
@@ -1015,25 +860,6 @@ function openProfilePopup(){
   if(overlay)overlay.classList.remove('hidden');
 }
 
-function toggleUserMenu(){
-  const menu=document.getElementById('userMenu');
-  if(menu)menu.classList.toggle('open');
-}
-
-function closeUserMenu(){
-  document.getElementById('userMenu')?.classList.remove('open');
-}
-
-function openProfileFromMenu(){
-  closeUserMenu();
-  openProfilePopup();
-}
-
-function openFriendsFromMenu(){
-  closeUserMenu();
-  openFriendsPopup();
-}
-
 function closeProfilePopup(){
   document.getElementById('profileOverlay')?.classList.add('hidden');
 }
@@ -1041,35 +867,14 @@ function closeProfilePopup(){
 function hydrateProfilePopup(){
   const profile=currentUserProfile||{};
   const leaderboard=currentUserLeaderboard||{};
-  const displayName=getProfileDisplayName(profile,currentUser);
-  const fullName=[profile.firstName,profile.lastName].filter(Boolean).join(' ').trim()||profile.name||getUserDisplayName(currentUser);
-  const avatar=normalizeAvatar(profile,displayName);
-  const stats=getUserStats(profile,leaderboard);
-  const avatarEl=document.getElementById('profileAvatar');
-  const heroNickname=document.getElementById('profileHeroNickname');
-  const heroName=document.getElementById('profileHeroName');
   const firstName=document.getElementById('profileFirstName');
   const lastName=document.getElementById('profileLastName');
   const nickname=document.getElementById('profileNickname');
   const totalScore=document.getElementById('profileTotalScore');
-  if(avatarEl){
-    avatarEl.textContent=avatar.label;
-    avatarEl.style.background=avatar.bg;
-  }
-  if(heroNickname)heroNickname.textContent=displayName;
-  if(heroName)heroName.textContent=fullName;
   if(firstName)firstName.value=profile.firstName||'';
   if(lastName)lastName.value=profile.lastName||'';
   if(nickname)nickname.value=profile.nickname||'';
-  if(totalScore)totalScore.textContent=stats.totalScore||0;
-  const gamesPlayed=document.getElementById('profileGamesPlayed');
-  const wins=document.getElementById('profileWins');
-  const favoriteGame=document.getElementById('profileFavoriteGame');
-  const lastGame=document.getElementById('profileLastGame');
-  if(gamesPlayed)gamesPlayed.textContent=stats.gamesPlayed||0;
-  if(wins)wins.textContent=stats.wins||0;
-  if(favoriteGame)favoriteGame.textContent=stats.favoriteGame||'—';
-  if(lastGame)lastGame.textContent=stats.lastGame||'—';
+  if(totalScore)totalScore.textContent=leaderboard.totalScore ?? profile.totalScore ?? 0;
 }
 
 function normalizeNickname(value){
@@ -1089,8 +894,6 @@ function saveProfilePopup(){
     lastName,
     nickname,
     name:displayName,
-    avatar:normalizeAvatar(currentUserProfile||{},displayName),
-    stats:{...DEFAULT_STATS,...(currentUserProfile?.stats||{})},
     isAnonymous:currentUser.isAnonymous,
     photoURL:currentUser.photoURL||null,
     updatedAt:firebase.firestore.FieldValue.serverTimestamp()
@@ -1101,22 +904,6 @@ function saveProfilePopup(){
   batch.commit().then(()=>{
     return currentUser.updateProfile?currentUser.updateProfile({displayName}):null;
   }).catch(err=>console.error('Errore salvataggio profilo:',err)).finally(closeProfilePopup);
-}
-
-function changeProfileAvatar(){
-  if(!currentUser||!window.db)return;
-  const currentLabel=currentUserProfile?.avatar?.label||'';
-  const avatar=randomAvatar(currentLabel);
-  const data={avatar,updatedAt:firebase.firestore.FieldValue.serverTimestamp()};
-  const batch=db.batch();
-  batch.set(db.collection('users').doc(currentUser.uid),data,{merge:true});
-  batch.set(db.collection('leaderboard').doc(currentUser.uid),data,{merge:true});
-  batch.commit().then(()=>{
-    currentUserProfile={...(currentUserProfile||{}),avatar};
-    hydrateProfilePopup();
-    updatePresenceState({avatar});
-    refreshCurrentLobbyPlayer();
-  }).catch(err=>console.error('Errore cambio avatar:',err));
 }
 
 const GAME_LABELS={
@@ -1144,36 +931,6 @@ function showPlayModePopup(game){
 
 function closePlayModePopup(){
   document.getElementById('playModeOverlay')?.classList.add('hidden');
-}
-
-function chooseHomeMode(mode){
-  selectedPlayMode=mode==='online'?'online':'local';
-  if(selectedPlayMode==='online'){
-    document.getElementById('homeChoiceGrid')?.classList.add('hidden');
-    document.getElementById('lobbySetupPanel')?.classList.remove('hidden');
-    document.getElementById('gameCardsSection')?.classList.add('hidden');
-    updatePresenceState({currentGame:'menu'});
-    return;
-  }
-  if(currentLobbyCode)Promise.resolve(leaveCurrentLobby()).catch(err=>console.error('Errore uscita lobby:',err));
-  currentLobbyCode=null;
-  currentLobby=null;
-  lobbyRef=null;
-  document.getElementById('homeChoiceGrid')?.classList.add('hidden');
-  document.getElementById('lobbySetupPanel')?.classList.add('hidden');
-  document.getElementById('gameCardsSection')?.classList.remove('hidden');
-  document.querySelectorAll('#gameCardsSection .game-card').forEach(card=>card.classList.remove('disabled'));
-  updatePresenceState({currentGame:'menu',currentLobby:''});
-  goTo('s-setup');
-}
-
-function resetHomeChoice(){
-  selectedPlayMode='';
-  document.getElementById('homeChoiceGrid')?.classList.remove('hidden');
-  document.getElementById('lobbySetupPanel')?.classList.add('hidden');
-  document.getElementById('activeLobbyPanel')?.classList.add('hidden');
-  document.getElementById('gameCardsSection')?.classList.add('hidden');
-  updatePresenceState({currentGame:'menu',currentLobby:currentLobbyCode||''});
 }
 
 function choosePlayMode(mode){
@@ -1284,12 +1041,8 @@ function showGameInvitePopup(invite){
   const text=document.getElementById('gameInviteText');
   const overlay=document.getElementById('gameInviteOverlay');
   if(text){
-    if(invite.type==='lobby'){
-      text.textContent=`${invite.fromName||'Un giocatore'} ti ha invitato nella lobby ${invite.lobbyCode}. Vuoi partecipare?`;
-    }else{
     const label=GAME_LABELS[invite.game]||invite.game||'un gioco';
     text.textContent=`${invite.fromName||'Un giocatore'} ti ha invitato a giocare ${label}. Vuoi partecipare?`;
-    }
   }
   if(overlay)overlay.classList.remove('hidden');
 }
@@ -1319,11 +1072,6 @@ function acceptGameInvite(){
   pendingGameInvite=null;
   selectedPlayMode='online';
   closeGameInvitePopup();
-  if(invite.type==='lobby'&&invite.lobbyCode){
-    joinLobby(invite.lobbyCode);
-    goTo('s-hero');
-    return;
-  }
   joinInvitedGame(invite);
 }
 
@@ -1379,21 +1127,11 @@ async function createGameSession(game,state={}){
 
 function updateGameSession(state){
   if(!activeGameSessionId||!currentUser||!window.db||applyingRemoteWheelState||applyingRemoteSessionState)return;
-  const data={
+  db.collection('gameSessions').doc(activeGameSessionId).set({
     state,
     updatedBy:currentUser.uid,
     updatedAt:firebase.firestore.FieldValue.serverTimestamp()
-  };
-  const ref=db.collection('gameSessions').doc(activeGameSessionId);
-  ref.update(data).catch(()=>{
-    ref.set(data,{merge:true}).catch(err=>console.error('Errore sync sessione gioco:',err));
-  });
-}
-
-function hasMeaningfulSessionState(state){
-  if(!state||typeof state!=='object')return false;
-  if(state.pendingLaunch)return false;
-  return Object.keys(state).length>0;
+  },{merge:true}).catch(err=>console.error('Errore sync sessione gioco:',err));
 }
 
 function listenGameSession(sessionId){
@@ -1404,7 +1142,6 @@ function listenGameSession(sessionId){
     if(!doc.exists)return;
     const data=doc.data();
     if(data.updatedBy&&data.updatedBy===currentUser?.uid)return;
-    if(!hasMeaningfulSessionState(data.state))return;
     activeGameSessionGame=data.game||activeGameSessionGame;
     if(data.game==='ruota'&&data.state)applyRemoteWheelState(data.state);
     if(data.game==='catena'&&data.state)applyRemoteChainState(data.state);
@@ -1494,26 +1231,11 @@ function joinInvitedGame(invite){
 
 /* ── GAME START ── */
 function startGame(game,options={}){
-  if(selectedPlayMode==='online'&&currentLobbyCode&&currentLobby&&!options.fromLobby){
-    startLobbyGame(game);
-    return;
-  }
-  if(!selectedPlayMode&&!options.fromLobby){
-    alert('Scegli prima se giocare con lobby online o in modalita locale.');
-    return;
-  }
   if(!players.length){goTo('s-setup');return;}
-  if(options.fromLobby){
-    startLobbyGameDirect(game);
+  if(isMultiplayerGame(game)&&!options.skipModeChoice){
+    showPlayModePopup(game);
     return;
   }
-  if(selectedPlayMode==='online'&&!currentLobbyCode){
-    alert('Crea o entra in una lobby prima di scegliere un gioco online.');
-    return;
-  }
-  currentStatsGame=game;
-  updatePresenceState({currentGame:game});
-  if(selectedPlayMode==='online')updateUserGameStats(game);
   if(['eredita','intesa','ruota','catena'].includes(game)&&players.length<2){
     stopAuaAudio();
     stopRdfAudio();
@@ -1621,52 +1343,6 @@ function startGame(game,options={}){
     document.getElementById('btn-pick2-go').onclick=()=>beginEredita();
     goTo('s-pick2');
   }
-}
-
-function startLobbyGameDirect(game){
-  if(!players.length)return;
-  selectedPlayMode='online';
-  currentStatsGame=game;
-  const payload=currentLobby?.launchPayload||{};
-  const participantUids=payload.participantUids||players.map(p=>p.uid).filter(Boolean);
-  updatePresenceState({currentGame:game,currentLobby:currentLobbyCode||''});
-  if(!currentLobbyCode||currentLobby?.hostUid===currentUser?.uid)updateUserGameStats(game);
-  if(game==='aua'){
-    selPid=(players.find(p=>p.uid===payload.starterUid)||players.find(p=>p.uid===currentUser?.uid)||players[0])?.id||null;
-    beginAUA();
-    return;
-  }
-  if(game==='taboo'){
-    selTabooPid=(players.find(p=>p.uid===payload.starterUid)||players.find(p=>p.uid===currentUser?.uid)||players[0])?.id||null;
-    beginTaboo();
-    return;
-  }
-  if(game==='ruota'){
-    selWheelPid=(players.find(p=>p.uid===payload.starterUid)||players[0])?.id||null;
-    beginWheel({
-      fromInvite:true,
-      sessionId:payload.sessionId,
-      phrase:payload.phrase,
-      category:payload.category,
-      participantUids
-    });
-    return;
-  }
-  if(['eredita','intesa','catena'].includes(game)){
-    if(players.length<2){alert('Servono almeno due giocatori in lobby.');return;}
-    const p1=players.find(p=>p.uid===payload.p1Uid)||players[0];
-    const p2=players.find(p=>p.uid===payload.p2Uid)||players.find(p=>p.id!==p1.id)||players[1];
-    selP1=p1?.id||players[0].id;
-    selP2=p2?.id||players[1].id;
-    selChainP1=selP1;
-    selChainP2=selP2;
-    if(game==='eredita')beginEredita({fromInvite:true,sessionId:payload.sessionId,words:payload.words,revOrders:payload.revOrders});
-    if(game==='intesa')beginIntesa({fromInvite:true,sessionId:payload.sessionId});
-    if(game==='catena')beginChain({fromInvite:true,sessionId:payload.sessionId,round:payload.round});
-    return;
-  }
-  if(game==='sarabanda')beginSarabanda({fromInvite:true,sessionId:payload.sessionId,tracks:payload.tracks,participantUids});
-  if(game==='guesswho')beginGuessWho({fromInvite:true,sessionId:payload.sessionId,characters:payload.characters,participantUids});
 }
 function selPick1(id){
   selPid=id;
@@ -3084,7 +2760,6 @@ async function beginWheel(options={}){
   document.getElementById('wheel-solution-input').value='';
   goTo('s-wheel');
   showWheelTurnNotice();
-  syncWheelState();
   if(!options.fromInvite){
     const starter=players.find(p=>p.id===selWheelPid);
     const participants=getOnlineParticipants();
@@ -3448,10 +3123,6 @@ function awardAndWin(pid,points=1,subText=null){
   const p=players.find(p=>p.id===pid);
   const t=teams.find(t=>t.mids.includes(pid));
   awardPlayerPoints(pid,points,'manche');
-  if(currentStatsGame&&p?.uid&&(!currentLobbyCode||currentLobby?.hostUid===currentUser?.uid)){
-    updateUserGameStats(currentStatsGame,{winnerUid:p.uid,countPlayed:false});
-  }
-  currentStatsGame=null;
   document.getElementById('win-name').textContent=p?p.name:'—';
   document.getElementById('win-sub').textContent=subText||(t?`+1 punto per ${t.name}!`:'Ha vinto questa manche!');
   const sorted=[...players].sort((a,b)=>b.score-a.score);
@@ -3479,406 +3150,6 @@ function awardAndWin(pid,points=1,subText=null){
   cleanupOnlineGameArtifacts();
 }
 
-/* ── PRESENCE, FRIENDS, LOBBY ── */
-function updatePresenceState(patch={}){
-  if(!currentUser||!window.database)return;
-  const name=patch.name||getProfileDisplayName(currentUserProfile||{},currentUser);
-  const avatar=patch.avatar||normalizeAvatar(currentUserProfile||{},name);
-  const data={
-    uid:currentUser.uid,
-    name,
-    avatar,
-    online:true,
-    currentGame:patch.currentGame||undefined,
-    currentScreen:patch.currentScreen||undefined,
-    currentLobby:patch.currentLobby!==undefined?patch.currentLobby:currentLobbyCode||'',
-    updatedAt:firebase.database.ServerValue.TIMESTAMP
-  };
-  Object.keys(data).forEach(k=>data[k]===undefined&&delete data[k]);
-  database.ref(`status/${currentUser.uid}`).update(data);
-  if(window.db){
-    const fsData={online:true,currentLobby:data.currentLobby,updatedAt:firebase.firestore.FieldValue.serverTimestamp()};
-    if(data.currentGame)fsData.currentGame=data.currentGame;
-    if(data.currentScreen)fsData.currentScreen=data.currentScreen;
-    db.collection('users').doc(currentUser.uid).set(fsData,{merge:true}).catch(()=>{});
-  }
-}
-
-function setupPresence(user){
-  teardownPresence();
-  if(!user||!database)return;
-  presenceRef=database.ref(`status/${user.uid}`);
-  presenceConnectedRef=database.ref('.info/connected');
-  presenceConnectedCallback=snap=>{
-    if(!snap.val())return;
-    presenceRef.onDisconnect().update({
-      online:false,
-      currentGame:'offline',
-      currentScreen:'offline',
-      updatedAt:firebase.database.ServerValue.TIMESTAMP
-    });
-    updatePresenceState({currentGame:'menu',currentScreen:document.querySelector('.screen.active')?.id||'s-hero'});
-  };
-  presenceConnectedRef.on('value',presenceConnectedCallback);
-  allPresenceRef=database.ref('status');
-  allPresenceRef.on('value',snap=>{
-    userPresenceMap=snap.val()||{};
-    renderFriendsList();
-  });
-}
-
-function teardownPresence(){
-  if(presenceConnectedRef&&presenceConnectedCallback)presenceConnectedRef.off('value',presenceConnectedCallback);
-  if(allPresenceRef)allPresenceRef.off();
-  if(presenceRef)presenceRef.update({online:false,currentGame:'offline',currentScreen:'offline',updatedAt:firebase.database.ServerValue.TIMESTAMP}).catch(()=>{});
-  presenceRef=null;presenceConnectedRef=null;presenceConnectedCallback=null;allPresenceRef=null;
-  userPresenceMap={};
-}
-
-function openFriendsPopup(){
-  renderFriendsList();
-  document.getElementById('friendsOverlay')?.classList.remove('hidden');
-}
-
-function closeFriendsPopup(){
-  document.getElementById('friendsOverlay')?.classList.add('hidden');
-}
-
-function renderFriendsList(){
-  const el=document.getElementById('friendsList');
-  if(!el)return;
-  const q=(document.getElementById('friendsSearch')?.value||'').trim().toLowerCase();
-  const users=registeredUsers
-    .filter(u=>u.uid!==currentUser?.uid)
-    .filter(u=>{
-      const label=(u.nickname||u.name||'').toLowerCase();
-      return !q||label.includes(q);
-    })
-    .sort((a,b)=>(a.nickname||a.name||'').localeCompare(b.nickname||b.name||''));
-  if(!users.length){
-    el.innerHTML='<div class="empty">Nessun utente trovato</div>';
-    return;
-  }
-  el.innerHTML=users.map(u=>{
-    const status=userPresenceMap[u.uid]||{};
-    const online=!!status.online;
-    const game=online?(status.currentGame&&status.currentGame!=='menu'?getGameLabel(status.currentGame):'Nel menu'):'Offline';
-    const name=getProfileDisplayName(u,{uid:u.uid,displayName:u.name});
-    return `<div class="friend-row">
-      ${renderAvatarHtml(normalizeAvatar(u,name),'friend-avatar')}
-      <div>
-        <div class="friend-name">${escapeHtml(name)}</div>
-        <div class="friend-status"><span class="status-dot${online?' on':''}"></span>${escapeHtml(game)}</div>
-      </div>
-      <button class="btn-ghost" style="padding:.55rem .8rem" onclick="inviteFriendToLobby('${escapeHtml(u.uid)}')">Invita</button>
-    </div>`;
-  }).join('');
-}
-
-function generateLobbyCode(){
-  return Math.random().toString(36).replace(/[^a-z0-9]/gi,'').slice(2,8).toUpperCase().padEnd(6,'X');
-}
-
-function getCurrentLobbyPlayerData(ready=false){
-  const name=getProfileDisplayName(currentUserProfile||{},currentUser);
-  return {
-    uid:currentUser.uid,
-    name,
-    avatar:normalizeAvatar(currentUserProfile||{},name),
-    ready:!!ready,
-    online:true,
-    joinedAt:firebase.database.ServerValue.TIMESTAMP
-  };
-}
-
-async function createLobby(){
-  if(!currentUser||!database)return;
-  selectedPlayMode='online';
-  if(currentLobbyCode)await leaveCurrentLobby();
-  const code=generateLobbyCode();
-  currentLobbyCode=code;
-  lobbyRef=database.ref(`lobbies/${code}`);
-  const data={
-    code,
-    hostUid:currentUser.uid,
-    status:'waiting',
-    selectedGame:'aua',
-    createdAt:firebase.database.ServerValue.TIMESTAMP,
-    updatedAt:firebase.database.ServerValue.TIMESTAMP,
-    players:{[currentUser.uid]:getCurrentLobbyPlayerData(false)}
-  };
-  await lobbyRef.set(data);
-  lobbyRef.child(`players/${currentUser.uid}`).onDisconnect().update({online:false});
-  listenLobby(code);
-  updatePresenceState({currentLobby:code,currentGame:'menu'});
-}
-
-function joinLobbyFromInput(){
-  const code=(document.getElementById('joinLobbyCode')?.value||'').trim().toUpperCase();
-  if(code)joinLobby(code);
-}
-
-async function joinLobby(code){
-  if(!currentUser||!database)return;
-  selectedPlayMode='online';
-  if(currentLobbyCode&&currentLobbyCode!==code)await leaveCurrentLobby();
-  const ref=database.ref(`lobbies/${code}`);
-  const snap=await ref.get();
-  if(!snap.exists()){
-    alert('Lobby non trovata.');
-    return;
-  }
-  currentLobbyCode=code;
-  lobbyRef=ref;
-  await ref.child(`players/${currentUser.uid}`).set(getCurrentLobbyPlayerData(false));
-  ref.child(`players/${currentUser.uid}`).onDisconnect().update({online:false});
-  listenLobby(code);
-  updatePresenceState({currentLobby:code,currentGame:'menu'});
-}
-
-function listenLobby(code){
-  if(lobbyRef)lobbyRef.off();
-  lobbyRef=database.ref(`lobbies/${code}`);
-  lobbyRef.on('value',snap=>{
-    currentLobby=snap.val();
-    if(!currentLobby){
-      currentLobbyCode=null;
-      renderLobby();
-      updatePresenceState({currentLobby:'',currentGame:'menu'});
-      return;
-    }
-    renderLobby();
-    reconcileLobbyHost();
-    syncPlayersFromLobby();
-    const launchKey=currentLobby.launchKey;
-    if(currentLobby.status==='inGame'&&currentLobby.selectedGame&&launchKey&&launchKey!==lastHandledLobbyLaunch){
-      lastHandledLobbyLaunch=launchKey;
-      startGame(currentLobby.selectedGame,{skipModeChoice:true,fromLobby:true});
-    }
-  });
-}
-
-function reconcileLobbyHost(){
-  if(!currentLobby||!lobbyRef||!currentUser)return;
-  const entries=Object.entries(currentLobby.players||{});
-  const onlineEntries=entries.filter(([,p])=>p.online!==false);
-  if(!entries.length){
-    lobbyRef.remove();
-    return;
-  }
-  const host=currentLobby.players?.[currentLobby.hostUid];
-  if(host&&host.online!==false)return;
-  const nextHost=(onlineEntries[0]||entries[0])?.[0];
-  if(nextHost&&currentUser.uid===nextHost){
-    lobbyRef.update({hostUid:nextHost,updatedAt:firebase.database.ServerValue.TIMESTAMP});
-  }
-}
-
-function syncPlayersFromLobby(){
-  const lobbyPlayers=Object.values(currentLobby?.players||{});
-  if(!lobbyPlayers.length)return;
-  players=lobbyPlayers.map((p,i)=>({
-    id:i+1,
-    name:p.name||'Giocatore',
-    teamId:null,
-    score:0,
-    ci:i%TC.length,
-    uid:p.uid,
-    isAnonymous:false,
-    photoURL:null,
-    avatar:p.avatar||normalizeAvatar({},p.name)
-  }));
-  nPid=players.length+1;
-  teams=[];
-  renderPlayers();
-  renderTeamSection();
-  renderRegisteredUserSelect();
-}
-
-function renderLobby(){
-  const home=document.getElementById('homeChoiceGrid');
-  const setup=document.getElementById('lobbySetupPanel');
-  const panel=document.getElementById('activeLobbyPanel');
-  const cards=document.getElementById('gameCardsSection');
-  if(!home||!setup||!panel)return;
-  if(!currentLobbyCode||!currentLobby){
-    if(selectedPlayMode==='online'){
-      home.classList.add('hidden');
-      setup.classList.remove('hidden');
-      cards?.classList.add('hidden');
-    }else if(selectedPlayMode==='local'){
-      home.classList.add('hidden');
-      setup.classList.add('hidden');
-      cards?.classList.remove('hidden');
-      document.querySelectorAll('#gameCardsSection .game-card').forEach(card=>card.classList.remove('disabled'));
-    }else{
-      home.classList.remove('hidden');
-      setup.classList.add('hidden');
-      cards?.classList.add('hidden');
-    }
-    panel.classList.add('hidden');
-    return;
-  }
-  home.classList.add('hidden');
-  setup.classList.add('hidden');
-  panel.classList.remove('hidden');
-  cards?.classList.remove('hidden');
-  const codeEl=document.getElementById('lobbyCodeLabel');
-  if(codeEl)codeEl.textContent=currentLobbyCode;
-  const lobbyPlayers=Object.values(currentLobby.players||{});
-  const hostUid=currentLobby.hostUid;
-  const isHost=hostUid===currentUser?.uid;
-  document.querySelectorAll('#gameCardsSection .game-card').forEach(card=>{
-    card.classList.toggle('disabled',!isHost);
-  });
-  const readyButton=document.getElementById('readyButton');
-  const me=currentLobby.players?.[currentUser?.uid];
-  if(readyButton)readyButton.textContent=me?.ready?'Non pronto':'Pronto';
-  const list=document.getElementById('lobbyPlayers');
-  if(list){
-    list.innerHTML=lobbyPlayers.map(p=>{
-      const isOnline=p.online!==false;
-      return `<div class="lobby-player">
-        ${renderAvatarHtml(p.avatar||normalizeAvatar({},p.name),'lobby-avatar')}
-        <div>
-          <div class="lobby-player-name">${escapeHtml(p.name||'Giocatore')}${p.uid===hostUid?' <span style="color:var(--gold);font-size:.75rem">(host)</span>':''}</div>
-          <div class="lobby-player-status"><span class="status-dot${isOnline?' on':''}"></span>${isOnline?'In lobby':'Offline'}</div>
-        </div>
-        <div class="ready-badge${p.ready?' ready':''}">${p.ready?'Pronto':'Non pronto'}</div>
-      </div>`;
-    }).join('');
-  }
-}
-
-function toggleLobbyReady(){
-  if(!lobbyRef||!currentUser||!currentLobby)return;
-  const current=!!currentLobby.players?.[currentUser.uid]?.ready;
-  lobbyRef.child(`players/${currentUser.uid}`).update({ready:!current,online:true});
-}
-
-function refreshCurrentLobbyPlayer(){
-  if(!lobbyRef||!currentUser)return;
-  const ready=!!currentLobby?.players?.[currentUser.uid]?.ready;
-  lobbyRef.child(`players/${currentUser.uid}`).update(getCurrentLobbyPlayerData(ready)).catch(()=>{});
-}
-
-function copyLobbyCode(){
-  if(!currentLobbyCode)return;
-  navigator.clipboard?.writeText(currentLobbyCode).catch(()=>{});
-}
-
-async function leaveCurrentLobby(){
-  if(!currentLobbyCode||!database||!currentUser)return;
-  const code=currentLobbyCode;
-  const ref=database.ref(`lobbies/${code}`);
-  const snap=await ref.get();
-  const lobby=snap.val();
-  if(lobby?.players?.[currentUser.uid]){
-    await ref.child(`players/${currentUser.uid}`).remove();
-  }
-  const nextSnap=await ref.child('players').get();
-  const remaining=nextSnap.val()||{};
-  const uids=Object.keys(remaining);
-  if(!uids.length){
-    await ref.remove();
-  }else if(lobby?.hostUid===currentUser.uid){
-    await ref.update({hostUid:uids[0],updatedAt:firebase.database.ServerValue.TIMESTAMP});
-  }
-  if(lobbyRef)lobbyRef.off();
-  lobbyRef=null;currentLobbyCode=null;currentLobby=null;lastHandledLobbyLaunch=null;
-  renderLobby();
-  updatePresenceState({currentLobby:'',currentGame:'menu'});
-}
-
-async function createLobbyLaunchPayload(game){
-  const lobbyPlayers=Object.values(currentLobby?.players||{});
-  const participantUids=lobbyPlayers.map(p=>p.uid).filter(Boolean);
-  const p1Uid=participantUids[0]||currentUser?.uid||null;
-  const p2Uid=participantUids.find(uid=>uid!==p1Uid)||participantUids[1]||null;
-  const payload={participantUids,starterUid:p1Uid,p1Uid,p2Uid};
-  let sessionId=null;
-  if(['ruota','eredita','intesa','catena','sarabanda','guesswho'].includes(game)){
-    sessionId=await createGameSession(game,{pendingLaunch:true});
-    payload.sessionId=sessionId;
-  }
-  if(game==='ruota'){
-    const phrases=await loadQuestionBank('ruota',WHEEL_PHRASES);
-    const phrase=phrases[Math.floor(Math.random()*phrases.length)]||WHEEL_PHRASES[0];
-    payload.phrase=phrase.text;
-    payload.category=phrase.cat;
-  }
-  if(game==='eredita'){
-    const words=await loadQuestionBank('eredita',ERE_WORDS);
-    const wordList=[...words].sort(()=>Math.random()-.5);
-    payload.words=wordList;
-    payload.revOrders=wordList.map(w=>w.word.split('').map((l,i)=>({l,i})).filter(x=>x.l!==' ').sort(()=>Math.random()-.5).map(x=>x.i));
-  }
-  if(game==='catena'){
-    const rounds=await loadQuestionBank('catena',CHAIN_ROUNDS);
-    payload.round=rounds[Math.floor(Math.random()*rounds.length)]||CHAIN_ROUNDS[0];
-  }
-  if(game==='sarabanda'){
-    const tracks=(await loadQuestionBank('sarabanda',SARABANDA_TRACKS)).filter(t=>t&&t.src);
-    payload.tracks=shuffleArray([...tracks]).slice(0,5);
-  }
-  if(game==='guesswho'){
-    const bank=await loadQuestionBank('guesswho',GUESS_WHO_CHARACTERS);
-    payload.characters=shuffleArray([...bank]).slice(0,GUESS_WHO_ROUNDS);
-  }
-  return stripUndefined(payload);
-}
-
-async function startLobbyGame(game){
-  if(!currentLobby||!lobbyRef||currentLobby.hostUid!==currentUser?.uid)return;
-  const lobbyPlayers=Object.values(currentLobby.players||{});
-  if(!lobbyPlayers.length)return;
-  const selectedGame=game||currentLobby.selectedGame||'aua';
-  const needsTwo=['eredita','intesa','ruota','catena','sarabanda'].includes(selectedGame);
-  if(needsTwo&&lobbyPlayers.filter(p=>p.online!==false).length<2){
-    alert('Servono almeno due giocatori online in lobby per avviare questo gioco.');
-    return;
-  }
-  const allReady=lobbyPlayers.every(p=>p.uid===currentUser.uid||p.ready);
-  if(!allReady&&!confirm('Non tutti sono pronti. Avvia comunque?'))return;
-  try{
-    const launchPayload=await createLobbyLaunchPayload(selectedGame);
-    const launchKey=`${Date.now()}-${Math.random().toString(36).slice(2,7)}`;
-    const launchUpdate=stripUndefined({
-      selectedGame,
-      launchPayload,
-      status:'inGame',
-      launchKey,
-      updatedAt:firebase.database.ServerValue.TIMESTAMP
-    });
-    await lobbyRef.update(launchUpdate);
-    currentLobby={...(currentLobby||{}),...launchUpdate};
-    lastHandledLobbyLaunch=launchKey;
-    syncPlayersFromLobby();
-    startLobbyGameDirect(selectedGame);
-  }catch(err){
-    console.error('Errore avvio gioco lobby:',err);
-    alert('Non sono riuscito ad avviare il gioco online. Controlla la connessione e riprova.');
-  }
-}
-
-function inviteFriendToLobby(uid){
-  if(!uid)return;
-  if(!currentLobbyCode){
-    alert('Crea o entra in una lobby prima di invitare amici.');
-    return;
-  }
-  if(!window.db)return;
-  db.collection('users').doc(uid).collection('gameInvites').add({
-    type:'lobby',
-    lobbyCode:currentLobbyCode,
-    status:'pending',
-    fromUid:currentUser.uid,
-    fromName:getCurrentUserName(),
-    createdAt:firebase.firestore.FieldValue.serverTimestamp(),
-    updatedAt:firebase.firestore.FieldValue.serverTimestamp()
-  }).catch(err=>console.error('Errore invito lobby:',err));
-}
-
 // LOGIN
 const firebaseConfig = {
         apiKey: "AIzaSyAs9kwrZnnBTOaBzkLn6ZhLN5mfWWmXcl4",
@@ -3895,7 +3166,6 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const database = firebase.database();
 const db = firebase.firestore();
-window.database = database;
 window.db = db;
 window.seedQuestionBanksToFirestore = seedQuestionBanksToFirestore;
 let currentUser = null;
@@ -3904,10 +3174,6 @@ listenTabooScoreEvents();
 document.addEventListener("DOMContentLoaded", () => {
   const overlay = document.getElementById("authOverlay");
   window.addEventListener('beforeunload',stopSarabandaAudio);
-  window.addEventListener('beforeunload',()=>{if(presenceRef)presenceRef.update({online:false,currentGame:'offline',updatedAt:firebase.database.ServerValue.TIMESTAMP});});
-  document.addEventListener('click',e=>{
-    if(!e.target.closest?.('#userBox'))closeUserMenu();
-  });
   renderRegisteredUserSelect();
   auth.onAuthStateChanged(user => {
     console.log("USER:", user);
@@ -3924,10 +3190,7 @@ document.addEventListener("DOMContentLoaded", () => {
       loadRegisteredUsers();
       listenCurrentUserProfile(user);
       listenGameInvites(user);
-      setupPresence(user);
-      renderLobby();
     } else {
-      teardownPresence();
       if(unsubscribeLeaderboard)unsubscribeLeaderboard();
       if(unsubscribeRegisteredUsers)unsubscribeRegisteredUsers();
       if(unsubscribeCurrentUserProfile)unsubscribeCurrentUserProfile();
@@ -3942,9 +3205,7 @@ document.addEventListener("DOMContentLoaded", () => {
       renderRegisteredUserSelect();
       renderHomeLeaderboard();
       closeProfilePopup();
-      closeFriendsPopup();
       closeGameInvitePopup();
-      renderLobby();
       if(overlay){
         overlay.style.display = "flex";
       }
@@ -3977,5 +3238,5 @@ function updateUserUI(user){
 
 function logout(){
   stopSarabandaAudio();
-  Promise.resolve(leaveCurrentLobby()).finally(()=>auth.signOut());
+  auth.signOut();
 }
