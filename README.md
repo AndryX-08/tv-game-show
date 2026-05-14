@@ -1,8 +1,8 @@
-# TV Game Night
+# TV Game Night 📺
 
 Web app per organizzare una serata di giochi TV in locale oppure online, con login Firebase, classifica utenti e sincronizzazione delle partite multiplayer.
 
-## Giochi inclusi
+## Giochi inclusi 🎱
 
 - Avanti un Altro
 - L'Eredita
@@ -13,7 +13,7 @@ Web app per organizzare una serata di giochi TV in locale oppure online, con log
 - Indovina Chi
 - Taboo con pagina giocatore separata
 
-## Funzionalita
+## Funzionalità 🔗
 
 - Login con Google o accesso anonimo tramite Firebase Auth.
 - Profili giocatore con nome, cognome, nickname e punteggio totale.
@@ -26,14 +26,6 @@ Web app per organizzare una serata di giochi TV in locale oppure online, con log
 - Indovina Chi con personaggi famosi, indizi progressivi e punti automatici.
 - Taboo con `host.html` e `play.html` per usare un secondo dispositivo come controller/schermo giocatore.
 - Layout responsive per desktop e mobile.
-
-## File principali
-
-- `index.html`: app principale, login, configurazione giocatori, menu e giochi.
-- `script.js`: logica giochi, Firebase Auth, Firestore, punteggi e sincronizzazione online.
-- `host.html`: pagina host per Taboo.
-- `play.html`: pagina giocatore/controller per Taboo.
-- `Music theme/`: audio usati dai giochi.
 
 ## Setup Firebase
 
@@ -93,49 +85,6 @@ Sarabanda/brano4.mp3
 Sarabanda/brano5.mp3
 ```
 
-## Regole Firestore consigliate
-
-```js
-rules_version = '2';
-
-service cloud.firestore {
-  match /databases/{database}/documents {
-
-    match /questionBanks/{bankId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null;
-    }
-
-    match /gameSessions/{sessionId} {
-      allow read, create, update, delete: if request.auth != null;
-    }
-
-    match /users/{uid} {
-      allow read: if request.auth != null;
-      allow create, update: if request.auth != null;
-    }
-
-    match /users/{uid}/gameInvites/{inviteId} {
-      allow read, update, delete: if request.auth != null
-        && (request.auth.uid == uid || request.auth.uid == resource.data.fromUid);
-
-      allow create: if request.auth != null;
-    }
-
-    match /leaderboard/{uid} {
-      allow read: if request.auth != null;
-      allow create, update: if request.auth != null;
-    }
-
-    match /scoreEvents/{eventId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null
-        && request.resource.data.writtenBy == request.auth.uid;
-    }
-  }
-}
-```
-
 ## Realtime Database
 
 Realtime Database viene usato soprattutto per Taboo.
@@ -147,7 +96,7 @@ currentGameState
 tabooScoreEvents
 ```
 
-## Come avviare
+## Come avviare ▶️
 
 Essendo un progetto statico, puoi aprire direttamente `index.html` nel browser oppure pubblicarlo con GitHub Pages / Firebase Hosting / Netlify.
 
@@ -169,7 +118,3 @@ Per giocare online:
 - lo stato live dei giochi multiplayer viene letto da `gameSessions`.
 
 Le sessioni e gli inviti vengono eliminati automaticamente a fine partita quando possibile.
-
-## Sicurezza
-
-I punteggi sono scritti dal client. Per una classifica anti-cheat reale, la logica di assegnazione punti andrebbe spostata in Cloud Functions.
