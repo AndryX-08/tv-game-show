@@ -28,20 +28,38 @@ let players=[],teams=[],nPid=1,nTid=1;
 let selPid=null,selP1=null,selP2=null,selWheelPid=null,selChainP1=null,selChainP2=null,selTabooPid=null;
 let intesaWinner=null;
 let intesaPlayers={p1:null,p2:null};
+let activeStatsGame=null;
 let globalLeaderboard=[];
 let registeredUsers=[];
+let userPresenceMap={};
 let currentUserProfile=null;
 let currentUserLeaderboard=null;
 let pendingGameInvite=null;
 let pendingPlayModeGame=null,selectedPlayMode='local';
 let activeGameSessionId=null,activeGameSessionGame=null,unsubscribeGameSession=null,applyingRemoteWheelState=false,applyingRemoteSessionState=false;
 let unsubscribeLeaderboard=null,unsubscribeRegisteredUsers=null,unsubscribeCurrentUserProfile=null,unsubscribeCurrentUserLeaderboard=null,unsubscribeGameInvites=null;
+let presenceRef=null,presenceConnectedRef=null,presenceConnectedCallback=null,allPresenceRef=null;
 let tabooScoreEventsRef=null,tabooScoreEventsStartedAt=Date.now(),processedTabooScoreEvents=new Set();
 let auaAudio=null,auaErrorAudio=null,auaAutoStartListener=null,auaAutoStarted=false,auaThemeResumeTime=0;
 let rdfAudio=null,rdfAutoStartListener=null,rdfAutoStarted=false;
 let ttsVoices=[];
 let ttsVoiceURI=localStorage.getItem('tvgn-tts-voice')||'';
 let ttsRate=parseFloat(localStorage.getItem('tvgn-tts-rate'))||.9;
+
+const PROFILE_COLORS=[
+  {bg:'#F5C518',color:'#08081A'},
+  {bg:'#3498DB',color:'#fff'},
+  {bg:'#2ECC71',color:'#06130F'},
+  {bg:'#E74C3C',color:'#fff'},
+  {bg:'#9B59B6',color:'#fff'},
+  {bg:'#ECF0F1',color:'#08081A'}
+];
+
+const DEFAULT_PROFILE_STATS={
+  gamesPlayed:0,
+  wins:0,
+  lastGame:'—'
+};
 
 const AUA_Q=[
 {q:"Di che colore è il cielo sereno?",a:["Verde","Blu"],wrong:"Verde"},
@@ -373,6 +391,7 @@ function goTo(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   if(id==='s-setup')initTtsControls();
+  updatePresenceState({currentScreen:id,currentGame:getGameNameFromScreen(id)});
 }
 function initials(n){return n.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)}
 function escapeHtml(value){
@@ -386,6 +405,17 @@ function escapeHtml(value){
 }
 function getTimer(g){return parseInt(document.getElementById('timer-'+g).value)||30}
 function getTabooTimer(){return parseInt(document.getElementById('timer-taboo')?.value)||60}
+function getGameNameFromScreen(id){
+  if(['s-hero','s-setup','s-pick','s-pick2','s-pick-wheel','s-pick-chain','s-pick-taboo','s-win'].includes(id))return 'menu';
+  if(id==='s-aua')return 'aua';
+  if(id==='s-eredita')return 'eredita';
+  if(id==='s-wheel')return 'ruota';
+  if(id==='s-chain')return 'catena';
+  if(id==='s-sarabanda')return 'sarabanda';
+  if(id==='s-guesswho')return 'guesswho';
+  if(id==='s-intesa-score')return 'intesa';
+  return 'menu';
+}
 function initTtsControls(){
   const rate=document.getElementById('tts-rate');
   if(rate)rate.value=ttsRate;
@@ -518,6 +548,7 @@ function stopRdfAudio(){
 }
 
 async function beginIntesa(options={}){
+  activeStatsGame='intesa';
   if(!selP1||!selP2||selP1===selP2) return;
   if(options.sessionId)listenGameSession(options.sessionId);
   intesaPlayers={p1:selP1,p2:selP2};
@@ -543,8 +574,15 @@ async function beginIntesa(options={}){
 function saveIntesaScores(){
   const v1=parseInt(document.getElementById('intesa-p1-score')?.value)||0;
   const v2=parseInt(document.getElementById('intesa-p2-score')?.value)||0;
+  const p1=players.find(p=>p.id===intesaPlayers.p1);
+  const p2=players.find(p=>p.id===intesaPlayers.p2);
   awardPlayerPoints(intesaPlayers.p1,v1,'intesa');
   awardPlayerPoints(intesaPlayers.p2,v2,'intesa');
+  const winnerUids=[];
+  if(v1>v2&&p1?.uid)winnerUids.push(p1.uid);
+  if(v2>v1&&p2?.uid)winnerUids.push(p2.uid);
+  if(v1===v2)[p1?.uid,p2?.uid].filter(Boolean).forEach(uid=>winnerUids.push(uid));
+  recordCompletedGame('intesa',winnerUids);
   intesaPlayers={p1:null,p2:null};
   renderPlayers();
   renderTeamSection();
@@ -718,6 +756,46 @@ function getProfileDisplayName(profile={},user=currentUser){
   return fullName||profile.name||getUserDisplayName(user);
 }
 
+function getProfileFullName(profile={},user=currentUser){
+  return [profile.firstName,profile.lastName].filter(Boolean).join(' ').trim()||profile.name||getUserDisplayName(user);
+}
+
+function getProfileColor(profile={},displayName='TV'){
+  const seed=String(profile.uid||profile.id||profile.name||displayName||'TV');
+  let hash=0;
+  for(let i=0;i<seed.length;i++)hash=(hash*31+seed.charCodeAt(i))>>>0;
+  return PROFILE_COLORS[hash%PROFILE_COLORS.length];
+}
+
+function renderProfileAvatar(profile={},name='Utente',className='friend-avatar'){
+  const color=getProfileColor(profile,name);
+  return `<div class="${className}" style="background:${escapeHtml(color.bg)};color:${escapeHtml(color.color||'#fff')}">${escapeHtml(initials(name.replace(/^@/,'')||'TV')||'TV')}</div>`;
+}
+
+function getProfileStats(profile={},leaderboard={}){
+  const stats={...DEFAULT_PROFILE_STATS,...(profile.stats||{})};
+  return {
+    gamesPlayed:Number(stats.gamesPlayed)||0,
+    wins:Number(stats.wins)||0,
+    lastGame:stats.lastGame||'—',
+    totalScore:leaderboard.totalScore ?? profile.totalScore ?? 0
+  };
+}
+
+function getGameStatsLabel(game){
+  const labels={
+    aua:'Avanti un Altro',
+    eredita:"L'Eredita",
+    intesa:"L'Intesa Vincente",
+    ruota:'La Ruota',
+    catena:'Reazione a Catena',
+    sarabanda:'Sarabanda',
+    guesswho:'Indovina Chi',
+    taboo:'Taboo'
+  };
+  return labels[game]||game||'—';
+}
+
 function addCurrentUserAsPlayer(user=currentUser){
   if(!user)return;
   const name=getUserDisplayName(user);
@@ -771,6 +849,29 @@ function savePlayerScoreOnline(player,points,source='game'){
   batch.commit().catch(err=>console.error('Errore salvataggio punti Firestore:',err));
 }
 
+function recordGameStats(game,winnerUids=[]){
+  if(!game||!window.db)return;
+  const participantUids=[...new Set(players.map(p=>p.uid).filter(Boolean))];
+  if(!participantUids.length)return;
+  const winners=new Set([].concat(winnerUids||[]).filter(Boolean));
+  const now=firebase.firestore.FieldValue.serverTimestamp();
+  const batch=db.batch();
+  participantUids.forEach(uid=>{
+    const stats={
+      gamesPlayed:firebase.firestore.FieldValue.increment(1),
+      lastGame:getGameStatsLabel(game)
+    };
+    if(winners.has(uid))stats.wins=firebase.firestore.FieldValue.increment(1);
+    batch.set(db.collection('users').doc(uid),{stats,updatedAt:now},{merge:true});
+  });
+  batch.commit().catch(err=>console.error('Errore aggiornamento statistiche:',err));
+}
+
+function recordCompletedGame(game=activeStatsGame,winnerUids=[]){
+  recordGameStats(game,winnerUids);
+  if(game&&activeStatsGame===game)activeStatsGame=null;
+}
+
 function saveUserIfNew(user){
   if(!user||!window.db)return Promise.resolve();
   const now=firebase.firestore.FieldValue.serverTimestamp();
@@ -780,6 +881,7 @@ function saveUserIfNew(user){
     firstName:'',
     lastName:'',
     nickname:'',
+    stats:{...DEFAULT_PROFILE_STATS},
     isAnonymous:user.isAnonymous,
     photoURL:user.photoURL||null,
     updatedAt:now
@@ -792,7 +894,11 @@ function saveUserIfNew(user){
   const userRef=db.collection('users').doc(user.uid);
   const leaderboardRef=db.collection('leaderboard').doc(user.uid);
   return userRef.get().then(doc=>{
-    const base=doc.exists?existingData:{...freshData,createdAt:now,totalScore:0};
+    const existing=doc.exists?doc.data():null;
+    const base=doc.exists?{
+      ...existingData,
+      stats:{...DEFAULT_PROFILE_STATS,...(existing?.stats||{})}
+    }:{...freshData,createdAt:now,totalScore:0};
     return userRef.set(base,{merge:true});
   }).then(()=>leaderboardRef.get()).then(doc=>{
     const base=doc.exists?existingData:{...freshData,totalScore:0};
@@ -820,6 +926,7 @@ function loadRegisteredUsers(){
     .onSnapshot(snapshot=>{
       registeredUsers=snapshot.docs.map(doc=>({id:doc.id,uid:doc.id,...doc.data()}));
       renderRegisteredUserSelect();
+      renderFriendsList();
     },err=>{
       console.error('Errore profili registrati Firestore:',err);
       renderRegisteredUserSelect();
@@ -845,6 +952,8 @@ function listenCurrentUserProfile(user){
       renderTeamSection();
     }
     updateUserUI(user);
+    updatePresenceState({});
+    renderFriendsList();
     hydrateProfilePopup();
   },err=>console.error('Errore profilo utente Firestore:',err));
   unsubscribeCurrentUserLeaderboard=db.collection('leaderboard').doc(user.uid).onSnapshot(doc=>{
@@ -856,6 +965,7 @@ function listenCurrentUserProfile(user){
 function openProfilePopup(){
   if(!currentUser)return;
   hydrateProfilePopup();
+  switchProfileTab('profile');
   const overlay=document.getElementById('profileOverlay');
   if(overlay)overlay.classList.remove('hidden');
 }
@@ -864,17 +974,101 @@ function closeProfilePopup(){
   document.getElementById('profileOverlay')?.classList.add('hidden');
 }
 
+function switchProfileTab(tab='profile'){
+  const isFriends=tab==='friends';
+  document.getElementById('profileTabProfile')?.classList.toggle('hidden',isFriends);
+  document.getElementById('profileTabFriends')?.classList.toggle('hidden',!isFriends);
+  document.getElementById('profileTabBtnProfile')?.classList.toggle('active',!isFriends);
+  document.getElementById('profileTabBtnFriends')?.classList.toggle('active',isFriends);
+  if(isFriends)renderFriendsList();
+}
+
+function renderFriendsList(){
+  const el=document.getElementById('friendsList');
+  if(!el)return;
+  const query=(document.getElementById('friendsSearch')?.value||'').trim().toLowerCase();
+  const users=registeredUsers
+    .filter(u=>u.uid!==currentUser?.uid)
+    .filter(u=>{
+      const label=[u.nickname,u.name,u.firstName,u.lastName].filter(Boolean).join(' ').toLowerCase();
+      return !query||label.includes(query);
+    })
+    .sort((a,b)=>(a.nickname||a.name||'').localeCompare(b.nickname||b.name||''));
+  if(!currentUser){
+    el.innerHTML='<div class="empty">Accedi per vedere gli amici</div>';
+    return;
+  }
+  if(!users.length){
+    el.innerHTML='<div class="empty">Nessun utente trovato</div>';
+    return;
+  }
+  el.innerHTML=users.map(u=>{
+    const presence=userPresenceMap[u.uid]||{};
+    const online=!!presence.online;
+    const name=getProfileDisplayName(u,{uid:u.uid,displayName:u.name});
+    const currentGame=presence.currentGame&&presence.currentGame!=='menu'&&presence.currentGame!=='offline'
+      ? getGameStatsLabel(presence.currentGame)
+      : (online?'Nel menu':'Offline');
+    return `<div class="friend-row">
+      ${renderProfileAvatar(u,name,'friend-avatar')}
+      <div>
+        <div class="friend-name">${escapeHtml(name)}</div>
+        <div class="friend-status"><span class="status-dot${online?' on':''}"></span>${escapeHtml(currentGame)}</div>
+      </div>
+      <button class="btn-ghost" style="padding:.55rem .8rem" onclick="inviteFriendToLobby('${escapeHtml(u.uid)}')">Invita</button>
+    </div>`;
+  }).join('');
+}
+
+function inviteFriendToLobby(uid){
+  const lobby=currentUserProfile?.currentLobby||userPresenceMap[currentUser?.uid]?.currentLobby||'';
+  if(!lobby){
+    alert('Non hai una lobby attiva da condividere.');
+    return;
+  }
+  if(!uid||!window.db||!currentUser)return;
+  db.collection('users').doc(uid).collection('gameInvites').add({
+    type:'lobby',
+    lobbyCode:lobby,
+    status:'pending',
+    fromUid:currentUser.uid,
+    fromName:getProfileDisplayName(currentUserProfile||{},currentUser),
+    createdAt:firebase.firestore.FieldValue.serverTimestamp(),
+    updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+  }).catch(err=>console.error('Errore invito lobby:',err));
+}
+
 function hydrateProfilePopup(){
   const profile=currentUserProfile||{};
   const leaderboard=currentUserLeaderboard||{};
+  const displayName=getProfileDisplayName(profile,currentUser);
+  const fullName=getProfileFullName(profile,currentUser);
+  const color=getProfileColor(profile,displayName);
+  const stats=getProfileStats(profile,leaderboard);
+  const avatarEl=document.getElementById('profileAvatar');
+  const heroNickname=document.getElementById('profileHeroNickname');
+  const heroName=document.getElementById('profileHeroName');
   const firstName=document.getElementById('profileFirstName');
   const lastName=document.getElementById('profileLastName');
   const nickname=document.getElementById('profileNickname');
   const totalScore=document.getElementById('profileTotalScore');
+  const gamesPlayed=document.getElementById('profileGamesPlayed');
+  const wins=document.getElementById('profileWins');
+  const lastGame=document.getElementById('profileLastGame');
+  if(avatarEl){
+    avatarEl.textContent=initials(fullName||displayName.replace(/^@/,'')||'TV')||'TV';
+    avatarEl.style.background=color.bg;
+    avatarEl.style.color=color.color||'#fff';
+  }
+  if(heroNickname)heroNickname.textContent=displayName;
+  if(heroName)heroName.textContent=fullName;
   if(firstName)firstName.value=profile.firstName||'';
   if(lastName)lastName.value=profile.lastName||'';
   if(nickname)nickname.value=profile.nickname||'';
-  if(totalScore)totalScore.textContent=leaderboard.totalScore ?? profile.totalScore ?? 0;
+  if(totalScore)totalScore.textContent=stats.totalScore;
+  if(gamesPlayed)gamesPlayed.textContent=stats.gamesPlayed;
+  if(wins)wins.textContent=stats.wins;
+  if(lastGame)lastGame.textContent=stats.lastGame;
 }
 
 function normalizeNickname(value){
@@ -894,6 +1088,7 @@ function saveProfilePopup(){
     lastName,
     nickname,
     name:displayName,
+    stats:{...DEFAULT_PROFILE_STATS,...(currentUserProfile?.stats||{})},
     isAnonymous:currentUser.isAnonymous,
     photoURL:currentUser.photoURL||null,
     updatedAt:firebase.firestore.FieldValue.serverTimestamp()
@@ -904,6 +1099,65 @@ function saveProfilePopup(){
   batch.commit().then(()=>{
     return currentUser.updateProfile?currentUser.updateProfile({displayName}):null;
   }).catch(err=>console.error('Errore salvataggio profilo:',err)).finally(closeProfilePopup);
+}
+
+function updatePresenceState(patch={}){
+  if(!currentUser||!database)return;
+  const data={
+    uid:currentUser.uid,
+    name:getProfileDisplayName(currentUserProfile||{},currentUser),
+    online:true,
+    currentGame:patch.currentGame,
+    currentScreen:patch.currentScreen,
+    currentLobby:patch.currentLobby ?? currentUserProfile?.currentLobby ?? '',
+    updatedAt:firebase.database.ServerValue.TIMESTAMP
+  };
+  Object.keys(data).forEach(key=>data[key]===undefined&&delete data[key]);
+  database.ref(`status/${currentUser.uid}`).update(data).catch(err=>console.error('Errore presenza RTDB:',err));
+  if(window.db){
+    const fsData={
+      online:true,
+      currentLobby:data.currentLobby||'',
+      updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+    };
+    if(data.currentGame)fsData.currentGame=data.currentGame;
+    if(data.currentScreen)fsData.currentScreen=data.currentScreen;
+    db.collection('users').doc(currentUser.uid).set(fsData,{merge:true}).catch(()=>{});
+  }
+}
+
+function setupPresence(user){
+  teardownPresence();
+  if(!user||!database)return;
+  presenceRef=database.ref(`status/${user.uid}`);
+  presenceConnectedRef=database.ref('.info/connected');
+  presenceConnectedCallback=snap=>{
+    if(!snap.val())return;
+    presenceRef.onDisconnect().update({
+      online:false,
+      currentGame:'offline',
+      updatedAt:firebase.database.ServerValue.TIMESTAMP
+    });
+    const activeScreen=document.querySelector('.screen.active')?.id||'s-hero';
+    updatePresenceState({currentScreen:activeScreen,currentGame:getGameNameFromScreen(activeScreen)});
+  };
+  presenceConnectedRef.on('value',presenceConnectedCallback);
+  allPresenceRef=database.ref('status');
+  allPresenceRef.on('value',snap=>{
+    userPresenceMap=snap.val()||{};
+    renderFriendsList();
+  });
+}
+
+function teardownPresence(){
+  if(presenceConnectedRef&&presenceConnectedCallback)presenceConnectedRef.off('value',presenceConnectedCallback);
+  if(allPresenceRef)allPresenceRef.off();
+  if(presenceRef)presenceRef.update({online:false,currentGame:'offline',updatedAt:firebase.database.ServerValue.TIMESTAMP}).catch(()=>{});
+  presenceRef=null;
+  presenceConnectedRef=null;
+  presenceConnectedCallback=null;
+  allPresenceRef=null;
+  userPresenceMap={};
 }
 
 const GAME_LABELS={
@@ -1236,6 +1490,7 @@ function startGame(game,options={}){
     showPlayModePopup(game);
     return;
   }
+  activeStatsGame=game;
   if(['eredita','intesa','ruota','catena'].includes(game)&&players.length<2){
     stopAuaAudio();
     stopRdfAudio();
@@ -1389,6 +1644,7 @@ function normalizeChainWord(text){
 }
 
 async function beginChain(options={}){
+  activeStatsGame='catena';
   if(!selChainP1||!selChainP2||selChainP1===selChainP2)return;
   clearChainTimer();
   if(options.sessionId)listenGameSession(options.sessionId);
@@ -1480,6 +1736,7 @@ function canControlChainOnline(){
 }
 
 function beginTaboo(){
+  activeStatsGame='taboo';
   if(!selTabooPid)return;
   const p=players.find(p=>p.id===selTabooPid);
   if(!p)return;
@@ -1719,6 +1976,7 @@ function completeChain(){
         <div class="sc-name">${tm.name}</div><div class="sc-pts">${tm.score}</div></div>`).join('');
     }
     document.getElementById('win-scores').innerHTML=html;
+    recordCompletedGame('catena',[p1?.uid,p2?.uid].filter(Boolean));
     goTo('s-win');
     cleanupOnlineGameArtifacts();
   },900);
@@ -1733,6 +1991,7 @@ let sarabandaEndedHandler=null;
 const SARABANDA_PREVIEW_SECONDS=6;
 
 async function beginSarabanda(options={}){
+  activeStatsGame='sarabanda';
   if(players.length<2){goTo('s-setup');return;}
   if(options.sessionId)listenGameSession(options.sessionId);
   const tracks=(options.tracks||await loadQuestionBank('sarabanda',SARABANDA_TRACKS)).filter(t=>t&&t.src);
@@ -2040,6 +2299,7 @@ function endSarabanda(){
         <div class="sc-pts">${p.score||0}</div>
       </div>`).join('');
   }
+  recordCompletedGame('sarabanda',winner?.uid?[winner.uid]:[]);
   goTo('s-win');
   cleanupOnlineGameArtifacts();
 }
@@ -2051,6 +2311,7 @@ let guessWhoState={};
 const GUESS_WHO_ROUNDS=5;
 
 async function beginGuessWho(options={}){
+  activeStatsGame='guesswho';
   if(!players.length){goTo('s-setup');return;}
   if(options.sessionId)listenGameSession(options.sessionId);
   const bank=options.characters||await loadQuestionBank('guesswho',GUESS_WHO_CHARACTERS);
@@ -2263,6 +2524,7 @@ function endGuessWho(){
         <div class="sc-pts">${p.score||0}</div>
       </div>`).join('');
   }
+  recordCompletedGame('guesswho',winner?.uid?[winner.uid]:[]);
   goTo('s-win');
   cleanupOnlineGameArtifacts();
 }
@@ -2272,6 +2534,7 @@ function endGuessWho(){
 ══════════════════════════════ */
 let auaState={};let auaInt=null;
 async function beginAUA(){
+  activeStatsGame='aua';
   clearAuaAutoStart();
   hideAuaIntroEffects();
   if(!selPid)return;
@@ -2372,6 +2635,7 @@ function restartAUA(){
 let ereState={};let ereInt=null;let spaceKH=null;
 
 async function beginEredita(options={}){
+  activeStatsGame='eredita';
   if(!selP1||!selP2)return;
   clearInterval(ereInt);
   if(options.sessionId)listenGameSession(options.sessionId);
@@ -2719,6 +2983,7 @@ function selPickWheel(id){
 }
 
 async function beginWheel(options={}){
+  activeStatsGame='ruota';
   if(!selWheelPid)return;
   hideWheelIntroEffects();
   if(options.sessionId)listenGameSession(options.sessionId);
@@ -3123,6 +3388,7 @@ function awardAndWin(pid,points=1,subText=null){
   const p=players.find(p=>p.id===pid);
   const t=teams.find(t=>t.mids.includes(pid));
   awardPlayerPoints(pid,points,'manche');
+  recordCompletedGame(activeStatsGame,p?.uid?[p.uid]:[]);
   document.getElementById('win-name').textContent=p?p.name:'—';
   document.getElementById('win-sub').textContent=subText||(t?`+1 punto per ${t.name}!`:'Ha vinto questa manche!');
   const sorted=[...players].sort((a,b)=>b.score-a.score);
@@ -3174,6 +3440,15 @@ listenTabooScoreEvents();
 document.addEventListener("DOMContentLoaded", () => {
   const overlay = document.getElementById("authOverlay");
   window.addEventListener('beforeunload',stopSarabandaAudio);
+  window.addEventListener('beforeunload',()=>{
+    if(presenceRef){
+      presenceRef.update({
+        online:false,
+        currentGame:'offline',
+        updatedAt:firebase.database.ServerValue.TIMESTAMP
+      }).catch(()=>{});
+    }
+  });
   renderRegisteredUserSelect();
   auth.onAuthStateChanged(user => {
     console.log("USER:", user);
@@ -3190,7 +3465,9 @@ document.addEventListener("DOMContentLoaded", () => {
       loadRegisteredUsers();
       listenCurrentUserProfile(user);
       listenGameInvites(user);
+      setupPresence(user);
     } else {
+      teardownPresence();
       if(unsubscribeLeaderboard)unsubscribeLeaderboard();
       if(unsubscribeRegisteredUsers)unsubscribeRegisteredUsers();
       if(unsubscribeCurrentUserProfile)unsubscribeCurrentUserProfile();
@@ -3238,5 +3515,6 @@ function updateUserUI(user){
 
 function logout(){
   stopSarabandaAudio();
+  teardownPresence();
   auth.signOut();
 }
