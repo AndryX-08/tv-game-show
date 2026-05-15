@@ -437,6 +437,7 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
 </head><body>
 <!-- OPENING 3D INTRO -->
 <div id="openingIntro" class="opening-intro" aria-label="Intro TV Game Night">
+  <audio id="openingIntroMusic" src="Music%20theme/intro_music_theme.mp3" preload="auto"></audio>
   <button class="intro-skip" type="button" onclick="skipOpeningIntro()">Salta intro</button>
   <div class="intro-light gold"></div>
   <div class="intro-light blue"></div>
@@ -467,6 +468,10 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
 // Gestione sicura dell'intro iniziale: indipendente dal resto del gioco.
 (function(){
   let introClosed = false;
+  let introAutoCloseTimer = null;
+  let introMusicStartHandler = null;
+  const introFadeMs = 850;
+  const introDurationMs = 6200;
 
   function revealHome(){
     const hero = document.getElementById('s-hero');
@@ -476,9 +481,72 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
     }
   }
 
+  function startOpeningIntroMusic(){
+    const music = document.getElementById('openingIntroMusic');
+    if(!music) return;
+
+    music.currentTime = 0;
+    music.volume = 1;
+
+    const playAttempt = music.play();
+    if(playAttempt && typeof playAttempt.catch === 'function'){
+      playAttempt.catch(function(){
+        if(introClosed) return;
+        introMusicStartHandler = function(){
+          if(introClosed) return;
+          music.play().catch(function(){});
+          introMusicStartHandler = null;
+        };
+        document.addEventListener('pointerdown', introMusicStartHandler, {once:true});
+      });
+    }
+  }
+
+  function clearOpeningIntroMusicHandler(){
+    if(!introMusicStartHandler) return;
+    document.removeEventListener('pointerdown', introMusicStartHandler);
+    introMusicStartHandler = null;
+  }
+
+  function stopOpeningIntroMusic(fadeOut){
+    const music = document.getElementById('openingIntroMusic');
+    if(!music) return;
+
+    if(!fadeOut){
+      clearOpeningIntroMusicHandler();
+      music.pause();
+      music.currentTime = 0;
+      return;
+    }
+
+    clearOpeningIntroMusicHandler();
+    const startVolume = music.volume;
+    const startedAt = performance.now();
+
+    function fadeStep(now){
+      const progress = Math.min((now - startedAt) / introFadeMs, 1);
+      music.volume = startVolume * (1 - progress);
+      if(progress < 1){
+        requestAnimationFrame(fadeStep);
+      }
+    }
+
+    requestAnimationFrame(fadeStep);
+
+    setTimeout(function(){
+      music.pause();
+      music.currentTime = 0;
+      music.volume = 1;
+    }, introFadeMs);
+  }
+
   window.skipOpeningIntro = function(){
     if(introClosed) return;
     introClosed = true;
+    if(introAutoCloseTimer){
+      clearTimeout(introAutoCloseTimer);
+      introAutoCloseTimer = null;
+    }
 
     const intro = document.getElementById('openingIntro');
     if(!intro){
@@ -488,6 +556,7 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
 
     intro.classList.add('hidden');
     intro.style.pointerEvents = 'none';
+    stopOpeningIntroMusic(true);
 
     setTimeout(function(){
       if(intro && intro.parentNode){
@@ -496,7 +565,7 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
       document.body.style.overflow = '';
       document.documentElement.style.overflow = '';
       revealHome();
-    }, 850);
+    }, introFadeMs);
   };
 
   document.addEventListener('DOMContentLoaded', function(){
@@ -507,12 +576,19 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
     }
 
     // Chiude automaticamente l'intro anche se altre parti del sito danno errore.
-    setTimeout(window.skipOpeningIntro, 6200);
+    startOpeningIntroMusic();
+    introAutoCloseTimer = setTimeout(window.skipOpeningIntro, introDurationMs);
 
     // Fallback extra: dopo 8 secondi lo rimuove comunque, senza animazione.
     setTimeout(function(){
       const stillThere = document.getElementById('openingIntro');
       if(stillThere){
+        introClosed = true;
+        if(introAutoCloseTimer){
+          clearTimeout(introAutoCloseTimer);
+          introAutoCloseTimer = null;
+        }
+        stopOpeningIntroMusic();
         stillThere.remove();
         revealHome();
       }
