@@ -25,7 +25,7 @@ const TC=[
 ];
 
 let players=[],teams=[],nPid=1,nTid=1;
-let selPid=null,selP1=null,selP2=null,selWheelPid=null,selChainP1=null,selChainP2=null,selTabooPid=null;
+let selPid=null,selP1=null,selP2=null,selWheelPid=null,selChainP1=null,selChainP2=null,selTabooPid=null,selHigherPid=null,selectedHolCategory='videogiochi';
 let intesaWinner=null;
 let intesaPlayers={p1:null,p2:null};
 let activeStatsGame=null;
@@ -209,6 +209,149 @@ const CHAIN_ROUNDS=[
   {start:"FESTA",words:["TORTA","CANDELA","LUCE","STELLA"]}
 ];
 
+const HIGHER_LOWER_BANKS={
+  videogiochi:{
+    label:'Videogiochi',
+    unit:'copie vendute stimate',
+    sub:'Classici e bestseller',
+    items:[
+      {name:'Minecraft',value:300000000,display:'300M copie',emoji:'⛏️',image:'https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?auto=format&fit=crop&w=900&q=80'},
+      {name:'Grand Theft Auto V',value:200000000,display:'200M copie',emoji:'🚗',image:'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=900&q=80'},
+      {name:'Tetris',value:100000000,display:'100M+ copie',emoji:'🧱',image:'https://images.unsplash.com/photo-1611996575749-79a3a250f948?auto=format&fit=crop&w=900&q=80'},
+      {name:'Wii Sports',value:82900000,display:'82,9M copie',emoji:'🎾',image:'https://images.unsplash.com/photo-1593305841991-05c297ba4575?auto=format&fit=crop&w=900&q=80'},
+      {name:'PUBG',value:75000000,display:'75M copie',emoji:'🎮',image:'https://images.unsplash.com/photo-1560253023-3ec5d502959f?auto=format&fit=crop&w=900&q=80'},
+      {name:'Mario Kart 8 Deluxe',value:69000000,display:'69M copie',emoji:'🏁',image:'https://images.unsplash.com/photo-1605901309584-818e25960a8f?auto=format&fit=crop&w=900&q=80'},
+      {name:'Red Dead Redemption 2',value:61000000,display:'61M copie',emoji:'🤠',image:'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80'},
+      {name:'The Witcher 3',value:50000000,display:'50M copie',emoji:'⚔️',image:'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=900&q=80'},
+      {name:'Overwatch',value:50000000,display:'50M giocatori/copie',emoji:'🛡️',image:'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=900&q=80'},
+      {name:'The Elder Scrolls V: Skyrim',value:60000000,display:'60M copie',emoji:'🐉',image:'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=900&q=80'},
+      {name:'Terraria',value:58000000,display:'58M copie',emoji:'⛏️',image:'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=900&q=80'},
+      {name:'Pokemon Rosso/Blu/Verde',value:47500000,display:'47,5M copie',emoji:'⚡',image:'https://images.unsplash.com/photo-1613771404721-1f92d799e49f?auto=format&fit=crop&w=900&q=80'},
+      {name:'Animal Crossing: New Horizons',value:45000000,display:'45M copie',emoji:'🏝️',image:'https://images.unsplash.com/photo-1605901309584-818e25960a8f?auto=format&fit=crop&w=900&q=80'},
+      {name:'Super Mario Bros.',value:40200000,display:'40,2M copie',emoji:'🍄',image:'https://images.unsplash.com/photo-1578303512597-81e6cc155b3e?auto=format&fit=crop&w=900&q=80'},
+      {name:'Mario Kart Wii',value:37300000,display:'37,3M copie',emoji:'🏎️',image:'https://images.unsplash.com/photo-1593305841991-05c297ba4575?auto=format&fit=crop&w=900&q=80'},
+      {name:'The Legend of Zelda: Breath of the Wild',value:33000000,display:'33M copie',emoji:'🗡️',image:'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=900&q=80'},
+      {name:'Call of Duty: Modern Warfare',value:30000000,display:'30M copie',emoji:'🎖️',image:'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=900&q=80'},
+      {name:'Diablo III',value:30000000,display:'30M copie',emoji:'🔥',image:'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=900&q=80'},
+      {name:'Human: Fall Flat',value:30000000,display:'30M copie',emoji:'🧍',image:'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=900&q=80'},
+      {name:'The Last of Us',value:20000000,display:'20M copie',emoji:'🍃',image:'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=900&q=80'},
+      {name:'God of War',value:19500000,display:'19,5M copie',emoji:'🪓',image:'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=900&q=80'},
+      {name:'Cyberpunk 2077',value:25000000,display:'25M copie',emoji:'🌃',image:'https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=900&q=80'},
+      {name:'Hogwarts Legacy',value:24000000,display:'24M copie',emoji:'🪄',image:'https://images.unsplash.com/photo-1518709268805-4e9042af2176?auto=format&fit=crop&w=900&q=80'},
+      {name:'Elden Ring',value:25000000,display:'25M copie',emoji:'💍',image:'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=900&q=80'},
+      {name:'Stardew Valley',value:30000000,display:'30M copie',emoji:'🌾',image:'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=900&q=80'},
+      {name:'Among Us',value:500000000,display:'500M download',emoji:'🚀',image:'https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&w=900&q=80'},
+      {name:'Fall Guys',value:50000000,display:'50M giocatori',emoji:'🏆',image:'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=900&q=80'},
+      {name:'FIFA 23',value:10000000,display:'10M+ copie',emoji:'⚽',image:'https://images.unsplash.com/photo-1575361204480-aadea25e6e68?auto=format&fit=crop&w=900&q=80'}
+    ]
+  },
+  case:{
+    label:'Case',
+    unit:'valore immobiliare stimato',
+    sub:'Dalla villa al monolocale',
+    items:[
+      {name:'Attico a Manhattan',value:95000000,display:'95M €',emoji:'🌆',image:'https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=900&q=80'},
+      {name:'Villa fronte mare a Malibu',value:78000000,display:'78M €',emoji:'🌊',image:'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=900&q=80'},
+      {name:'Chalet di lusso a St. Moritz',value:42000000,display:'42M €',emoji:'🏔️',image:'https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&w=900&q=80'},
+      {name:'Casale in Toscana',value:8500000,display:'8,5M €',emoji:'🍇',image:'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=900&q=80'},
+      {name:'Loft industriale a Milano',value:2200000,display:'2,2M €',emoji:'🏙️',image:'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=900&q=80'},
+      {name:'Villetta con giardino',value:650000,display:'650K €',emoji:'🏡',image:'https://images.unsplash.com/photo-1570129477492-45c003edd2be?auto=format&fit=crop&w=900&q=80'},
+      {name:'Bilocale in centro',value:310000,display:'310K €',emoji:'🪟',image:'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=900&q=80'},
+      {name:'Tiny house',value:85000,display:'85K €',emoji:'🧳',image:'https://images.unsplash.com/photo-1523217582562-09d0def993a6?auto=format&fit=crop&w=900&q=80'},
+      {name:'Villa sul Lago di Como',value:36000000,display:'36M €',emoji:'🚤',image:'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=900&q=80'},
+      {name:'Masseria in Puglia',value:6200000,display:'6,2M €',emoji:'🌿',image:'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=900&q=80'},
+      {name:'Villa a Ibiza',value:24500000,display:'24,5M €',emoji:'🌅',image:'https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=900&q=80'},
+      {name:'Penthouse a Dubai',value:52000000,display:'52M €',emoji:'🏙️',image:'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=900&q=80'},
+      {name:'Castello in Scozia',value:14500000,display:'14,5M €',emoji:'🏰',image:'https://images.unsplash.com/photo-1518709268805-4e9042af2176?auto=format&fit=crop&w=900&q=80'},
+      {name:'Casa colonica ristrutturata',value:1250000,display:'1,25M €',emoji:'🚜',image:'https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=900&q=80'},
+      {name:'Appartamento a Parigi',value:3200000,display:'3,2M €',emoji:'🥐',image:'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=900&q=80'},
+      {name:'Casa sul canale ad Amsterdam',value:4800000,display:'4,8M €',emoji:'🚲',image:'https://images.unsplash.com/photo-1513581166391-887a96ddeafd?auto=format&fit=crop&w=900&q=80'},
+      {name:'Villa in Costa Smeralda',value:29000000,display:'29M €',emoji:'⛵',image:'https://images.unsplash.com/photo-1613977257363-707ba9348227?auto=format&fit=crop&w=900&q=80'},
+      {name:'Casa minimalista in Giappone',value:1800000,display:'1,8M €',emoji:'🎋',image:'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=900&q=80'},
+      {name:'Ranch in Montana',value:18500000,display:'18,5M €',emoji:'🐎',image:'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=900&q=80'},
+      {name:'Baita in Trentino',value:980000,display:'980K €',emoji:'🪵',image:'https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&w=900&q=80'},
+      {name:'Studio vicino universita',value:165000,display:'165K €',emoji:'🎓',image:'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=900&q=80'},
+      {name:'Palazzo storico a Venezia',value:41000000,display:'41M €',emoji:'🎭',image:'https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?auto=format&fit=crop&w=900&q=80'},
+      {name:'Casa galleggiante',value:420000,display:'420K €',emoji:'⚓',image:'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80'},
+      {name:'Villa moderna a Los Angeles',value:68000000,display:'68M €',emoji:'🎬',image:'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=900&q=80'},
+      {name:'Duplex a Londra',value:12500000,display:'12,5M €',emoji:'☂️',image:'https://images.unsplash.com/photo-1600566753151-384129cf4e3e?auto=format&fit=crop&w=900&q=80'},
+      {name:'Villa con vigneto in Napa Valley',value:22500000,display:'22,5M €',emoji:'🍷',image:'https://images.unsplash.com/photo-1568605114967-8130f3a36994?auto=format&fit=crop&w=900&q=80'},
+      {name:'Casa prefabbricata premium',value:240000,display:'240K €',emoji:'📦',image:'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=900&q=80'},
+      {name:'Monolocale periferico',value:92000,display:'92K €',emoji:'🔑',image:'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=900&q=80'}
+    ]
+  },
+  oggetti:{
+    label:'Oggetti',
+    unit:'prezzo stimato',
+    sub:'Aste, lusso e tecnologia',
+    items:[
+      {name:'Diamante rosa raro',value:57000000,display:'57M €',emoji:'💎',image:'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=900&q=80'},
+      {name:'Ferrari da collezione',value:32000000,display:'32M €',emoji:'🏎️',image:'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=900&q=80'},
+      {name:'Orologio di lusso raro',value:17000000,display:'17M €',emoji:'⌚',image:'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=900&q=80'},
+      {name:'Chitarra firmata da rockstar',value:6000000,display:'6M €',emoji:'🎸',image:'https://images.unsplash.com/photo-1510915361894-db8b60106cb1?auto=format&fit=crop&w=900&q=80'},
+      {name:'Sneaker limited edition',value:1800000,display:'1,8M €',emoji:'👟',image:'https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&w=900&q=80'},
+      {name:'Primo iPhone sigillato',value:190000,display:'190K €',emoji:'📱',image:'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=900&q=80'},
+      {name:'Set LEGO raro',value:12000,display:'12K €',emoji:'🧩',image:'https://images.unsplash.com/photo-1587654780291-39c9404d746b?auto=format&fit=crop&w=900&q=80'},
+      {name:'Bici da corsa top',value:9000,display:'9K €',emoji:'🚲',image:'https://images.unsplash.com/photo-1485965120184-e220f721d03e?auto=format&fit=crop&w=900&q=80'},
+      {name:'Birkin Himalayan',value:380000,display:'380K €',emoji:'👜',image:'https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=900&q=80'},
+      {name:'Carta Pokemon Charizard 1st Edition',value:420000,display:'420K €',emoji:'🔥',image:'https://images.unsplash.com/photo-1613771404721-1f92d799e49f?auto=format&fit=crop&w=900&q=80'},
+      {name:'Maglia storica di Maradona',value:8500000,display:'8,5M €',emoji:'⚽',image:'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?auto=format&fit=crop&w=900&q=80'},
+      {name:'Pianoforte da concerto Steinway',value:180000,display:'180K €',emoji:'🎹',image:'https://images.unsplash.com/photo-1520523839897-bd0b52f945a0?auto=format&fit=crop&w=900&q=80'},
+      {name:'Yacht di lusso medio',value:24000000,display:'24M €',emoji:'🛥️',image:'https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?auto=format&fit=crop&w=900&q=80'},
+      {name:'Jet privato usato',value:36000000,display:'36M €',emoji:'✈️',image:'https://images.unsplash.com/photo-1540962351504-03099e0a754b?auto=format&fit=crop&w=900&q=80'},
+      {name:'Computer Apple-1',value:905000,display:'905K €',emoji:'💻',image:'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=900&q=80'},
+      {name:'Fumetto Action Comics n.1',value:3200000,display:'3,2M €',emoji:'🦸',image:'https://images.unsplash.com/photo-1612036782180-6f0b6cd846fe?auto=format&fit=crop&w=900&q=80'},
+      {name:'Moneta Double Eagle 1933',value:18800000,display:'18,8M €',emoji:'🪙',image:'https://images.unsplash.com/photo-1621416894569-0f39ed31d247?auto=format&fit=crop&w=900&q=80'},
+      {name:'Bottiglia Romanée-Conti',value:550000,display:'550K €',emoji:'🍷',image:'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=900&q=80'},
+      {name:'Sedia di design vintage',value:45000,display:'45K €',emoji:'🪑',image:'https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?auto=format&fit=crop&w=900&q=80'},
+      {name:'Macchina fotografica Leica rara',value:2400000,display:'2,4M €',emoji:'📷',image:'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=900&q=80'},
+      {name:'Spada samurai antica',value:780000,display:'780K €',emoji:'🗡️',image:'https://images.unsplash.com/photo-1594381898411-846e7d193883?auto=format&fit=crop&w=900&q=80'},
+      {name:'Violino Stradivari',value:15500000,display:'15,5M €',emoji:'🎻',image:'https://images.unsplash.com/photo-1465821185615-20b3c2fbf41b?auto=format&fit=crop&w=900&q=80'},
+      {name:'Anello con zaffiro reale',value:1200000,display:'1,2M €',emoji:'💍',image:'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=900&q=80'},
+      {name:'Drone cinema professionale',value:25000,display:'25K €',emoji:'🚁',image:'https://images.unsplash.com/photo-1508614589041-895b88991e3e?auto=format&fit=crop&w=900&q=80'},
+      {name:'Console Nintendo PlayStation prototype',value:360000,display:'360K €',emoji:'🕹️',image:'https://images.unsplash.com/photo-1593305841991-05c297ba4575?auto=format&fit=crop&w=900&q=80'},
+      {name:'Tappeto persiano antico',value:950000,display:'950K €',emoji:'🧶',image:'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=900&q=80'},
+      {name:'Casco Formula 1 autografato',value:125000,display:'125K €',emoji:'🏁',image:'https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?auto=format&fit=crop&w=900&q=80'},
+      {name:'Diamante blu raro',value:48000000,display:'48M €',emoji:'🔷',image:'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=900&q=80'}
+    ]
+  },
+  arte:{
+    label:"Opere d'arte",
+    unit:'prezzo d’asta stimato',
+    sub:'Capolavori e mercato',
+    items:[
+      {name:'Salvator Mundi',value:450000000,display:'450M €',emoji:'🖼️',image:'https://images.unsplash.com/photo-1541961017774-22349e4a1262?auto=format&fit=crop&w=900&q=80'},
+      {name:'Interchange',value:300000000,display:'300M €',emoji:'🎨',image:'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?auto=format&fit=crop&w=900&q=80'},
+      {name:'I giocatori di carte',value:250000000,display:'250M €',emoji:'♣️',image:'https://images.unsplash.com/photo-1578301978693-85fa9c0320b9?auto=format&fit=crop&w=900&q=80'},
+      {name:'Nafea Faa Ipoipo',value:210000000,display:'210M €',emoji:'🌺',image:'https://images.unsplash.com/photo-1577083288073-40892c0860a4?auto=format&fit=crop&w=900&q=80'},
+      {name:'Number 17A',value:200000000,display:'200M €',emoji:'🟨',image:'https://images.unsplash.com/photo-1561214115-f2f134cc4912?auto=format&fit=crop&w=900&q=80'},
+      {name:'Ninfee',value:84000000,display:'84M €',emoji:'🪷',image:'https://images.unsplash.com/photo-1564399579883-451a5d44ec08?auto=format&fit=crop&w=900&q=80'},
+      {name:'Scultura contemporanea',value:58000000,display:'58M €',emoji:'🗿',image:'https://images.unsplash.com/photo-1554907984-15263bfd63bd?auto=format&fit=crop&w=900&q=80'},
+      {name:'Fotografia d’autore',value:4300000,display:'4,3M €',emoji:'📷',image:'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80'},
+      {name:'Les Femmes d’Alger',value:179000000,display:'179M €',emoji:'👥',image:'https://images.unsplash.com/photo-1578301978693-85fa9c0320b9?auto=format&fit=crop&w=900&q=80'},
+      {name:'Nu couché',value:170000000,display:'170M €',emoji:'🖌️',image:'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?auto=format&fit=crop&w=900&q=80'},
+      {name:'Three Studies of Lucian Freud',value:142000000,display:'142M €',emoji:'🎭',image:'https://images.unsplash.com/photo-1547826039-bfc35e0f1ea8?auto=format&fit=crop&w=900&q=80'},
+      {name:'Balloon Dog',value:58400000,display:'58,4M €',emoji:'🎈',image:'https://images.unsplash.com/photo-1554907984-15263bfd63bd?auto=format&fit=crop&w=900&q=80'},
+      {name:'Rabbit',value:91000000,display:'91M €',emoji:'✨',image:'https://images.unsplash.com/photo-1554907984-15263bfd63bd?auto=format&fit=crop&w=900&q=80'},
+      {name:'Meules',value:110000000,display:'110M €',emoji:'🌾',image:'https://images.unsplash.com/photo-1564399579883-451a5d44ec08?auto=format&fit=crop&w=900&q=80'},
+      {name:'Untitled Basquiat',value:110500000,display:'110,5M €',emoji:'👑',image:'https://images.unsplash.com/photo-1541961017774-22349e4a1262?auto=format&fit=crop&w=900&q=80'},
+      {name:'Silver Car Crash',value:105000000,display:'105M €',emoji:'🚗',image:'https://images.unsplash.com/photo-1561214115-f2f134cc4912?auto=format&fit=crop&w=900&q=80'},
+      {name:'Dora Maar au Chat',value:95200000,display:'95,2M €',emoji:'🐈',image:'https://images.unsplash.com/photo-1577083552431-6e5fd01aa342?auto=format&fit=crop&w=900&q=80'},
+      {name:'Portrait of Adele Bloch-Bauer II',value:87900000,display:'87,9M €',emoji:'👒',image:'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?auto=format&fit=crop&w=900&q=80'},
+      {name:'Triptych, 1976',value:86200000,display:'86,2M €',emoji:'🧩',image:'https://images.unsplash.com/photo-1547826039-bfc35e0f1ea8?auto=format&fit=crop&w=900&q=80'},
+      {name:'Orange, Red, Yellow',value:86800000,display:'86,8M €',emoji:'🟧',image:'https://images.unsplash.com/photo-1561214115-f2f134cc4912?auto=format&fit=crop&w=900&q=80'},
+      {name:'Turquoise Marilyn',value:80000000,display:'80M €',emoji:'💄',image:'https://images.unsplash.com/photo-1579762715118-a6f1d4b934f1?auto=format&fit=crop&w=900&q=80'},
+      {name:'False Start',value:80000000,display:'80M €',emoji:'🏁',image:'https://images.unsplash.com/photo-1578301978693-85fa9c0320b9?auto=format&fit=crop&w=900&q=80'},
+      {name:'White Center',value:72800000,display:'72,8M €',emoji:'⬜',image:'https://images.unsplash.com/photo-1561214115-f2f134cc4912?auto=format&fit=crop&w=900&q=80'},
+      {name:'L’Homme qui marche I',value:104000000,display:'104M €',emoji:'🚶',image:'https://images.unsplash.com/photo-1554907984-15263bfd63bd?auto=format&fit=crop&w=900&q=80'},
+      {name:'Poppy Flowers',value:50000000,display:'50M €',emoji:'🌺',image:'https://images.unsplash.com/photo-1564399579883-451a5d44ec08?auto=format&fit=crop&w=900&q=80'},
+      {name:'Girl with Balloon',value:23000000,display:'23M €',emoji:'🎈',image:'https://images.unsplash.com/photo-1579762715118-a6f1d4b934f1?auto=format&fit=crop&w=900&q=80'},
+      {name:'Scultura da galleria emergente',value:120000,display:'120K €',emoji:'🪨',image:'https://images.unsplash.com/photo-1554907984-15263bfd63bd?auto=format&fit=crop&w=900&q=80'},
+      {name:'Stampa numerata contemporanea',value:18000,display:'18K €',emoji:'🖨️',image:'https://images.unsplash.com/photo-1547826039-bfc35e0f1ea8?auto=format&fit=crop&w=900&q=80'}
+    ]
+  }
+};
+
 const SARABANDA_TRACKS=[
   {title:"40 Gradi",artist:"Simba la Rue",src:"Sarabanda/40-gradi-spotdownorg_NdFO2YGS.mp3"},
   {title:"Soldi In Nero",artist:"Shiva feat. Sfera Ebbasta",src:"Sarabanda/soldi-in-nero-feat-sfera-ebbasta-spotdownorg_OeJNjolX.mp3"},
@@ -388,6 +531,10 @@ function goTo(id){
   if(id!=='s-pick-wheel'&&id!=='s-wheel')stopRdfAudio();
   if(id!=='s-chain')clearChainTimer();
   if(id!=='s-sarabanda')stopSarabandaAudio();
+  if(id!=='s-higherlower'){
+    clearTimeout(higherLowerTimer);
+    higherLowerTimer=null;
+  }
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   if(id==='s-setup')initTtsControls();
@@ -406,13 +553,14 @@ function escapeHtml(value){
 function getTimer(g){return parseInt(document.getElementById('timer-'+g).value)||30}
 function getTabooTimer(){return parseInt(document.getElementById('timer-taboo')?.value)||60}
 function getGameNameFromScreen(id){
-  if(['s-hero','s-setup','s-pick','s-pick2','s-pick-wheel','s-pick-chain','s-pick-taboo','s-win'].includes(id))return 'menu';
+  if(['s-hero','s-setup','s-pick','s-pick2','s-pick-wheel','s-pick-chain','s-pick-taboo','s-pick-hol','s-win'].includes(id))return 'menu';
   if(id==='s-aua')return 'aua';
   if(id==='s-eredita')return 'eredita';
   if(id==='s-wheel')return 'ruota';
   if(id==='s-chain')return 'catena';
   if(id==='s-sarabanda')return 'sarabanda';
   if(id==='s-guesswho')return 'guesswho';
+  if(id==='s-higherlower')return 'higherlower';
   if(id==='s-intesa-score')return 'intesa';
   return 'menu';
 }
@@ -791,6 +939,7 @@ function getGameStatsLabel(game){
     catena:'Reazione a Catena',
     sarabanda:'Sarabanda',
     guesswho:'Indovina Chi',
+    higherlower:'Higher or Lower',
     taboo:'Taboo'
   };
   return labels[game]||game||'—';
@@ -1166,7 +1315,8 @@ const GAME_LABELS={
   intesa:"INTESA VINCENTE",
   catena:'REAZIONE A CATENA',
   sarabanda:'SARABANDA',
-  guesswho:'INDOVINA CHI'
+  guesswho:'INDOVINA CHI',
+  higherlower:'HIGHER OR LOWER'
 };
 
 const MULTIPLAYER_GAMES=['ruota','eredita','intesa','catena','sarabanda','guesswho'];
@@ -1506,6 +1656,24 @@ function startGame(game,options={}){
     beginGuessWho();
     return;
   }
+  if(game==='higherlower'){
+    stopAuaAudio();
+    stopRdfAudio();
+    selHigherPid=null;
+    selectedHolCategory=selectedHolCategory||Object.keys(HIGHER_LOWER_BANKS)[0];
+    document.getElementById('pick-grid-hol').innerHTML=players.map(p=>{
+      const c=TC[p.ci%TC.length];const t=teams.find(t=>t.mids.includes(p.id));
+      return `<div class="player-pick" id="pp-hol-${p.id}" onclick="selPickHigherLower(${p.id})">
+        <div class="pp-avatar" style="background:${c.light};color:${c.hex}">${initials(p.name)}</div>
+        <div class="pp-name">${escapeHtml(p.name)}</div>
+        <div class="pp-info">${t?escapeHtml(t.name):'Libero'} · ${p.score}pt</div></div>`;
+    }).join('');
+    renderHigherLowerCategories();
+    document.getElementById('btn-pick-hol-go').disabled=true;
+    document.getElementById('btn-pick-hol-go').onclick=()=>beginHigherLower();
+    goTo('s-pick-hol');
+    return;
+  }
   if(game==='catena'){
     if(players.length<2){goTo('s-setup');return;}
     stopAuaAudio();
@@ -1611,6 +1779,22 @@ function selPickTaboo(id){
   document.getElementById('pp-taboo-'+id)?.classList.add('selected');
   document.getElementById('btn-pick-taboo-go').disabled=false;
 }
+function selPickHigherLower(id){
+  selHigherPid=id;
+  document.querySelectorAll('#pick-grid-hol .player-pick').forEach(e=>e.classList.remove('selected'));
+  document.getElementById('pp-hol-'+id)?.classList.add('selected');
+  updateHigherLowerStartButton();
+}
+function selectHigherLowerCategory(key){
+  if(!HIGHER_LOWER_BANKS[key])return;
+  selectedHolCategory=key;
+  renderHigherLowerCategories();
+  updateHigherLowerStartButton();
+}
+function updateHigherLowerStartButton(){
+  const btn=document.getElementById('btn-pick-hol-go');
+  if(btn)btn.disabled=!(selHigherPid&&HIGHER_LOWER_BANKS[selectedHolCategory]);
+}
 function selPick2(slot,id){
   if(slot==='p1')selP1=id;else selP2=id;
   document.querySelectorAll(`#pick-grid-${slot} .player-pick`).forEach(e=>e.classList.remove('selected'));
@@ -1623,6 +1807,164 @@ function selPickChain(slot,id){
   document.querySelectorAll(`#pick-grid-chain-${slot} .player-pick`).forEach(e=>e.classList.remove('selected'));
   document.getElementById(`pp-chain-${slot}-${id}`)?.classList.add('selected');
   document.getElementById('btn-pick-chain-go').disabled=!(selChainP1&&selChainP2&&selChainP1!==selChainP2);
+}
+
+/* ══════════════════════════════
+   HIGHER OR LOWER
+══════════════════════════════ */
+let higherLowerState={};
+let higherLowerTimer=null;
+
+function renderHigherLowerCategories(){
+  const el=document.getElementById('hol-categories');
+  if(!el)return;
+  el.innerHTML=Object.entries(HIGHER_LOWER_BANKS).map(([key,cat])=>`
+    <button class="hol-cat${key===selectedHolCategory?' selected':''}" type="button" onclick="selectHigherLowerCategory('${key}')">
+      <div class="hol-cat-name">${escapeHtml(cat.label)}</div>
+      <div class="hol-cat-sub">${escapeHtml(cat.sub)}</div>
+    </button>
+  `).join('');
+}
+
+function getHigherLowerItemHtml(item,side){
+  const image=escapeHtml(item.image||'');
+  return `
+    <div class="hol-img" style="background-image:url('${image}')"></div>
+    <div class="hol-fallback">${escapeHtml(item.emoji||'📦')}</div>
+    <div class="hol-body">
+      <div class="hol-kicker">Oggetto ${side.toUpperCase()}</div>
+      <div class="hol-name">${escapeHtml(item.name)}</div>
+      <div class="hol-value">${escapeHtml(item.display)}</div>
+    </div>
+  `;
+}
+
+function markHigherLowerFallback(card,item){
+  if(!card||!item?.image)return;
+  const img=new Image();
+  img.onload=()=>{};
+  img.onerror=()=>{
+    const bg=card.querySelector('.hol-img');
+    const fb=card.querySelector('.hol-fallback');
+    if(bg)bg.style.display='none';
+    if(fb)fb.style.display='flex';
+  };
+  img.src=item.image;
+}
+
+async function beginHigherLower(){
+  activeStatsGame='higherlower';
+  clearTimeout(higherLowerTimer);
+  higherLowerTimer=null;
+  const player=players.find(p=>p.id===selHigherPid);
+  const bank=HIGHER_LOWER_BANKS[selectedHolCategory];
+  if(!player||!bank){goTo('s-pick-hol');return;}
+  const items=shuffleArray([...bank.items]);
+  if(items.length<3){
+    alert('Servono almeno tre carte per giocare a Higher or Lower.');
+    return;
+  }
+  higherLowerState={
+    pid:player.id,
+    category:selectedHolCategory,
+    items,
+    current:items[0],
+    challenger:items[1],
+    nextIdx:2,
+    streak:0,
+    locked:false,
+    message:`${player.name}, scegli quale vale di piu.`
+  };
+  renderHigherLower();
+  goTo('s-higherlower');
+}
+
+function renderHigherLower(){
+  const state=higherLowerState;
+  if(!state?.current||!state?.challenger)return;
+  const player=players.find(p=>p.id===state.pid);
+  const cat=HIGHER_LOWER_BANKS[state.category];
+  const cardA=document.getElementById('hol-card-a');
+  const cardB=document.getElementById('hol-card-b');
+  document.getElementById('hol-player').textContent=player?.name||'Giocatore';
+  document.getElementById('hol-score').textContent=state.streak||0;
+  document.getElementById('hol-message').textContent=state.message||`Scegli il valore piu alto: ${cat?.unit||'valore stimato'}.`;
+  if(cardA){
+    cardA.className='hol-card';
+    cardA.disabled=!!state.locked;
+    cardA.innerHTML=getHigherLowerItemHtml(state.current,'a');
+    markHigherLowerFallback(cardA,state.current);
+  }
+  if(cardB){
+    cardB.className='hol-card';
+    cardB.disabled=!!state.locked;
+    cardB.innerHTML=getHigherLowerItemHtml(state.challenger,'b');
+    markHigherLowerFallback(cardB,state.challenger);
+  }
+}
+
+function chooseHigherLower(side){
+  const state=higherLowerState;
+  if(!state?.current||!state?.challenger||state.locked)return;
+  state.locked=true;
+  const a=state.current;
+  const b=state.challenger;
+  const higher=a.value>=b.value?'a':'b';
+  const picked=side==='a'?'a':'b';
+  const correct=picked===higher;
+  const cardA=document.getElementById('hol-card-a');
+  const cardB=document.getElementById('hol-card-b');
+  cardA?.classList.add('revealed',higher==='a'?'higher':'lower');
+  cardB?.classList.add('revealed',higher==='b'?'higher':'lower');
+  if(correct){
+    state.streak++;
+    document.getElementById('hol-score').textContent=state.streak;
+    state.message=`Giusto! ${higher==='a'?a.name:b.name} vale di piu.`;
+    document.getElementById('hol-message').textContent=state.message;
+    higherLowerTimer=setTimeout(nextHigherLowerRound,1050);
+    return;
+  }
+  state.message=`Sbagliato: ${higher==='a'?a.name:b.name} valeva di piu.`;
+  document.getElementById('hol-message').textContent=state.message;
+  higherLowerTimer=setTimeout(()=>endHigherLower(false),1400);
+}
+
+function nextHigherLowerRound(){
+  const state=higherLowerState;
+  if(!state?.items)return;
+  const a=state.current;
+  const b=state.challenger;
+  state.current=a.value>=b.value?a:b;
+  if(state.nextIdx>=state.items.length){
+    endHigherLower(true);
+    return;
+  }
+  state.challenger=state.items[state.nextIdx++];
+  state.locked=false;
+  state.message='Continua la serie: quale vale di piu?';
+  renderHigherLower();
+}
+
+function endHigherLower(completed=false){
+  clearTimeout(higherLowerTimer);
+  higherLowerTimer=null;
+  const state=higherLowerState;
+  const player=players.find(p=>p.id===state?.pid);
+  const points=state?.streak||0;
+  if(player&&points>0)awardPlayerPoints(player.id,points,'higher-lower');
+  document.getElementById('win-name').textContent=player?.name||'Giocatore';
+  document.getElementById('win-sub').textContent=completed
+    ? `Serie chiusa con ${points} risposte corrette!`
+    : `Game over: ${points} risposte corrette.`;
+  document.getElementById('win-scores').innerHTML=`<div style="font-size:.68rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--mut);margin-bottom:.6rem">Risultato Higher or Lower</div>
+    <div class="sc-row">
+      <div class="sc-rank">1</div>
+      <div class="sc-name">${escapeHtml(player?.name||'Giocatore')}</div>
+      <div class="sc-pts">${points}</div>
+    </div>`;
+  recordCompletedGame('higherlower',player?.uid&&points>0?[player.uid]:[]);
+  higherLowerState={};
+  goTo('s-win');
 }
 
 /* ══════════════════════════════
@@ -3424,10 +3766,17 @@ const firebaseConfig = {
         projectId: "tv-game-night",
         storageBucket: "tv-game-night.firebasestorage.app",
         messagingSenderId: "570468387403",
-        appId: "1:570468387403:web:1bcd29c85f8e8d00539bce"
+        appId: "1:570468387403:web:1bcd29c85f8e8d00539bce",
+        measurementId: "G-6LYXHB8VCJ"
     };
 
-firebase.initializeApp(firebaseConfig);
+const firebaseApp = firebase.apps?.length ? firebase.app() : firebase.initializeApp(firebaseConfig);
+let analytics = null;
+try{
+  analytics = typeof firebase.analytics === 'function' ? firebase.analytics(firebaseApp) : null;
+}catch(err){
+  console.warn('Analytics non inizializzato:',err);
+}
 
 const auth = firebase.auth();
 const database = firebase.database();

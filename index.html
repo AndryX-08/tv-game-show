@@ -5,6 +5,7 @@
 <title>TV Game Night</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <meta name="google-site-verification" content="EDQehZrVf_RM7yRgTsABSED3sfPZ8tM5RFziHaBg9b4" />
+<meta name="google-adsense-account" content="ca-pub-5825437395557584">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800;900&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
@@ -293,6 +294,36 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
 .gw-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;margin-top:.7rem}
 .gw-message{min-height:30px;text-align:center;font-weight:900;color:var(--txt);font-size:.9rem;margin-top:.75rem}
 
+/* HIGHER OR LOWER */
+.hol-setup{display:grid;gap:.9rem;margin-bottom:1.2rem}
+.hol-cats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.65rem}
+.hol-cat{background:var(--surf);border:2px solid rgba(255,255,255,.14);border-radius:12px;padding:.85rem;text-align:left;color:var(--txt);font-family:'Nunito',sans-serif;cursor:pointer;transition:all .18s}
+.hol-cat:hover,.hol-cat.selected{border-color:var(--gold);background:rgba(245,197,24,.1)}
+.hol-cat-name{font-weight:900;color:var(--gold);margin-bottom:.2rem}
+.hol-cat-sub{font-size:.72rem;color:var(--mut)}
+.hol-stage{background:var(--surf);border:1px solid var(--bord);border-radius:16px;padding:1rem;margin-bottom:1rem}
+.hol-head{display:flex;align-items:flex-start;justify-content:space-between;gap:.8rem;margin-bottom:.9rem}
+.hol-title{font-family:'Bebas Neue',sans-serif;font-size:1.45rem;letter-spacing:3px;color:var(--gold)}
+.hol-meta{text-align:right;font-size:.78rem;color:var(--mut)}
+.hol-score{font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:2px;color:var(--gold);line-height:1}
+.hol-versus{display:grid;grid-template-columns:1fr auto 1fr;gap:.75rem;align-items:stretch;margin-bottom:.85rem}
+.hol-card{position:relative;min-height:330px;border:2px solid rgba(255,255,255,.14);border-radius:14px;overflow:hidden;background:var(--surf2);cursor:pointer;transition:transform .18s,border-color .18s,opacity .18s}
+.hol-card:hover{transform:translateY(-2px);border-color:rgba(245,197,24,.65)}
+.hol-card.revealed.higher{border-color:#2ECC71}
+.hol-card.revealed.lower{opacity:.62}
+.hol-img{position:absolute;inset:0;background-size:cover;background-position:center;filter:saturate(1.05)}
+.hol-img::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(8,8,26,.05),rgba(8,8,26,.84))}
+.hol-fallback{position:absolute;inset:0;display:none;align-items:center;justify-content:center;font-size:5rem;background:linear-gradient(145deg,rgba(245,197,24,.18),rgba(52,152,219,.16),rgba(231,76,60,.12))}
+.hol-body{position:absolute;inset:auto 0 0;padding:1rem;text-align:left}
+.hol-kicker{font-size:.66rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:.3rem}
+.hol-name{font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:2px;line-height:1;color:#fff;text-shadow:0 2px 10px rgba(0,0,0,.5)}
+.hol-value{display:none;margin-top:.55rem;font-weight:900;color:#2ECC71}
+.hol-card.revealed .hol-value{display:block}
+.hol-vs{align-self:center;width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--gold);color:#08081A;font-family:'Bebas Neue',sans-serif;font-size:1.35rem;letter-spacing:1px;box-shadow:0 8px 24px rgba(0,0,0,.32)}
+.hol-message{min-height:34px;text-align:center;font-size:.9rem;font-weight:900;color:var(--txt);margin:.6rem 0}
+.hol-actions{display:flex;gap:.65rem}
+.hol-actions button{flex:1}
+
 @media(max-width:620px){
   .game-cards{grid-template-columns:repeat(2,1fr)}
   .wheel-status{grid-template-columns:1fr}
@@ -371,6 +402,11 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
   .sara-actions{grid-template-columns:1fr}
   .gw-top{flex-direction:column}
   .gw-meta,.gw-actions{grid-template-columns:1fr}
+  .hol-head{flex-direction:column}
+  .hol-meta{text-align:left}
+  .hol-versus{grid-template-columns:1fr;gap:.55rem}
+  .hol-vs{margin:0 auto;width:40px;height:40px}
+  .hol-card{min-height:250px}
   .sc-row{gap:.45rem}
   .sc-rank{width:18px;flex-shrink:0}
   .sc-name{font-size:.82rem}
@@ -434,6 +470,7 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics-compat.js"></script>
 </head><body>
 <!-- OPENING 3D INTRO -->
 <div id="openingIntro" class="opening-intro" aria-label="Intro TV Game Night">
@@ -747,6 +784,11 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
         <div class="gc-name">Indovina Chi</div>
         <div class="gc-sub">Personaggi e indizi</div>
       </div>
+      <div class="game-card" onclick="startGame('higherlower')">
+        <div class="gc-emoji">📈</div>
+        <div class="gc-name">Higher or Lower</div>
+        <div class="gc-sub">Scegli cosa vale di più</div>
+      </div>
       <div class="game-card" onclick="startGame('taboo')">
         <div class="gc-emoji">🚫</div>
         <div class="gc-name">Taboo</div>
@@ -875,6 +917,24 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
   <div style="font-size:.82rem;color:var(--mut);margin-bottom:1.2rem">Seleziona il giocatore che descriverà la parola senza dire quelle proibite</div>
   <div class="player-pick-grid" id="pick-grid-taboo"></div>
   <button class="btn-gold" id="btn-pick-taboo-go" style="width:100%" disabled>APRI TABOO ›</button>
+</div>
+
+<!-- PICK HIGHER OR LOWER -->
+<div class="screen" id="s-pick-hol">
+  <button class="btn-back" onclick="goTo('s-hero')">← Menu</button>
+  <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:3px;color:var(--gold);margin-bottom:.25rem">Higher or Lower</div>
+  <div style="font-size:.82rem;color:var(--mut);margin-bottom:1.2rem">Scegli il concorrente e una categoria. Alla prima risposta sbagliata il turno finisce.</div>
+  <div class="hol-setup">
+    <div>
+      <div style="font-size:.7rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:.6rem">Concorrente</div>
+      <div class="player-pick-grid" id="pick-grid-hol"></div>
+    </div>
+    <div>
+      <div style="font-size:.7rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:.6rem">Categoria</div>
+      <div class="hol-cats" id="hol-categories"></div>
+    </div>
+  </div>
+  <button class="btn-gold" id="btn-pick-hol-go" style="width:100%" disabled>INIZIA ›</button>
 </div>
 
 <!-- PICK 2 (EREDITA) -->
@@ -1104,6 +1164,32 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
   <div style="display:flex;gap:.75rem">
     <button class="btn-ghost" style="flex:1" onclick="endGuessWho()">Termina</button>
     <button class="btn-ghost" style="flex:1" onclick="goTo('s-hero')">Menu</button>
+  </div>
+</div>
+
+<!-- HIGHER OR LOWER GAME -->
+<div class="screen" id="s-higherlower">
+  <div class="hol-head">
+    <div>
+      <div class="hol-title">📈 Higher or Lower</div>
+      <div style="font-size:.78rem;color:var(--mut)">Gioca: <span id="hol-player" style="color:var(--txt);font-weight:900"></span></div>
+    </div>
+    <div class="hol-meta">
+      <div>Risposte corrette</div>
+      <div class="hol-score" id="hol-score">0</div>
+    </div>
+  </div>
+  <div class="hol-stage">
+    <div class="hol-versus">
+      <button class="hol-card" id="hol-card-a" type="button" onclick="chooseHigherLower('a')"></button>
+      <div class="hol-vs">VS</div>
+      <button class="hol-card" id="hol-card-b" type="button" onclick="chooseHigherLower('b')"></button>
+    </div>
+    <div class="hol-message" id="hol-message"></div>
+    <div class="hol-actions">
+      <button class="btn-ghost" onclick="endHigherLower(true)">Termina</button>
+      <button class="btn-ghost" onclick="goTo('s-hero')">Menu</button>
+    </div>
   </div>
 </div>
 
