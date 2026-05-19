@@ -4,6 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>Taboo Host - TV Game Night</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#08081A">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="TV Game Night">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <style>
     :root{--bg:#08081A;--surface:#12122A;--surface2:#1C1C3A;--gold:#F5C518;--txt:#F0EEE4;--mut:#7A7A9A;--red:#E74C3C;--green:#2ECC71}
     *{box-sizing:border-box;margin:0;padding:0}
@@ -209,6 +217,14 @@
     }
 
     window.addEventListener('load', init);
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function(){
+        navigator.serviceWorker.register('./service-worker.js').catch(function(error){
+          console.warn('Service worker non registrato:', error);
+        });
+      });
+    }
   </script>
 </body>
 </html>

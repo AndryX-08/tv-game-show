@@ -4,6 +4,13 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>TV Game Night</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#08081A">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="TV Game Night">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="google-site-verification" content="EDQehZrVf_RM7yRgTsABSED3sfPZ8tM5RFziHaBg9b4" />
 <meta name="google-adsense-account" content="ca-pub-5825437395557584">
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5825437395557584" crossorigin="anonymous"></script>
@@ -16,6 +23,20 @@ body{background:var(--bg);color:var(--txt);font-family:'Nunito',sans-serif;min-h
 button,input,select{max-width:100%}
 .screen{display:none;padding:1.4rem;max-width:720px;width:100%;margin:0 auto}
 .screen.active{display:block}
+.pwa-install-tip{position:fixed;left:1rem;right:1rem;bottom:calc(1rem + env(safe-area-inset-bottom));display:none;background:rgba(18,18,42,.96);border:1.5px solid rgba(245,197,24,.42);border-radius:16px;padding:1rem;z-index:10001;box-shadow:0 18px 50px rgba(0,0,0,.46);backdrop-filter:blur(12px)}
+.pwa-install-tip.show{display:block}
+.pwa-install-head{display:flex;align-items:flex-start;justify-content:space-between;gap:.8rem;margin-bottom:.55rem}
+.pwa-install-title{font-family:'Bebas Neue',sans-serif;font-size:1.35rem;letter-spacing:2px;color:var(--gold);line-height:1}
+.pwa-install-close{width:34px;height:34px;border-radius:10px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.08);color:var(--txt);font-size:1.2rem;line-height:1;cursor:pointer;flex-shrink:0}
+.pwa-install-tip p{font-size:.86rem;line-height:1.45;color:var(--txt);margin-bottom:.65rem}
+.pwa-install-steps{display:grid;gap:.35rem;margin:.65rem 0 .8rem;padding-left:1.1rem;color:var(--txt)}
+.pwa-install-steps li{font-size:.82rem;line-height:1.35}
+.pwa-install-actions{display:flex;gap:.55rem;align-items:center}
+.pwa-install-actions button{flex:1;padding:.72rem .85rem;border-radius:10px;font-family:'Nunito',sans-serif;font-weight:900;cursor:pointer}
+.pwa-install-primary{display:none;background:var(--gold);border:none;color:#08081A}
+.pwa-install-primary.show{display:block}
+.pwa-install-secondary{background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.22);color:var(--txt)}
+@media(min-width:721px){.pwa-install-tip{display:none!important}}
 
 .user-box {position: fixed;top: 15px;right: 20px;background: rgba(20,20,30,0.9);padding: 10px 15px;border-radius: 12px;display: flex;align-items: center;gap: 10px;z-index: 999;backdrop-filter: blur(8px);}
 .user-name-btn{background:none;border:none;color:var(--txt);font-family:'Nunito',sans-serif;font-size:.95rem;font-weight:900;cursor:pointer;padding:.25rem .35rem;border-radius:8px}
@@ -473,6 +494,18 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics-compat.js"></script>
 </head><body>
+<div class="pwa-install-tip" id="pwaInstallTip" role="dialog" aria-live="polite" aria-label="Installa TV Game Night">
+  <div class="pwa-install-head">
+    <div class="pwa-install-title">Installa TV Game Night</div>
+    <button class="pwa-install-close" id="pwaInstallClose" type="button" aria-label="Chiudi avviso">×</button>
+  </div>
+  <p>Aprila dalla schermata Home per giocare a schermo pieno e ritrovarla subito.</p>
+  <ol class="pwa-install-steps" id="pwaInstallSteps"></ol>
+  <div class="pwa-install-actions">
+    <button class="pwa-install-primary" id="pwaInstallButton" type="button">Installa ora</button>
+    <button class="pwa-install-secondary" id="pwaInstallLater" type="button">Più tardi</button>
+  </div>
+</div>
 <!-- OPENING 3D INTRO -->
 <div id="openingIntro" class="opening-intro" aria-label="Intro TV Game Night">
   <audio id="openingIntroMusic" src="Music%20theme/intro_music_theme.mp3" preload="auto"></audio>
@@ -1228,4 +1261,89 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
   </div>
 </div>
 <script src="script.js"></script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('./service-worker.js').catch(function(error){
+      console.warn('Service worker non registrato:', error);
+    });
+  });
+}
+
+(function(){
+  var deferredInstallPrompt=null;
+  var tip=document.getElementById('pwaInstallTip');
+  var steps=document.getElementById('pwaInstallSteps');
+  var installButton=document.getElementById('pwaInstallButton');
+  var closeButton=document.getElementById('pwaInstallClose');
+  var laterButton=document.getElementById('pwaInstallLater');
+  var isMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  var isStandalone=window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  var isIos=/iPhone|iPad|iPod/i.test(navigator.userAgent);
+  var isAndroid=/Android/i.test(navigator.userAgent);
+
+  function setSteps(items){
+    steps.innerHTML='';
+    items.forEach(function(item){
+      var li=document.createElement('li');
+      li.textContent=item;
+      steps.appendChild(li);
+    });
+  }
+
+  function hideTip(){
+    if(tip) tip.classList.remove('show');
+    sessionStorage.setItem('tvgn-pwa-tip-closed','1');
+  }
+
+  function showTip(){
+    if(!tip || !isMobile || isStandalone || sessionStorage.getItem('tvgn-pwa-tip-closed')==='1') return;
+
+    if(isIos){
+      setSteps([
+        'Apri il sito con Safari.',
+        'Tocca il pulsante Condividi nella barra di Safari.',
+        'Scegli Aggiungi alla schermata Home e poi Aggiungi.'
+      ]);
+    } else if(isAndroid){
+      setSteps([
+        'Tocca Installa ora se il pulsante e disponibile.',
+        'In alternativa apri il menu del browser.',
+        'Scegli Installa app oppure Aggiungi a schermata Home.'
+      ]);
+    } else {
+      setSteps([
+        'Apri il menu del browser.',
+        'Scegli Installa app oppure Aggiungi a schermata Home.'
+      ]);
+    }
+
+    tip.classList.add('show');
+  }
+
+  window.addEventListener('beforeinstallprompt', function(event){
+    event.preventDefault();
+    deferredInstallPrompt=event;
+    if(installButton) installButton.classList.add('show');
+    showTip();
+  });
+
+  if(installButton){
+    installButton.addEventListener('click', function(){
+      if(!deferredInstallPrompt) return;
+      deferredInstallPrompt.prompt();
+      deferredInstallPrompt.userChoice.finally(function(){
+        deferredInstallPrompt=null;
+        installButton.classList.remove('show');
+        hideTip();
+      });
+    });
+  }
+
+  if(closeButton) closeButton.addEventListener('click', hideTip);
+  if(laterButton) laterButton.addEventListener('click', hideTip);
+  window.addEventListener('appinstalled', hideTip);
+  window.addEventListener('load', function(){ setTimeout(showTip, 900); });
+})();
+</script>
 </body></html>
