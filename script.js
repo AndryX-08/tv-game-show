@@ -45,6 +45,9 @@ let rdfAudio=null,rdfAutoStartListener=null,rdfAutoStarted=false;
 let ttsVoices=[];
 let ttsVoiceURI=localStorage.getItem('tvgn-tts-voice')||'';
 let ttsRate=parseFloat(localStorage.getItem('tvgn-tts-rate'))||.9;
+let onboardingStep=0,onboardingStarted=false;
+const ANON_IDLE_LIMIT_MS=30*60*1000;
+let anonymousCleanupTimer=null,anonymousCleanupInProgress=false,anonymousLifecycleBound=false;
 
 const PROFILE_COLORS=[
   {bg:'#F5C518',color:'#08081A'},
@@ -60,6 +63,33 @@ const DEFAULT_PROFILE_STATS={
   wins:0,
   lastGame:'—'
 };
+
+const ONBOARDING_STEPS=[
+  {
+    icon:'🎮',
+    mini:'Scegli',
+    title:'Scegli un gioco',
+    text:'Dalla home trovi tutti i giochi disponibili: scegli quello che vuoi e prepara la serata.'
+  },
+  {
+    icon:'👥',
+    mini:'Giocatori',
+    title:'Configura i giocatori',
+    text:'Aggiungi amici, squadre e timer dalla configurazione. Se siete online, invita profili registrati.'
+  },
+  {
+    icon:'📺',
+    mini:'Partita',
+    title:'Gioca sullo stesso schermo',
+    text:'Ogni gioco guida turno, punteggi e azioni principali con pulsanti grandi pensati per il mobile.'
+  },
+  {
+    icon:'🏆',
+    mini:'Punti',
+    title:'Salva i risultati',
+    text:'Quando hai un account, statistiche e classifica restano associate al tuo profilo.'
+  }
+];
 
 const AUA_Q=[
 {q:"Di che colore è il cielo sereno?",a:["Verde","Blu"],wrong:"Verde"},
@@ -1021,6 +1051,165 @@ function recordCompletedGame(game=activeStatsGame,winnerUids=[]){
   if(game&&activeStatsGame===game)activeStatsGame=null;
 }
 
+function renderOnboardingStep(){
+  const step=ONBOARDING_STEPS[onboardingStep]||ONBOARDING_STEPS[0];
+  const icon=document.getElementById('tutorialIcon');
+  const mini=document.getElementById('tutorialMiniTitle');
+  const title=document.getElementById('tutorialTitle');
+  const text=document.getElementById('tutorialText');
+  const progress=document.getElementById('tutorialProgress');
+  const back=document.getElementById('tutorialBack');
+  const next=document.getElementById('tutorialNext');
+  if(icon)icon.textContent=step.icon;
+  if(mini)mini.textContent=step.mini;
+  if(title)title.textContent=step.title;
+  if(text)text.textContent=step.text;
+  if(progress){
+    progress.innerHTML=ONBOARDING_STEPS.map((_,idx)=>`<span class="${idx===onboardingStep?'active':''}"></span>`).join('');
+  }
+  if(back)back.disabled=onboardingStep===0;
+  if(next)next.textContent=onboardingStep===ONBOARDING_STEPS.length-1?'Inizia':'Avanti';
+}
+
+function showOnboardingTutorial(){
+  if(onboardingStarted)return;
+  const overlay=document.getElementById('tutorialOverlay');
+  if(!overlay)return;
+  onboardingStarted=true;
+  onboardingStep=0;
+  renderOnboardingStep();
+  overlay.classList.remove('hidden');
+  overlay.style.display='flex';
+}
+
+function markOnboardingSeen(){
+  if(!currentUser||!window.db)return;
+  db.collection('users').doc(currentUser.uid).set({
+    onboardingSeenAt:firebase.firestore.FieldValue.serverTimestamp(),
+    updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+  },{merge:true}).catch(err=>console.error('Errore salvataggio tutorial:',err));
+}
+
+function closeOnboardingTutorial(){
+  const overlay=document.getElementById('tutorialOverlay');
+  if(overlay){
+    overlay.classList.add('hidden');
+    overlay.style.display='none';
+  }
+  markOnboardingSeen();
+}
+
+function skipOnboardingTutorial(){
+  closeOnboardingTutorial();
+}
+
+function nextOnboardingStep(){
+  if(onboardingStep>=ONBOARDING_STEPS.length-1){
+    closeOnboardingTutorial();
+    return;
+  }
+  onboardingStep+=1;
+  renderOnboardingStep();
+}
+
+function prevOnboardingStep(){
+  onboardingStep=Math.max(0,onboardingStep-1);
+  renderOnboardingStep();
+}
+
+function isFreshFirebaseAuthUser(user){
+  if(!user?.metadata)return false;
+  return user.metadata.creationTime&&user.metadata.lastSignInTime&&user.metadata.creationTime===user.metadata.lastSignInTime;
+}
+
+function clearAnonymousCleanupTimer(){
+  if(anonymousCleanupTimer)clearTimeout(anonymousCleanupTimer);
+  anonymousCleanupTimer=null;
+}
+
+function resetAnonymousActivityTimer(){
+  if(!currentUser?.isAnonymous||anonymousCleanupInProgress)return;
+  clearAnonymousCleanupTimer();
+  anonymousCleanupTimer=setTimeout(()=>{
+    cleanupAnonymousAccount('idle-timeout');
+  },ANON_IDLE_LIMIT_MS);
+}
+
+function bindAnonymousActivityListeners(){
+  if(anonymousLifecycleBound)return;
+  anonymousLifecycleBound=true;
+  ['pointerdown','keydown','touchstart','scroll'].forEach(eventName=>{
+    window.addEventListener(eventName,resetAnonymousActivityTimer,{passive:true});
+  });
+  window.addEventListener('pagehide',cleanupAnonymousAccountOnExit);
+  window.addEventListener('beforeunload',cleanupAnonymousAccountOnExit);
+}
+
+function startAnonymousLifecycle(){
+  bindAnonymousActivityListeners();
+  resetAnonymousActivityTimer();
+}
+
+function stopAnonymousLifecycle(){
+  clearAnonymousCleanupTimer();
+}
+
+function cleanupAnonymousAccountOnExit(){
+  if(!currentUser?.isAnonymous||anonymousCleanupInProgress)return;
+  cleanupAnonymousAccount('page-exit');
+}
+
+async function deleteAnonymousFirestoreData(uid){
+  if(!uid||!window.db)return;
+  const batch=db.batch();
+  try{
+    const invitesSnap=await db.collection('users').doc(uid).collection('gameInvites').limit(100).get();
+    invitesSnap.docs.forEach(doc=>batch.delete(doc.ref));
+  }catch(err){
+    console.error('Errore lettura inviti anonimi:',err);
+  }
+  try{
+    const sessionsSnap=await db.collection('gameSessions').where('createdBy','==',uid).limit(25).get();
+    sessionsSnap.docs.forEach(doc=>batch.delete(doc.ref));
+  }catch(err){
+    console.error('Errore lettura sessioni anonime:',err);
+  }
+  batch.delete(db.collection('leaderboard').doc(uid));
+  batch.delete(db.collection('users').doc(uid));
+  await batch.commit();
+}
+
+async function cleanupAnonymousAccount(reason='manual',options={}){
+  const user=currentUser||auth.currentUser;
+  if(!user?.isAnonymous||anonymousCleanupInProgress)return;
+  anonymousCleanupInProgress=true;
+  stopAnonymousLifecycle();
+  try{
+    stopSarabandaAudio();
+    stopGameSessionListener();
+    if(database){
+      await database.ref(`status/${user.uid}`).remove().catch(err=>console.error('Errore rimozione presenza anonima:',err));
+    }
+    await deleteAnonymousFirestoreData(user.uid);
+    players=players.filter(p=>p.uid!==user.uid);
+    renderPlayers();
+    renderTeamSection();
+    renderRegisteredUserSelect();
+    if(options.deleteAuth!==false&&auth.currentUser?.uid===user.uid){
+      await user.delete();
+    }else if(options.signOut!==false&&auth.currentUser?.uid===user.uid){
+      await auth.signOut();
+    }
+  }catch(err){
+    console.error(`Errore pulizia account anonimo (${reason}):`,err);
+    if(auth.currentUser?.uid===user.uid){
+      auth.signOut().catch(()=>{});
+    }
+  }finally{
+    anonymousCleanupInProgress=false;
+  }
+}
+
 function saveUserIfNew(user){
   if(!user||!window.db)return Promise.resolve();
   const now=firebase.firestore.FieldValue.serverTimestamp();
@@ -1042,7 +1231,9 @@ function saveUserIfNew(user){
   };
   const userRef=db.collection('users').doc(user.uid);
   const leaderboardRef=db.collection('leaderboard').doc(user.uid);
+  let isNewUser=false;
   return userRef.get().then(doc=>{
+    isNewUser=!doc.exists;
     const existing=doc.exists?doc.data():null;
     const base=doc.exists?{
       ...existingData,
@@ -1052,7 +1243,10 @@ function saveUserIfNew(user){
   }).then(()=>leaderboardRef.get()).then(doc=>{
     const base=doc.exists?existingData:{...freshData,totalScore:0};
     return leaderboardRef.set(base,{merge:true});
-  }).catch(err=>console.error('Errore salvataggio utente Firestore:',err));
+  }).then(()=>isNewUser).catch(err=>{
+    console.error('Errore salvataggio utente Firestore:',err);
+    return false;
+  });
 }
 
 function loadLeaderboard(){
@@ -3808,7 +4002,15 @@ document.addEventListener("DOMContentLoaded", () => {
         overlay.style.display = "none"; // forza nascondimento
       }
       updateUserUI(user);
-      saveUserIfNew(user);
+      if(user.isAnonymous){
+        showOnboardingTutorial();
+        startAnonymousLifecycle();
+      }else{
+        stopAnonymousLifecycle();
+      }
+      saveUserIfNew(user).then(isNewUser=>{
+        if(isNewUser||isFreshFirebaseAuthUser(user))showOnboardingTutorial();
+      });
       addCurrentUserAsPlayer(user);
       loadLeaderboard();
       loadRegisteredUsers();
@@ -3817,6 +4019,7 @@ document.addEventListener("DOMContentLoaded", () => {
       setupPresence(user);
     } else {
       teardownPresence();
+      stopAnonymousLifecycle();
       if(unsubscribeLeaderboard)unsubscribeLeaderboard();
       if(unsubscribeRegisteredUsers)unsubscribeRegisteredUsers();
       if(unsubscribeCurrentUserProfile)unsubscribeCurrentUserProfile();
@@ -3832,6 +4035,12 @@ document.addEventListener("DOMContentLoaded", () => {
       renderHomeLeaderboard();
       closeProfilePopup();
       closeGameInvitePopup();
+      onboardingStarted=false;
+      const tutorialOverlay=document.getElementById('tutorialOverlay');
+      if(tutorialOverlay){
+        tutorialOverlay.classList.add('hidden');
+        tutorialOverlay.style.display='none';
+      }
       if(overlay){
         overlay.style.display = "flex";
       }
@@ -3865,5 +4074,9 @@ function updateUserUI(user){
 function logout(){
   stopSarabandaAudio();
   teardownPresence();
+  if(currentUser?.isAnonymous){
+    cleanupAnonymousAccount('logout');
+    return;
+  }
   auth.signOut();
 }

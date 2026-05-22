@@ -84,6 +84,26 @@ button,input,select{max-width:100%}
 .auth-btn.google {background: rgba(20,20,30,0.9);color:#fdfdfd;border:1.5px solid rgba(245,197,24,.4);border-radius:12px;padding:.85rem 2.2rem;font-family:'Nunito',sans-serif;font-size:.95rem;font-weight:900;cursor:pointer;transition:transform .15s,background .15s}
 .auth-btn.anon {background:none; color: #dadada; text-decoration: underline;}
 .auth-btn.google:hover {transform: scale(1.03);}
+.tutorial-box{max-width:460px;padding:1.35rem;text-align:left;overflow:hidden}
+.tutorial-top{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1rem}
+.tutorial-kicker{font-size:.68rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--mut)}
+.tutorial-skip{background:transparent;border:none;color:var(--mut);font-family:'Nunito',sans-serif;font-weight:900;cursor:pointer;padding:.35rem .45rem;border-radius:8px}
+.tutorial-skip:hover{background:rgba(255,255,255,.08);color:#fff}
+.tutorial-visual{height:150px;border-radius:16px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;margin-bottom:1rem;position:relative;overflow:hidden}
+.tutorial-orbit{position:absolute;width:112px;height:112px;border:1.5px solid rgba(245,197,24,.25);border-radius:50%;animation:tutorialSpin 5s linear infinite}
+.tutorial-dot{position:absolute;width:16px;height:16px;border-radius:50%;background:var(--gold);box-shadow:0 0 18px rgba(245,197,24,.55);left:50%;top:-8px;transform:translateX(-50%)}
+.tutorial-card-mini{width:150px;background:rgba(18,18,42,.94);border:1.5px solid rgba(245,197,24,.35);border-radius:12px;padding:.75rem;text-align:center;box-shadow:0 16px 35px rgba(0,0,0,.28);animation:tutorialFloat 2.7s ease-in-out infinite}
+.tutorial-card-mini span{display:block;font-size:1.65rem;margin-bottom:.25rem}
+.tutorial-card-mini strong{font-family:'Bebas Neue',sans-serif;font-size:1.05rem;letter-spacing:1.8px;color:var(--gold)}
+.tutorial-title{font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:2px;color:var(--gold);line-height:1.05;margin-bottom:.45rem}
+.tutorial-text{font-size:.92rem;line-height:1.45;color:var(--txt);opacity:.9;margin-bottom:1rem}
+.tutorial-progress{display:flex;gap:.38rem;margin:1rem 0}
+.tutorial-progress span{flex:1;height:6px;border-radius:999px;background:rgba(255,255,255,.14)}
+.tutorial-progress span.active{background:var(--gold)}
+.tutorial-actions{display:flex;gap:.7rem}
+.tutorial-actions button{flex:1}
+@keyframes tutorialSpin{to{transform:rotate(360deg)}}
+@keyframes tutorialFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
 
 .btn-gold{background:var(--gold);color:#08081A;border:none;border-radius:12px;padding:.85rem 2.2rem;font-family:'Nunito',sans-serif;font-size:.95rem;font-weight:900;cursor:pointer;transition:transform .15s,background .15s}
 .btn-gold:hover{background:#FFD93D;transform:scale(1.03)}
@@ -690,6 +710,29 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
 <div id="userBox" class="user-box hidden">
   <button class="user-name-btn" id="userName" onclick="openProfilePopup()">Utente</button>
   <button onclick="logout()">Logout</button>
+</div>
+
+<div id="tutorialOverlay" class="auth-overlay hidden" aria-live="polite">
+  <div class="auth-box tutorial-box">
+    <div class="tutorial-top">
+      <div class="tutorial-kicker">Primi passi</div>
+      <button class="tutorial-skip" type="button" onclick="skipOnboardingTutorial()">Salta</button>
+    </div>
+    <div class="tutorial-visual" aria-hidden="true">
+      <div class="tutorial-orbit"><div class="tutorial-dot"></div></div>
+      <div class="tutorial-card-mini">
+        <span id="tutorialIcon">🎮</span>
+        <strong id="tutorialMiniTitle">TV Game Night</strong>
+      </div>
+    </div>
+    <div class="tutorial-title" id="tutorialTitle">Scegli un gioco</div>
+    <div class="tutorial-text" id="tutorialText">Dalla home trovi tutti i giochi disponibili: scegli quello che vuoi e prepara i giocatori.</div>
+    <div class="tutorial-progress" id="tutorialProgress" aria-hidden="true"></div>
+    <div class="tutorial-actions">
+      <button class="btn-ghost" id="tutorialBack" type="button" onclick="prevOnboardingStep()">Indietro</button>
+      <button class="btn-gold" id="tutorialNext" type="button" onclick="nextOnboardingStep()">Avanti</button>
+    </div>
+  </div>
 </div>
 
 <!-- PROFILO -->
