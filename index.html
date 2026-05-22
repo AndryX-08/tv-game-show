@@ -3,8 +3,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>TV Game Night</title>
-<link rel="icon" href="favicon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="Icone/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="Icone/apple-touch-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#08081A">
 <meta name="mobile-web-app-capable" content="yes">
@@ -98,6 +98,7 @@ button,input,select{max-width:100%}
 .btn-success:hover{background:rgba(46,204,113,.38)}
 .btn-danger{background:rgba(231,76,60,.2);color:#ff6b6b;border:1.5px solid rgba(231,76,60,.45);border-radius:10px;padding:.7rem 1.6rem;font-family:'Nunito',sans-serif;font-size:.9rem;font-weight:900;cursor:pointer;transition:all .18s}
 .btn-danger:hover{background:rgba(231,76,60,.38)}
+.auth-btn img,.btn-gold img,.btn-ghost img,.btn-back img{width:1.05em;height:1.05em;display:inline-block;vertical-align:-.16em;margin-right:.42rem;object-fit:contain}
 
 input.tf,select.tf{background:var(--surf2);border:1.5px solid rgba(255,255,255,.18);border-radius:9px;padding:.65rem .9rem;color:var(--txt);font-family:'Nunito',sans-serif;font-size:.9rem;outline:none;transition:border-color .15s;flex:1}
 input.tf:focus,select.tf:focus{border-color:var(--gold)}
@@ -691,6 +692,7 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
   <button onclick="logout()">Logout</button>
 </div>
 
+<!-- PROFILO -->
 <div id="profileOverlay" class="auth-overlay hidden">
   <div class="auth-box profile-box">
     <h1>Profilo</h1>
@@ -771,8 +773,8 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
     <h1>Modalità</h1>
     <p id="playModeText">Vuoi giocare in locale o online?</p>
     <div class="profile-actions">
-      <button class="auth-btn google" style="flex:1" onclick="choosePlayMode('local')">Locale</button>
-      <button class="auth-btn google" style="flex:1" onclick="choosePlayMode('online')">Online</button>
+      <button class="auth-btn google" style="flex:1" onclick="choosePlayMode('local')"><img src="Icone_syst/terminal.png" alt="" aria-hidden="true">Locale</button>
+      <button class="auth-btn google" style="flex:1" onclick="choosePlayMode('online')"><img src="Icone_syst/wireless-symbol.png" alt="" aria-hidden="true">Online</button>
     </div>
   </div>
 </div>
@@ -840,7 +842,7 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
 
 <!-- SETUP -->
 <div class="screen" id="s-setup">
-  <button class="btn-back" onclick="goTo('s-hero')">← Menu</button>
+  <button class="btn-back" onclick="goTo('s-hero')"><img src="Icone_syst/home.png" alt="" aria-hidden="true">Menu</button>
   <div style="font-family:'Bebas Neue',sans-serif;font-size:1.7rem;letter-spacing:3px;margin-bottom:.25rem">Configurazione</div>
   <div style="font-size:.8rem;color:var(--mut);margin-bottom:1.2rem">Giocatori, squadre e timer</div>
   <div class="step-block">
@@ -899,14 +901,13 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
     </div>
   </div>
   <div style="display:flex;gap:.75rem;margin-top:.4rem">
-    <button class="btn-ghost" style="flex:1" onclick="goTo('s-hero')">← Menu</button>
     <button class="btn-gold" style="flex:2" onclick="goTo('s-hero')">Salva ›</button>
   </div>
 </div>
 
 <!-- PICK REAZIONE -->
 <div class="screen" id="s-pick-chain">
-  <button class="btn-back" onclick="goTo('s-hero')">← Menu</button>
+  <button class="btn-back" onclick="goTo('s-hero')"><img src="Icone_syst/home.png" alt="" aria-hidden="true">Menu</button>
   <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:3px;color:var(--gold);margin-bottom:.25rem">Chi fa la catena?</div>
   <div style="font-size:.82rem;color:var(--mut);margin-bottom:1rem">Seleziona la coppia: giocheranno insieme parola dopo parola</div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.2rem">
@@ -924,7 +925,7 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
 
 <!-- PICK 1 (AUA) -->
 <div class="screen" id="s-pick">
-  <button class="btn-back" onclick="goTo('s-hero')">← Menu</button>
+  <button class="btn-back" onclick="goTo('s-hero')"><img src="Icone_syst/home.png" alt="" aria-hidden="true">Menu</button>
   <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:3px;color:var(--gold);margin-bottom:.25rem">Chi gioca?</div>
   <div style="font-size:.82rem;color:var(--mut);margin-bottom:1.2rem">Seleziona il giocatore che risponderà alle domande</div>
   <div class="aua-intro-wrapper" id="aua-intro-effects">
@@ -946,7 +947,7 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
 
 <!-- PICK TABOO -->
 <div class="screen" id="s-pick-taboo">
-  <button class="btn-back" onclick="goTo('s-hero')">← Menu</button>
+  <button class="btn-back" onclick="goTo('s-hero')"><img src="Icone_syst/home.png" alt="" aria-hidden="true">Menu</button>
   <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:3px;color:var(--gold);margin-bottom:.25rem">Chi spiega?</div>
   <div style="font-size:.82rem;color:var(--mut);margin-bottom:1.2rem">Seleziona il giocatore che descriverà la parola senza dire quelle proibite</div>
   <div class="player-pick-grid" id="pick-grid-taboo"></div>
@@ -955,7 +956,7 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
 
 <!-- PICK HIGHER OR LOWER -->
 <div class="screen" id="s-pick-hol">
-  <button class="btn-back" onclick="goTo('s-hero')">← Menu</button>
+  <button class="btn-back" onclick="goTo('s-hero')"><img src="Icone_syst/home.png" alt="" aria-hidden="true">Menu</button>
   <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:3px;color:var(--gold);margin-bottom:.25rem">Higher or Lower</div>
   <div style="font-size:.82rem;color:var(--mut);margin-bottom:1.2rem">Scegli il concorrente e una categoria. Alla prima risposta sbagliata il turno finisce.</div>
   <div class="hol-setup">
@@ -973,7 +974,7 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
 
 <!-- PICK 2 (EREDITA) -->
 <div class="screen" id="s-pick2">
-  <button class="btn-back" onclick="goTo('s-hero')">← Menu</button>
+  <button class="btn-back" onclick="goTo('s-hero')"><img src="Icone_syst/home.png" alt="" aria-hidden="true">Menu</button>
   <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:3px;color:var(--gold);margin-bottom:.25rem">Chi sfida chi?</div>
   <div style="font-size:.82rem;color:var(--mut);margin-bottom:1rem">Seleziona i due sfidanti</div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.2rem">
@@ -991,7 +992,7 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
 
 <!-- PICK RUOTA -->
 <div class="screen" id="s-pick-wheel">
-  <button class="btn-back" onclick="goTo('s-hero')">← Menu</button>
+  <button class="btn-back" onclick="goTo('s-hero')"><img src="Icone_syst/home.png" alt="" aria-hidden="true">Menu</button>
   <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:3px;color:var(--gold);margin-bottom:.25rem">Chi inizia?</div>
   <div style="font-size:.82rem;color:var(--mut);margin-bottom:1.2rem">Seleziona il primo concorrente: la ruota partirà automaticamente al secondo 12 della sigla</div>
   <div class="aua-intro-wrapper" id="wheel-intro-effects">
@@ -1020,6 +1021,9 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
   <div class="timer-display" id="aua-tdisp">30</div>
   <div class="progress-track" id="aua-track"></div>
   <div id="aua-content"></div>
+  <div style="display:flex;gap:.75rem">
+    <button class="btn-ghost" style="flex:1" onclick="goTo('s-hero')"><img src="Icone_syst/home.png" alt="" aria-hidden="true">Menu</button>
+  </div>
 </div>
 
 <!-- EREDITA GAME -->
@@ -1035,6 +1039,9 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
   <div class="ere-layout" id="ere-panels"></div>
   <div class="word-card" id="ere-word-card"></div>
   <div style="display:flex;gap:.75rem;justify-content:center" id="ere-controls"></div>
+  <div style="display:flex;gap:.75rem">
+    <button class="btn-ghost" style="flex:1" onclick="goTo('s-hero')"><img src="Icone_syst/home.png" alt="" aria-hidden="true">Menu</button>
+  </div>
 </div>
 
 <!-- RUOTA GAME -->
@@ -1084,7 +1091,7 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
         <div class="wheel-disc" id="wheel-disc"><div id="wheel-labels"></div></div>
       </div>
       <div class="wheel-controls">
-        <button class="btn-ghost" onclick="goTo('s-hero')">Menu</button>
+        <button class="btn-ghost" onclick="goTo('s-hero')"><img src="Icone_syst/home.png" alt="" aria-hidden="true">Menu</button>
         <div class="wheel-space-hint" onclick="spinWheel()" style="cursor:pointer;"><kbd>SPAZIO</kbd> Gira</div>
       </div>
     </div>
@@ -1123,8 +1130,8 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
     <div class="chain-message" id="chain-message"></div>
   </div>
   <div style="display:flex;gap:.75rem">
-    <button class="btn-ghost" style="flex:1" onclick="goTo('s-hero')">Menu</button>
-    <button class="btn-ghost" style="flex:1" onclick="beginChain()">Nuova catena</button>
+    <button class="btn-ghost" style="flex:1" onclick="goTo('s-hero')"><img src="Icone_syst/home.png" alt="" aria-hidden="true">Menu</button>
+    <button class="btn-ghost" style="flex:1" onclick="beginChain()"><img src="Icone_syst/replay.png" alt="" aria-hidden="true">Nuova catena</button>
   </div>
 </div>
 
@@ -1154,7 +1161,7 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
   </div>
   <div style="display:flex;gap:.75rem">
     <button class="btn-ghost" style="flex:1" onclick="endSarabanda()">Termina</button>
-    <button class="btn-ghost" style="flex:1" onclick="goTo('s-hero')">Menu</button>
+    <button class="btn-ghost" style="flex:1" onclick="goTo('s-hero')"><img src="Icone_syst/home.png" alt="" aria-hidden="true">Menu</button>
   </div>
 </div>
 
@@ -1197,7 +1204,7 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
   </div>
   <div style="display:flex;gap:.75rem">
     <button class="btn-ghost" style="flex:1" onclick="endGuessWho()">Termina</button>
-    <button class="btn-ghost" style="flex:1" onclick="goTo('s-hero')">Menu</button>
+    <button class="btn-ghost" style="flex:1" onclick="goTo('s-hero')"><img src="Icone_syst/home.png" alt="" aria-hidden="true">Menu</button>
   </div>
 </div>
 
@@ -1222,14 +1229,14 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
     <div class="hol-message" id="hol-message"></div>
     <div class="hol-actions">
       <button class="btn-ghost" onclick="endHigherLower(true)">Termina</button>
-      <button class="btn-ghost" onclick="goTo('s-hero')">Menu</button>
+      <button class="btn-ghost" onclick="goTo('s-hero')"><img src="Icone_syst/home.png" alt="" aria-hidden="true">Menu</button>
     </div>
   </div>
 </div>
 
 <!-- INTESA SCORE -->
 <div class="screen" id="s-intesa-score">
-  <button class="btn-back" onclick="goTo('s-hero')">← Menu</button>
+  <button class="btn-back" onclick="goTo('s-hero')"><img src="Icone_syst/home.png" alt="" aria-hidden="true">Menu</button>
   <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:3px;color:var(--gold);margin-bottom:.25rem">Punteggi L'Intesa</div>
   <div style="font-size:.82rem;color:var(--mut);margin-bottom:1.2rem">Inserisci i punti ottenuti per ogni giocatore</div>
   <div style="background:rgba(52,152,219,.08);border:1px solid rgba(52,152,219,.2);border-radius:12px;padding:1rem;margin-bottom:1.4rem">
@@ -1255,8 +1262,8 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
     <div class="win-sub" id="win-sub"></div>
     <div class="scores-panel" id="win-scores"></div>
     <div style="display:flex;gap:.75rem">
-      <button class="btn-ghost" style="flex:1" onclick="goTo('s-hero')">Menu</button>
-      <button class="btn-gold" style="flex:2" onclick="goTo('s-hero')">Gioca ancora ›</button>
+      <button class="btn-ghost" style="flex:1" onclick="goTo('s-hero')"><img src="Icone_syst/home.png" alt="" aria-hidden="true">Menu</button>
+      <button class="btn-gold" style="flex:2" onclick="goTo('s-hero')"><img src="Icone_syst/replay.png" alt="" aria-hidden="true">Gioca ancora ›</button>
     </div>
   </div>
 </div>

@@ -12,13 +12,13 @@
   "categories": ["games", "entertainment"],
   "icons": [
     {
-      "src": "icon-192.png",
+      "src": "Icone/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "logo.png",
+      "src": "Icone/logo.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"

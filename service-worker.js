@@ -1,13 +1,17 @@
-const CACHE_NAME = 'tv-game-night-v1';
+const CACHE_NAME = 'tv-game-night-v3';
 const APP_SHELL = [
   './',
   './index.html',
   './script.js',
   './manifest.webmanifest',
-  './favicon.svg',
-  './logo.png',
-  './icon-192.png',
-  './apple-touch-icon.png',
+  './Icone/favicon.svg',
+  './Icone/logo.png',
+  './Icone/icon-192.png',
+  './Icone/apple-touch-icon.png',
+  './Icone_syst/home.png',
+  './Icone_syst/replay.png',
+  './Icone_syst/terminal.png',
+  './Icone_syst/wireless-symbol.png',
   './host.html',
   './play.html',
   './privacy-policy.html',
@@ -35,6 +39,17 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
+
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).then(response => {
+        const responseToCache = response.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put('./index.html', responseToCache));
+        return response;
+      }).catch(() => caches.match('./index.html'))
+    );
+    return;
+  }
 
   event.respondWith(
     caches.match(event.request).then(cached => {
