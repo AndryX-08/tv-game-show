@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tv-game-night-v3';
+const CACHE_NAME = 'tv-game-night-v4';
 const APP_SHELL = [
   './',
   './index.html',
