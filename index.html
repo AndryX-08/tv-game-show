@@ -393,8 +393,8 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
 }
 
 @media(max-width:620px){
-  .screen{padding:4.7rem .85rem 1rem}
-  .user-box{top:.55rem;left:.75rem;right:.75rem;width:auto;justify-content:space-between;padding:.55rem .65rem;gap:.5rem}
+  .screen{padding:calc(5.6rem + env(safe-area-inset-top)) .85rem 1rem}
+  .user-box{top:calc(.75rem + env(safe-area-inset-top));left:.75rem;right:.75rem;width:auto;justify-content:space-between;padding:.55rem .65rem;gap:.5rem}
   .user-name-btn{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left}
   .user-box button:not(.user-name-btn){flex-shrink:0;padding:.5rem .65rem}
   .auth-overlay{align-items:flex-start;padding:1rem;overflow:auto}
