@@ -2334,6 +2334,20 @@ function playAffariOutcomeSound(isGood){
   return playAffariAudio('Music theme/aua_errore.mp3',{volume:.9,duration:3200});
 }
 
+function showAffariPrizeAlert(pkg,isGood){
+  const alert=document.getElementById('affari-reveal-alert');
+  const amount=document.getElementById('affari-reveal-amount');
+  const region=document.getElementById('affari-reveal-region');
+  const label=document.getElementById('affari-reveal-label');
+  if(!alert||!amount)return;
+  alert.classList.remove('show','good','bad');
+  void alert.offsetWidth;
+  amount.textContent=formatMoney(pkg.prize);
+  if(region)region.textContent=`Pacco ${pkg.num} - ${pkg.region}`;
+  if(label)label.textContent='Nel pacco';
+  alert.classList.add(isGood?'good':'bad','show');
+}
+
 function getAffariRemaining(){
   return (affariState.packages||[]).filter(pkg=>!pkg.opened);
 }
@@ -2630,10 +2644,11 @@ async function openAffariPackage(num){
   pkg.justOpened=true;
   affariState.openedThisRound++;
   affariState.offer=0;
-  const good=pkg.prize<=1000?'Ottimo colpo':'Questo fa male';
-  affariState.message=`Pacco ${pkg.num}, ${pkg.region}: ${formatMoney(pkg.prize)}. ${good}.`;
-  speakMystery(`Pacco ${pkg.num}, ${pkg.region}. Dentro c'erano ${formatMoney(pkg.prize)}.`);
-  playAffariOutcomeSound(pkg.prize<=1000);
+  const isGood=pkg.prize<=1000;
+  const good=isGood?'Ottimo colpo':'Questo fa male';
+  affariState.message=`Pacco ${pkg.num}, ${pkg.region}: ${good}.`;
+  showAffariPrizeAlert(pkg,isGood);
+  playAffariOutcomeSound(isGood);
   setTimeout(()=>{pkg.justOpened=false;renderAffari();},700);
   const openable=getAffariOpenable();
   const roundTarget=AFFARI_ROUNDS[affariState.roundIndex]||1;
@@ -2702,6 +2717,7 @@ async function revealAffariFinal(){
   await playAffariSuspense();
   own.opened=true;
   own.justOpened=true;
+  showAffariPrizeAlert(own,own.prize>=10000);
   playAffariOutcomeSound(own.prize>=10000);
   finishAffariGame(own.prize,'pacco finale');
 }
