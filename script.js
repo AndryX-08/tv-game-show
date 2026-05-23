@@ -2648,6 +2648,9 @@ async function openAffariPackage(num){
     affariState.step='Chiamata';
     affariState.message=`L'uomo misterioso offre ${formatMoney(affariState.offer)}. Accetti o rifiuti?`;
     speakMystery(`L'uomo misterioso offre ${formatMoney(affariState.offer)}. Accetti o rifiuti?`);
+  }else{
+    affariState.phase='open';
+    affariState.step='Apertura pacchi';
   }
   renderAffari();
 }
