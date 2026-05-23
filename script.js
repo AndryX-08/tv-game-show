@@ -561,6 +561,7 @@ function goTo(id){
   if(id!=='s-pick-wheel'&&id!=='s-wheel')stopRdfAudio();
   if(id!=='s-chain')clearChainTimer();
   if(id!=='s-sarabanda')stopSarabandaAudio();
+  if(id!=='s-affari')stopAffariAudio();
   if(id!=='s-higherlower'){
     clearTimeout(higherLowerTimer);
     higherLowerTimer=null;
@@ -2190,8 +2191,15 @@ function endHigherLower(completed=false){
 ══════════════════════════════ */
 const AFFARI_PRIZES=[0,1,5,10,20,50,75,100,200,500,1000,5000,10000,15000,20000,30000,50000,75000,100000,300000];
 const AFFARI_ROUNDS=[6,5,4,3,2,1];
+const AFFARI_REGIONS=[
+  'Abruzzo','Basilicata','Calabria','Campania','Emilia-Romagna',
+  'Friuli V.G.','Lazio','Liguria','Lombardia','Marche',
+  'Molise','Piemonte','Puglia','Sardegna','Sicilia',
+  'Toscana','Trentino-A.A.','Umbria','Valle d Aosta','Veneto'
+];
 let affariState={};
 let affariScene=null;
+let affariAudio=null;
 
 function formatMoney(value){
   return `${Math.round(value).toLocaleString('it-IT')} €`;
@@ -2217,6 +2225,82 @@ function speakMystery(text){
   msg.rate=.86;
   msg.pitch=.72;
   window.speechSynthesis.speak(msg);
+}
+
+function stopAffariAudio(){
+  if(affariAudio){
+    affariAudio.pause();
+    affariAudio.currentTime=0;
+  }
+  affariAudio=null;
+}
+
+function playAffariAudio(src,{volume=.85,duration=5200,startAt=0}={}){
+  stopAffariAudio();
+  if(!src)return Promise.resolve();
+  return new Promise(resolve=>{
+    const audio=new Audio(src);
+    affariAudio=audio;
+    audio.volume=volume;
+    audio.currentTime=startAt;
+    let done=false;
+    const finish=()=>{
+      if(done)return;
+      done=true;
+      audio.pause();
+      if(affariAudio===audio)affariAudio=null;
+      resolve();
+    };
+    audio.addEventListener('ended',finish,{once:true});
+    audio.addEventListener('error',finish,{once:true});
+    audio.play().catch(finish);
+    setTimeout(finish,duration);
+  });
+}
+
+function playAffariSuspense(){
+  return new Promise(resolve=>{
+    const AudioContext=window.AudioContext||window.webkitAudioContext;
+    if(!AudioContext){
+      setTimeout(resolve,1300);
+      return;
+    }
+    const ctx=new AudioContext();
+    const master=ctx.createGain();
+    const osc=ctx.createOscillator();
+    const tremolo=ctx.createOscillator();
+    const tremoloGain=ctx.createGain();
+    master.gain.setValueAtTime(.0001,ctx.currentTime);
+    master.gain.exponentialRampToValueAtTime(.14,ctx.currentTime+.2);
+    master.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+1.55);
+    osc.type='sawtooth';
+    osc.frequency.setValueAtTime(96,ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(176,ctx.currentTime+1.45);
+    tremolo.type='sine';
+    tremolo.frequency.value=9;
+    tremoloGain.gain.value=.06;
+    tremolo.connect(tremoloGain);
+    tremoloGain.connect(master.gain);
+    osc.connect(master);
+    master.connect(ctx.destination);
+    osc.start();
+    tremolo.start();
+    setTimeout(()=>{
+      osc.stop();
+      tremolo.stop();
+      ctx.close().catch(()=>{});
+      resolve();
+    },1600);
+  });
+}
+
+function playAffariOutcomeSound(isGood){
+  if(isGood){
+    const tracks=Array.isArray(SARABANDA_TRACKS)?SARABANDA_TRACKS:[];
+    const track=tracks[Math.floor(Math.random()*tracks.length)];
+    return playAffariAudio(track?.src,{volume:.72,duration:5600,startAt:8});
+  }
+  return playAffariAudio('Music theme/aua_errore.mp3',{volume:.9,duration:3200});
 }
 
 function getAffariRemaining(){
@@ -2249,25 +2333,32 @@ function renderAffariFallback(){
   const el=document.getElementById('affari-fallback');
   if(!el)return;
   el.innerHTML=(affariState.packages||[]).map(pkg=>`
-    <button class="affari-package ${pkg.opened?'opened':''} ${pkg.num===affariState.ownNum?'own':''} ${pkg.justOpened?'reveal':''}"
-      type="button" onclick="chooseAffariPackage(${pkg.num})">
-      ${pkg.opened?formatMoney(pkg.prize):pkg.num}
-    </button>
+    <div class="affari-package-wrap">
+      <button class="affari-package ${pkg.opened?'opened':''} ${pkg.num===affariState.ownNum?'own':''} ${pkg.justOpened?'reveal':''} ${affariState.phase==='reveal'?'locked':''}"
+        type="button" onclick="chooseAffariPackage(${pkg.num})">
+        ${pkg.opened?formatMoney(pkg.prize):pkg.num}
+      </button>
+      <div class="affari-region">${escapeHtml(pkg.region||'')}</div>
+    </div>
   `).join('');
 }
 
-function makeAffariLabelTexture(text,color='#ffffff'){
+function makeAffariLabelTexture(text,sub='',color='#ffffff'){
   if(!window.THREE)return null;
   const canvas=document.createElement('canvas');
-  canvas.width=256;canvas.height=160;
+  canvas.width=320;canvas.height=200;
   const ctx=canvas.getContext('2d');
   ctx.fillStyle='rgba(0,0,0,0)';
   ctx.fillRect(0,0,canvas.width,canvas.height);
   ctx.fillStyle=color;
-  ctx.font='900 76px Arial';
+  ctx.font='900 78px Arial';
   ctx.textAlign='center';
   ctx.textBaseline='middle';
-  ctx.fillText(text,128,88);
+  ctx.fillText(text,160,80);
+  if(sub){
+    ctx.font='900 24px Arial';
+    ctx.fillText(sub.toUpperCase(),160,148);
+  }
   const texture=new THREE.CanvasTexture(canvas);
   texture.needsUpdate=true;
   return texture;
@@ -2282,7 +2373,7 @@ function initAffariThree(){
   renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
   const scene=new THREE.Scene();
   const camera=new THREE.PerspectiveCamera(42,1,.1,100);
-  camera.position.set(0,6.6,12);
+  camera.position.set(0,6.8,13.2);
   camera.lookAt(0,0,0);
   scene.add(new THREE.AmbientLight(0xffffff,.62));
   const key=new THREE.SpotLight(0xffdf86,1.5,30,Math.PI/5,.3);
@@ -2292,24 +2383,42 @@ function initAffariThree(){
   side.position.set(-7,3,4);
   scene.add(side);
   const floor=new THREE.Mesh(
-    new THREE.CylinderGeometry(8.5,8.5,.16,80),
+    new THREE.CylinderGeometry(10.5,10.5,.16,80),
     new THREE.MeshStandardMaterial({color:0x17172e,roughness:.48,metalness:.18})
   );
   floor.position.y=-.9;
   scene.add(floor);
-  return {renderer,scene,camera,objects:[],started:false};
+  const backdrop=new THREE.Mesh(
+    new THREE.TorusGeometry(5.8,.035,12,100),
+    new THREE.MeshBasicMaterial({color:0xf5c518,transparent:true,opacity:.28})
+  );
+  backdrop.position.set(0,2.1,-2.8);
+  backdrop.rotation.x=Math.PI/2;
+  scene.add(backdrop);
+  return {renderer,scene,camera,objects:[],pallets:[],started:false};
 }
 
 function buildAffariThreePackages(){
   if(!affariScene)return;
   affariScene.objects.forEach(obj=>affariScene.scene.remove(obj.group));
+  affariScene.pallets.forEach(pallet=>affariScene.scene.remove(pallet));
   affariScene.objects=[];
+  affariScene.pallets=[];
   const boxGeo=new THREE.BoxGeometry(1.05,.78,.7);
+  const palletGeo=new THREE.BoxGeometry(8.2,.18,1.04);
+  const palletMat=new THREE.MeshStandardMaterial({color:0x8b5a2b,roughness:.58,metalness:.05});
+  for(let row=0;row<4;row++){
+    const z=(row-1.5)*1.42;
+    const pallet=new THREE.Mesh(palletGeo,palletMat);
+    pallet.position.set(0,-.58,z);
+    affariScene.scene.add(pallet);
+    affariScene.pallets.push(pallet);
+  }
   (affariState.packages||[]).forEach((pkg,i)=>{
     const row=Math.floor(i/5);
     const col=i%5;
-    const x=(col-2)*1.65;
-    const z=(row-1.5)*1.28;
+    const x=(col-2)*1.55+(row%2?.34:-.34);
+    const z=(row-1.5)*1.42;
     const mat=new THREE.MeshStandardMaterial({
       color:pkg.opened?0x3a3a4a:(pkg.num===affariState.ownNum?0x1f9d61:0xb91c1c),
       roughness:.34,
@@ -2321,9 +2430,13 @@ function buildAffariThreePackages(){
     group.rotation.y=(col-2)*.08;
     box.userData.num=pkg.num;
     group.add(box);
-    const labelTexture=makeAffariLabelTexture(pkg.opened?formatMoney(pkg.prize).replace(' €',''):String(pkg.num),pkg.opened?'#b9b9c8':'#ffffff');
+    const labelTexture=makeAffariLabelTexture(
+      pkg.opened?formatMoney(pkg.prize).replace(' €',''):String(pkg.num),
+      pkg.opened?'':pkg.region,
+      pkg.opened?'#b9b9c8':'#ffffff'
+    );
     const label=new THREE.Mesh(
-      new THREE.PlaneGeometry(1.08,.56),
+      new THREE.PlaneGeometry(1.16,.7),
       new THREE.MeshBasicMaterial({map:labelTexture,transparent:true})
     );
     label.position.set(0,0,.356);
@@ -2362,7 +2475,7 @@ function animateAffariThree(){
     const pkg=affariState.packages?.find(p=>p.num===obj.num);
     obj.group.position.y=Math.sin(now*1.4+i*.45)*.045;
     obj.group.rotation.x=pkg?.justOpened?Math.sin(now*12)*.12:0;
-    obj.group.rotation.y+=pkg?.opened?.003:.006;
+    obj.group.rotation.y+=pkg?.opened ? .003 : .006;
   });
   affariScene.renderer.render(affariScene.scene,affariScene.camera);
   requestAnimationFrame(animateAffariThree);
@@ -2425,6 +2538,8 @@ function renderAffari(){
   if(affariState.phase==='open'){
     affariState.step=`Apri ${remainingToOpen} ${remainingToOpen===1?'pacco':'pacchi'}`;
     if(stepEl)stepEl.textContent=affariState.step;
+  }else if(affariState.phase==='reveal'){
+    if(stepEl)stepEl.textContent='Suspense';
   }
   renderAffariPrizes();
   renderAffariFallback();
@@ -2436,9 +2551,10 @@ function beginAffariTuoi(){
   const player=players.find(p=>p.id===selAffariPid)||players[0];
   if(!player)return;
   const prizes=shuffleCopy(AFFARI_PRIZES);
+  const regions=shuffleCopy(AFFARI_REGIONS);
   affariState={
     pid:player.id,
-    packages:prizes.map((prize,i)=>({num:i+1,prize,opened:false,justOpened:false})),
+    packages:prizes.map((prize,i)=>({num:i+1,region:regions[i]||'',prize,opened:false,justOpened:false})),
     ownNum:null,
     phase:'choose',
     roundIndex:0,
@@ -2455,35 +2571,43 @@ function beginAffariTuoi(){
 
 function chooseAffariPackage(num){
   if(!affariState.packages?.length)return;
+  if(affariState.phase==='reveal')return;
   if(affariState.phase==='choose'){
     affariState.ownNum=num;
+    const pkg=affariState.packages.find(p=>p.num===num);
     affariState.phase='open';
-    affariState.message=`Hai scelto il pacco ${num}. Ora apriamo i primi pacchi.`;
+    affariState.message=`Hai scelto il pacco ${num}, ${pkg?.region||''}. Ora apriamo i primi pacchi.`;
     affariState.step='Primo round';
-    speakMystery(`Pacco numero ${num}. Bene. Ora apriamo i primi pacchi.`);
+    speakMystery(`Pacco numero ${num}, ${pkg?.region||''}. Bene. Ora apriamo i primi pacchi.`);
     renderAffari();
     return;
   }
   if(affariState.phase==='open')openAffariPackage(num);
 }
 
-function openAffariPackage(num){
+async function openAffariPackage(num){
   const pkg=affariState.packages.find(p=>p.num===num);
-  if(!pkg||pkg.opened||pkg.num===affariState.ownNum)return;
+  if(!pkg||pkg.opened||pkg.num===affariState.ownNum||affariState.phase!=='open')return;
+  affariState.phase='reveal';
+  affariState.step='Suspense';
+  affariState.message=`Il pacco ${pkg.num}, ${pkg.region}, sta per essere aperto...`;
+  renderAffari();
+  await playAffariSuspense();
   pkg.opened=true;
   pkg.justOpened=true;
   affariState.openedThisRound++;
   affariState.offer=0;
   const good=pkg.prize<=1000?'Ottimo colpo':'Questo fa male';
-  affariState.message=`Pacco ${pkg.num}: ${formatMoney(pkg.prize)}. ${good}.`;
-  speakMystery(`Pacco ${pkg.num}. Dentro c'erano ${formatMoney(pkg.prize)}.`);
+  affariState.message=`Pacco ${pkg.num}, ${pkg.region}: ${formatMoney(pkg.prize)}. ${good}.`;
+  speakMystery(`Pacco ${pkg.num}, ${pkg.region}. Dentro c'erano ${formatMoney(pkg.prize)}.`);
+  playAffariOutcomeSound(pkg.prize<=1000);
   setTimeout(()=>{pkg.justOpened=false;renderAffari();},700);
   const openable=getAffariOpenable();
   const roundTarget=AFFARI_ROUNDS[affariState.roundIndex]||1;
   if(openable.length===1){
     affariState.phase='final';
     affariState.step='Finale';
-    affariState.message=`Restano il tuo pacco ${affariState.ownNum} e il pacco ${openable[0].num}. Puoi cambiare o scoprire cosa hai.`;
+    affariState.message=`Restano il tuo pacco ${affariState.ownNum} e il pacco ${openable[0].num}, ${openable[0].region}. Puoi cambiare o scoprire cosa hai.`;
     speakMystery('Siamo al finale. Cambio o tieni il tuo pacco?');
   }else if(affariState.openedThisRound>=roundTarget){
     affariState.phase='offer';
@@ -2521,18 +2645,25 @@ function swapAffariPackage(){
   const other=getAffariOpenable()[0];
   if(!other)return;
   const old=affariState.ownNum;
+  const oldPkg=affariState.packages.find(pkg=>pkg.num===old);
   affariState.ownNum=other.num;
-  affariState.message=`Cambio effettuato: lasci il pacco ${old} e prendi il pacco ${other.num}.`;
-  speakMystery(`Cambio effettuato. Ora il tuo pacco e il numero ${other.num}.`);
+  affariState.message=`Cambio effettuato: lasci il pacco ${old}, ${oldPkg?.region||''}, e prendi il pacco ${other.num}, ${other.region}.`;
+  speakMystery(`Cambio effettuato. Ora il tuo pacco e il numero ${other.num}, ${other.region}.`);
   renderAffari();
 }
 
-function revealAffariFinal(){
+async function revealAffariFinal(){
   if(affariState.phase!=='final')return;
   const own=affariState.packages.find(pkg=>pkg.num===affariState.ownNum);
   if(!own)return;
+  affariState.phase='reveal';
+  affariState.step='Pacco finale';
+  affariState.message=`Apriamo il tuo pacco ${own.num}, ${own.region}...`;
+  renderAffari();
+  await playAffariSuspense();
   own.opened=true;
   own.justOpened=true;
+  playAffariOutcomeSound(own.prize>=10000);
   finishAffariGame(own.prize,'pacco finale');
 }
 
@@ -2546,7 +2677,7 @@ function finishAffariGame(amount,reason){
   document.getElementById('win-scores').innerHTML=`<div style="font-size:.68rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--mut);margin-bottom:.6rem">Risultato Affari Tuoi</div>
     <div class="sc-row">
       <div class="sc-rank">📦</div>
-      <div class="sc-name">Pacco ${own?.num||affariState.ownNum||'—'}</div>
+      <div class="sc-name">Pacco ${own?.num||affariState.ownNum||'—'}${own?.region?` - ${escapeHtml(own.region)}`:''}</div>
       <div class="sc-pts">${formatMoney(own?.prize||amount)}</div>
     </div>
     <div class="sc-row">
