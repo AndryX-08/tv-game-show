@@ -2200,6 +2200,7 @@ const AFFARI_REGIONS=[
 let affariState={};
 let affariScene=null;
 let affariAudio=null;
+let affariAudioUnlocked=false;
 
 function formatMoney(value){
   return `${Math.round(value).toLocaleString('it-IT')} €`;
@@ -2228,32 +2229,62 @@ function speakMystery(text){
 }
 
 function stopAffariAudio(){
-  if(affariAudio){
-    affariAudio.pause();
-    affariAudio.currentTime=0;
+  const audio=affariAudio||document.getElementById('affari-audio');
+  if(!audio)return;
+  audio.pause();
+  audio.currentTime=0;
+}
+
+function unlockAffariAudio(){
+  if(affariAudioUnlocked)return;
+  const audio=document.getElementById('affari-audio');
+  if(!audio)return;
+  affariAudio=audio;
+  audio.muted=true;
+  audio.src='Music theme/aua_errore.mp3';
+  audio.currentTime=0;
+  const attempt=audio.play();
+  if(attempt&&typeof attempt.then==='function'){
+    attempt.then(()=>{
+      audio.pause();
+      audio.currentTime=0;
+      audio.muted=false;
+      affariAudioUnlocked=true;
+    }).catch(()=>{
+      audio.muted=false;
+    });
+  }else{
+    audio.pause();
+    audio.currentTime=0;
+    audio.muted=false;
+    affariAudioUnlocked=true;
   }
-  affariAudio=null;
 }
 
 function playAffariAudio(src,{volume=.85,duration=5200,startAt=0}={}){
   stopAffariAudio();
   if(!src)return Promise.resolve();
   return new Promise(resolve=>{
-    const audio=new Audio(src);
+    const audio=document.getElementById('affari-audio')||new Audio();
     affariAudio=audio;
+    audio.muted=false;
+    audio.src=src;
+    audio.load();
     audio.volume=volume;
-    audio.currentTime=startAt;
+    try{audio.currentTime=startAt;}catch(err){}
     let done=false;
     const finish=()=>{
       if(done)return;
       done=true;
+      audio.removeEventListener('ended',finish);
+      audio.removeEventListener('error',finish);
       audio.pause();
-      if(affariAudio===audio)affariAudio=null;
       resolve();
     };
-    audio.addEventListener('ended',finish,{once:true});
-    audio.addEventListener('error',finish,{once:true});
-    audio.play().catch(finish);
+    audio.addEventListener('ended',finish);
+    audio.addEventListener('error',finish);
+    const attempt=audio.play();
+    if(attempt&&typeof attempt.catch==='function')attempt.catch(finish);
     setTimeout(finish,duration);
   });
 }
@@ -2548,6 +2579,7 @@ function renderAffari(){
 
 function beginAffariTuoi(){
   activeStatsGame='affarituoi';
+  affariAudioUnlocked=false;
   const player=players.find(p=>p.id===selAffariPid)||players[0];
   if(!player)return;
   const prizes=shuffleCopy(AFFARI_PRIZES);
@@ -2570,6 +2602,7 @@ function beginAffariTuoi(){
 }
 
 function chooseAffariPackage(num){
+  unlockAffariAudio();
   if(!affariState.packages?.length)return;
   if(affariState.phase==='reveal')return;
   if(affariState.phase==='choose'){
@@ -2620,6 +2653,7 @@ async function openAffariPackage(num){
 }
 
 function acceptAffariOffer(){
+  unlockAffariAudio();
   if(affariState.phase==='final'){
     revealAffariFinal();
     return;
@@ -2629,6 +2663,7 @@ function acceptAffariOffer(){
 }
 
 function rejectAffariOffer(){
+  unlockAffariAudio();
   if(affariState.phase!=='offer')return;
   affariState.roundIndex++;
   affariState.openedThisRound=0;
@@ -2641,6 +2676,7 @@ function rejectAffariOffer(){
 }
 
 function swapAffariPackage(){
+  unlockAffariAudio();
   if(affariState.phase!=='final')return;
   const other=getAffariOpenable()[0];
   if(!other)return;
