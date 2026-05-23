@@ -25,7 +25,7 @@ const TC=[
 ];
 
 let players=[],teams=[],nPid=1,nTid=1;
-let selPid=null,selP1=null,selP2=null,selWheelPid=null,selChainP1=null,selChainP2=null,selTabooPid=null,selHigherPid=null,selectedHolCategory='videogiochi';
+let selPid=null,selP1=null,selP2=null,selWheelPid=null,selChainP1=null,selChainP2=null,selTabooPid=null,selHigherPid=null,selAffariPid=null,selectedHolCategory='videogiochi';
 let intesaWinner=null;
 let intesaPlayers={p1:null,p2:null};
 let activeStatsGame=null;
@@ -970,7 +970,8 @@ function getGameStatsLabel(game){
     sarabanda:'Sarabanda',
     guesswho:'Indovina Chi',
     higherlower:'Higher or Lower',
-    taboo:'Taboo'
+    taboo:'Taboo',
+    affarituoi:'Affari Tuoi'
   };
   return labels[game]||game||'—';
 }
@@ -1510,7 +1511,8 @@ const GAME_LABELS={
   catena:'REAZIONE A CATENA',
   sarabanda:'SARABANDA',
   guesswho:'INDOVINA CHI',
-  higherlower:'HIGHER OR LOWER'
+  higherlower:'HIGHER OR LOWER',
+  affarituoi:'AFFARI TUOI'
 };
 
 const MULTIPLAYER_GAMES=['ruota','eredita','intesa','catena','sarabanda','guesswho'];
@@ -1868,6 +1870,22 @@ function startGame(game,options={}){
     goTo('s-pick-hol');
     return;
   }
+  if(game==='affarituoi'){
+    stopAuaAudio();
+    stopRdfAudio();
+    selAffariPid=null;
+    document.getElementById('pick-grid-affari').innerHTML=players.map(p=>{
+      const c=TC[p.ci%TC.length];const t=teams.find(t=>t.mids.includes(p.id));
+      return `<div class="player-pick" id="pp-affari-${p.id}" onclick="selPickAffari(${p.id})">
+        <div class="pp-avatar" style="background:${c.light};color:${c.hex}">${initials(p.name)}</div>
+        <div class="pp-name">${escapeHtml(p.name)}</div>
+        <div class="pp-info">${t?escapeHtml(t.name):'Libero'} · ${p.score}pt</div></div>`;
+    }).join('');
+    document.getElementById('btn-pick-affari-go').disabled=true;
+    document.getElementById('btn-pick-affari-go').onclick=()=>beginAffariTuoi();
+    goTo('s-pick-affari');
+    return;
+  }
   if(game==='catena'){
     if(players.length<2){goTo('s-setup');return;}
     stopAuaAudio();
@@ -1978,6 +1996,12 @@ function selPickHigherLower(id){
   document.querySelectorAll('#pick-grid-hol .player-pick').forEach(e=>e.classList.remove('selected'));
   document.getElementById('pp-hol-'+id)?.classList.add('selected');
   updateHigherLowerStartButton();
+}
+function selPickAffari(id){
+  selAffariPid=id;
+  document.querySelectorAll('#pick-grid-affari .player-pick').forEach(e=>e.classList.remove('selected'));
+  document.getElementById('pp-affari-'+id)?.classList.add('selected');
+  document.getElementById('btn-pick-affari-go').disabled=false;
 }
 function selectHigherLowerCategory(key){
   if(!HIGHER_LOWER_BANKS[key])return;
@@ -2158,6 +2182,382 @@ function endHigherLower(completed=false){
     </div>`;
   recordCompletedGame('higherlower',player?.uid&&points>0?[player.uid]:[]);
   higherLowerState={};
+  goTo('s-win');
+}
+
+/* ══════════════════════════════
+   AFFARI TUOI
+══════════════════════════════ */
+const AFFARI_PRIZES=[0,1,5,10,20,50,75,100,200,500,1000,5000,10000,15000,20000,30000,50000,75000,100000,300000];
+const AFFARI_ROUNDS=[6,5,4,3,2,1];
+let affariState={};
+let affariScene=null;
+
+function formatMoney(value){
+  return `${Math.round(value).toLocaleString('it-IT')} €`;
+}
+
+function shuffleCopy(items){
+  const arr=[...items];
+  for(let i=arr.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]]=[arr[j],arr[i]];
+  }
+  return arr;
+}
+
+function speakMystery(text){
+  if(!('speechSynthesis' in window)||!text)return;
+  window.speechSynthesis.cancel();
+  const msg=new SpeechSynthesisUtterance(text);
+  const voices=window.speechSynthesis.getVoices?.()||[];
+  const italian=voices.find(v=>/it/i.test(v.lang))||voices[0];
+  if(italian)msg.voice=italian;
+  msg.lang=italian?.lang||'it-IT';
+  msg.rate=.86;
+  msg.pitch=.72;
+  window.speechSynthesis.speak(msg);
+}
+
+function getAffariRemaining(){
+  return (affariState.packages||[]).filter(pkg=>!pkg.opened);
+}
+
+function getAffariOpenable(){
+  return (affariState.packages||[]).filter(pkg=>!pkg.opened&&pkg.num!==affariState.ownNum);
+}
+
+function calculateAffariOffer(){
+  const remaining=getAffariRemaining();
+  const average=remaining.reduce((sum,pkg)=>sum+pkg.prize,0)/Math.max(1,remaining.length);
+  const progress=affariState.roundIndex/Math.max(1,AFFARI_ROUNDS.length-1);
+  const factor=.42+progress*.36+(Math.random()*.16-.08);
+  const rounded=Math.max(1,Math.round((average*factor)/500)*500);
+  return rounded;
+}
+
+function renderAffariPrizes(){
+  const el=document.getElementById('affari-prizes');
+  if(!el)return;
+  const opened=new Set((affariState.packages||[]).filter(pkg=>pkg.opened).map(pkg=>pkg.prize));
+  el.innerHTML=[...AFFARI_PRIZES].sort((a,b)=>a-b).map(value=>`
+    <div class="affari-prize ${opened.has(value)?'opened':''}">${formatMoney(value)}</div>
+  `).join('');
+}
+
+function renderAffariFallback(){
+  const el=document.getElementById('affari-fallback');
+  if(!el)return;
+  el.innerHTML=(affariState.packages||[]).map(pkg=>`
+    <button class="affari-package ${pkg.opened?'opened':''} ${pkg.num===affariState.ownNum?'own':''} ${pkg.justOpened?'reveal':''}"
+      type="button" onclick="chooseAffariPackage(${pkg.num})">
+      ${pkg.opened?formatMoney(pkg.prize):pkg.num}
+    </button>
+  `).join('');
+}
+
+function makeAffariLabelTexture(text,color='#ffffff'){
+  if(!window.THREE)return null;
+  const canvas=document.createElement('canvas');
+  canvas.width=256;canvas.height=160;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='rgba(0,0,0,0)';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle=color;
+  ctx.font='900 76px Arial';
+  ctx.textAlign='center';
+  ctx.textBaseline='middle';
+  ctx.fillText(text,128,88);
+  const texture=new THREE.CanvasTexture(canvas);
+  texture.needsUpdate=true;
+  return texture;
+}
+
+function initAffariThree(){
+  const canvas=document.getElementById('affari-canvas');
+  const fallback=document.getElementById('affari-fallback');
+  if(!canvas||!window.THREE)return null;
+  if(fallback)fallback.style.display='none';
+  const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+  const scene=new THREE.Scene();
+  const camera=new THREE.PerspectiveCamera(42,1,.1,100);
+  camera.position.set(0,6.6,12);
+  camera.lookAt(0,0,0);
+  scene.add(new THREE.AmbientLight(0xffffff,.62));
+  const key=new THREE.SpotLight(0xffdf86,1.5,30,Math.PI/5,.3);
+  key.position.set(0,10,7);
+  scene.add(key);
+  const side=new THREE.PointLight(0x3498db,.8,24);
+  side.position.set(-7,3,4);
+  scene.add(side);
+  const floor=new THREE.Mesh(
+    new THREE.CylinderGeometry(8.5,8.5,.16,80),
+    new THREE.MeshStandardMaterial({color:0x17172e,roughness:.48,metalness:.18})
+  );
+  floor.position.y=-.9;
+  scene.add(floor);
+  return {renderer,scene,camera,objects:[],started:false};
+}
+
+function buildAffariThreePackages(){
+  if(!affariScene)return;
+  affariScene.objects.forEach(obj=>affariScene.scene.remove(obj.group));
+  affariScene.objects=[];
+  const boxGeo=new THREE.BoxGeometry(1.05,.78,.7);
+  (affariState.packages||[]).forEach((pkg,i)=>{
+    const row=Math.floor(i/5);
+    const col=i%5;
+    const x=(col-2)*1.65;
+    const z=(row-1.5)*1.28;
+    const mat=new THREE.MeshStandardMaterial({
+      color:pkg.opened?0x3a3a4a:(pkg.num===affariState.ownNum?0x1f9d61:0xb91c1c),
+      roughness:.34,
+      metalness:.22
+    });
+    const box=new THREE.Mesh(boxGeo,mat);
+    const group=new THREE.Group();
+    group.position.set(x,0,z);
+    group.rotation.y=(col-2)*.08;
+    box.userData.num=pkg.num;
+    group.add(box);
+    const labelTexture=makeAffariLabelTexture(pkg.opened?formatMoney(pkg.prize).replace(' €',''):String(pkg.num),pkg.opened?'#b9b9c8':'#ffffff');
+    const label=new THREE.Mesh(
+      new THREE.PlaneGeometry(1.08,.56),
+      new THREE.MeshBasicMaterial({map:labelTexture,transparent:true})
+    );
+    label.position.set(0,0,.356);
+    group.add(label);
+    const handle=new THREE.Mesh(
+      new THREE.TorusGeometry(.32,.035,8,24,Math.PI),
+      new THREE.MeshStandardMaterial({color:0xf5c518,roughness:.25,metalness:.45})
+    );
+    handle.position.set(0,.43,0);
+    handle.rotation.z=Math.PI;
+    group.add(handle);
+    affariScene.scene.add(group);
+    affariScene.objects.push({group,box,num:pkg.num,baseY:0});
+  });
+}
+
+function resizeAffariThree(){
+  if(!affariScene)return;
+  const canvas=document.getElementById('affari-canvas');
+  const rect=canvas.getBoundingClientRect();
+  if(!rect.width||!rect.height)return;
+  affariScene.renderer.setSize(rect.width,rect.height,false);
+  affariScene.camera.aspect=rect.width/rect.height;
+  affariScene.camera.updateProjectionMatrix();
+}
+
+function animateAffariThree(){
+  if(!affariScene||!document.getElementById('s-affari')?.classList.contains('active')){
+    if(affariScene)affariScene.started=false;
+    return;
+  }
+  affariScene.started=true;
+  resizeAffariThree();
+  const now=performance.now()/1000;
+  affariScene.objects.forEach((obj,i)=>{
+    const pkg=affariState.packages?.find(p=>p.num===obj.num);
+    obj.group.position.y=Math.sin(now*1.4+i*.45)*.045;
+    obj.group.rotation.x=pkg?.justOpened?Math.sin(now*12)*.12:0;
+    obj.group.rotation.y+=pkg?.opened?.003:.006;
+  });
+  affariScene.renderer.render(affariScene.scene,affariScene.camera);
+  requestAnimationFrame(animateAffariThree);
+}
+
+function renderAffariThree(){
+  const canvas=document.getElementById('affari-canvas');
+  const fallback=document.getElementById('affari-fallback');
+  if(!window.THREE){
+    if(canvas)canvas.style.display='none';
+    if(fallback)fallback.style.display='grid';
+    renderAffariFallback();
+    return;
+  }
+  if(canvas)canvas.style.display='block';
+  if(!affariScene)affariScene=initAffariThree();
+  buildAffariThreePackages();
+  if(!affariScene.started)requestAnimationFrame(animateAffariThree);
+}
+
+function setupAffariCanvasClick(){
+  const canvas=document.getElementById('affari-canvas');
+  if(!canvas||canvas.dataset.affariClickBound==='1')return;
+  canvas.dataset.affariClickBound='1';
+  canvas.addEventListener('click',event=>{
+    if(!affariScene||!window.THREE)return;
+    const rect=canvas.getBoundingClientRect();
+    const mouse=new THREE.Vector2(
+      ((event.clientX-rect.left)/rect.width)*2-1,
+      -(((event.clientY-rect.top)/rect.height)*2-1)
+    );
+    const raycaster=new THREE.Raycaster();
+    raycaster.setFromCamera(mouse,affariScene.camera);
+    const hits=raycaster.intersectObjects(affariScene.objects.map(o=>o.box),false);
+    if(hits[0]?.object?.userData?.num)chooseAffariPackage(hits[0].object.userData.num);
+  });
+}
+
+function renderAffari(){
+  const player=players.find(p=>p.id===affariState.pid);
+  const roundTarget=AFFARI_ROUNDS[affariState.roundIndex]||1;
+  const remainingToOpen=Math.max(0,roundTarget-affariState.openedThisRound);
+  const playerEl=document.getElementById('affari-player');
+  const offerEl=document.getElementById('affari-offer');
+  const stepEl=document.getElementById('affari-step');
+  const msgEl=document.getElementById('affari-message');
+  if(playerEl)playerEl.textContent=player?.name||'Concorrente';
+  if(offerEl)offerEl.textContent=affariState.offer?formatMoney(affariState.offer):'—';
+  if(stepEl)stepEl.textContent=affariState.step||'Pacchi in studio';
+  if(msgEl)msgEl.textContent=affariState.message||'Scegli un pacco.';
+  const acceptBtn=document.getElementById('affari-accept');
+  const rejectBtn=document.getElementById('affari-reject');
+  if(acceptBtn){
+    acceptBtn.disabled=!(affariState.phase==='offer'||affariState.phase==='final');
+    acceptBtn.textContent=affariState.phase==='final'?'Scopri pacco':'Accetto';
+  }
+  if(rejectBtn)rejectBtn.disabled=affariState.phase!=='offer';
+  const canSwap=affariState.phase==='final'&&getAffariOpenable().length===1;
+  document.getElementById('affari-swap').disabled=!canSwap;
+  if(affariState.phase==='open'){
+    affariState.step=`Apri ${remainingToOpen} ${remainingToOpen===1?'pacco':'pacchi'}`;
+    if(stepEl)stepEl.textContent=affariState.step;
+  }
+  renderAffariPrizes();
+  renderAffariFallback();
+  renderAffariThree();
+}
+
+function beginAffariTuoi(){
+  activeStatsGame='affarituoi';
+  const player=players.find(p=>p.id===selAffariPid)||players[0];
+  if(!player)return;
+  const prizes=shuffleCopy(AFFARI_PRIZES);
+  affariState={
+    pid:player.id,
+    packages:prizes.map((prize,i)=>({num:i+1,prize,opened:false,justOpened:false})),
+    ownNum:null,
+    phase:'choose',
+    roundIndex:0,
+    openedThisRound:0,
+    offer:0,
+    step:'Scelta del pacco',
+    message:'Scegli il tuo pacco. Da qui comincia la partita.'
+  };
+  goTo('s-affari');
+  setupAffariCanvasClick();
+  renderAffari();
+  speakMystery(`Benvenuto ${player.name}. Scegli il tuo pacco.`);
+}
+
+function chooseAffariPackage(num){
+  if(!affariState.packages?.length)return;
+  if(affariState.phase==='choose'){
+    affariState.ownNum=num;
+    affariState.phase='open';
+    affariState.message=`Hai scelto il pacco ${num}. Ora apriamo i primi pacchi.`;
+    affariState.step='Primo round';
+    speakMystery(`Pacco numero ${num}. Bene. Ora apriamo i primi pacchi.`);
+    renderAffari();
+    return;
+  }
+  if(affariState.phase==='open')openAffariPackage(num);
+}
+
+function openAffariPackage(num){
+  const pkg=affariState.packages.find(p=>p.num===num);
+  if(!pkg||pkg.opened||pkg.num===affariState.ownNum)return;
+  pkg.opened=true;
+  pkg.justOpened=true;
+  affariState.openedThisRound++;
+  affariState.offer=0;
+  const good=pkg.prize<=1000?'Ottimo colpo':'Questo fa male';
+  affariState.message=`Pacco ${pkg.num}: ${formatMoney(pkg.prize)}. ${good}.`;
+  speakMystery(`Pacco ${pkg.num}. Dentro c'erano ${formatMoney(pkg.prize)}.`);
+  setTimeout(()=>{pkg.justOpened=false;renderAffari();},700);
+  const openable=getAffariOpenable();
+  const roundTarget=AFFARI_ROUNDS[affariState.roundIndex]||1;
+  if(openable.length===1){
+    affariState.phase='final';
+    affariState.step='Finale';
+    affariState.message=`Restano il tuo pacco ${affariState.ownNum} e il pacco ${openable[0].num}. Puoi cambiare o scoprire cosa hai.`;
+    speakMystery('Siamo al finale. Cambio o tieni il tuo pacco?');
+  }else if(affariState.openedThisRound>=roundTarget){
+    affariState.phase='offer';
+    affariState.offer=calculateAffariOffer();
+    affariState.step='Chiamata';
+    affariState.message=`L'uomo misterioso offre ${formatMoney(affariState.offer)}. Accetti o rifiuti?`;
+    speakMystery(`L'uomo misterioso offre ${formatMoney(affariState.offer)}. Accetti o rifiuti?`);
+  }
+  renderAffari();
+}
+
+function acceptAffariOffer(){
+  if(affariState.phase==='final'){
+    revealAffariFinal();
+    return;
+  }
+  if(affariState.phase!=='offer')return;
+  finishAffariGame(affariState.offer,'offerta accettata');
+}
+
+function rejectAffariOffer(){
+  if(affariState.phase!=='offer')return;
+  affariState.roundIndex++;
+  affariState.openedThisRound=0;
+  affariState.offer=0;
+  affariState.phase='open';
+  affariState.step='Offerta rifiutata';
+  affariState.message='Offerta rifiutata. Si continua ad aprire pacchi.';
+  speakMystery('Offerta rifiutata. Andiamo avanti.');
+  renderAffari();
+}
+
+function swapAffariPackage(){
+  if(affariState.phase!=='final')return;
+  const other=getAffariOpenable()[0];
+  if(!other)return;
+  const old=affariState.ownNum;
+  affariState.ownNum=other.num;
+  affariState.message=`Cambio effettuato: lasci il pacco ${old} e prendi il pacco ${other.num}.`;
+  speakMystery(`Cambio effettuato. Ora il tuo pacco e il numero ${other.num}.`);
+  renderAffari();
+}
+
+function revealAffariFinal(){
+  if(affariState.phase!=='final')return;
+  const own=affariState.packages.find(pkg=>pkg.num===affariState.ownNum);
+  if(!own)return;
+  own.opened=true;
+  own.justOpened=true;
+  finishAffariGame(own.prize,'pacco finale');
+}
+
+function finishAffariGame(amount,reason){
+  const player=players.find(p=>p.id===affariState.pid);
+  const points=Math.max(1,Math.round(amount/10000));
+  if(player)awardPlayerPoints(player.id,points,'affari-tuoi');
+  const own=affariState.packages?.find(pkg=>pkg.num===affariState.ownNum);
+  document.getElementById('win-name').textContent=player?.name||'Concorrente';
+  document.getElementById('win-sub').textContent=`${reason}: ${formatMoney(amount)} (${points} pt).`;
+  document.getElementById('win-scores').innerHTML=`<div style="font-size:.68rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--mut);margin-bottom:.6rem">Risultato Affari Tuoi</div>
+    <div class="sc-row">
+      <div class="sc-rank">📦</div>
+      <div class="sc-name">Pacco ${own?.num||affariState.ownNum||'—'}</div>
+      <div class="sc-pts">${formatMoney(own?.prize||amount)}</div>
+    </div>
+    <div class="sc-row">
+      <div class="sc-rank">€</div>
+      <div class="sc-name">${escapeHtml(player?.name||'Concorrente')}</div>
+      <div class="sc-pts">${points} pt</div>
+    </div>`;
+  recordCompletedGame('affarituoi',player?.uid?[player.uid]:[]);
+  renderHomeLeaderboard();
+  speakMystery(`Partita finita. Hai vinto ${formatMoney(amount)}.`);
+  affariState={};
   goTo('s-win');
 }
 

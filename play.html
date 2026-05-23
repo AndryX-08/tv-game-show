@@ -50,9 +50,11 @@
     .player-choice span{font-size:1rem;font-weight:700;color:#fff}
     .setup-note{margin-top:1rem;color:var(--mut);font-size:.95rem;line-height:1.45}
     .btn{border:none;border-radius:18px;padding:1rem 1.2rem;font-size:1rem;font-weight:800;cursor:pointer;transition:transform .18s,filter .18s;background:var(--gold);color:#08081A;white-space:normal;line-height:1.2}
-    .btn:hover{transform:translateY(-1px);filter:brightness(1.05)}
     .btn-setup{margin-top:1rem;min-width:220px}
     .note{margin-top:1.3rem;color:var(--mut);font-size:.92rem;line-height:1.6}
+    @media(hover:hover) and (pointer:fine){
+      .btn:hover{transform:translateY(-1px);filter:brightness(1.05)}
+    }
     @media(max-width:520px){
       body{display:block;padding:4.6rem .75rem 1rem}
       .screen{width:100%}
