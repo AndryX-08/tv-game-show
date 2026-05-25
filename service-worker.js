@@ -1,7 +1,8 @@
-const CACHE_NAME = 'tv-game-night-v17';
+const CACHE_NAME = 'tv-game-night-v21';
 const APP_SHELL = [
   './',
   './index.html',
+  './404.html',
   './script.js',
   './manifest.webmanifest',
   './Icone/favicon.svg',
@@ -43,6 +44,10 @@ self.addEventListener('fetch', event => {
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request).then(response => {
+        if (!response || !response.ok) {
+          return caches.match('./index.html').then(cached => cached || fetch('./index.html'));
+        }
+
         const responseToCache = response.clone();
         caches.open(CACHE_NAME).then(cache => cache.put('./index.html', responseToCache));
         return response;

@@ -25,7 +25,7 @@ const TC=[
 ];
 
 let players=[],teams=[],nPid=1,nTid=1;
-let selPid=null,selP1=null,selP2=null,selWheelPid=null,selChainP1=null,selChainP2=null,selTabooPid=null,selHigherPid=null,selAffariPid=null,selectedHolCategory='videogiochi';
+let selPid=null,selP1=null,selP2=null,selWheelPid=null,selChainP1=null,selChainP2=null,selTabooPid=null,selHigherPid=null,selAffariPid=null,selMoviePid=null,selectedHolCategory='videogiochi';
 let intesaWinner=null;
 let intesaPlayers={p1:null,p2:null};
 let activeStatsGame=null;
@@ -48,6 +48,20 @@ let ttsRate=parseFloat(localStorage.getItem('tvgn-tts-rate'))||.9;
 let onboardingStep=0,onboardingStarted=false;
 const ANON_IDLE_LIMIT_MS=30*60*1000;
 let anonymousCleanupTimer=null,anonymousCleanupInProgress=false,anonymousLifecycleBound=false;
+
+const APP_ROUTES={
+  's-hero':'/',
+  's-setup':'/configura',
+  's-pick-affari':'/affari-tuoi',
+  's-affari':'/affari-tuoi/studio',
+  's-pick-movie':'/indovina-film',
+  's-movieguess':'/indovina-film/gioca'
+};
+const SCREEN_BY_ROUTE=Object.entries(APP_ROUTES).reduce((acc,[screen,path])=>{
+  acc[path]=screen;
+  return acc;
+},{'/home':'s-hero','/index.html':'s-hero'});
+let appRoutingReady=false;
 
 const PROFILE_COLORS=[
   {bg:'#F5C518',color:'#08081A'},
@@ -556,7 +570,8 @@ function speakQuestion(text){
   window.speechSynthesis.speak(msg);
 }
 
-function goTo(id){
+function goTo(id,options={}){
+  const pushRoute=options.pushRoute!==false;
   if(id!=='s-aua'&&id!=='s-eredita')stopQuestionSpeech();
   if(id!=='s-pick-wheel'&&id!=='s-wheel')stopRdfAudio();
   if(id!=='s-chain')clearChainTimer();
@@ -570,6 +585,9 @@ function goTo(id){
   document.getElementById(id).classList.add('active');
   if(id==='s-setup')initTtsControls();
   updatePresenceState({currentScreen:id,currentGame:getGameNameFromScreen(id)});
+  if(pushRoute&&appRoutingReady&&APP_ROUTES[id]&&location.pathname!==APP_ROUTES[id]){
+    history.pushState({screen:id},'',APP_ROUTES[id]);
+  }
 }
 function initials(n){return n.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)}
 function escapeHtml(value){
@@ -583,8 +601,19 @@ function escapeHtml(value){
 }
 function getTimer(g){return parseInt(document.getElementById('timer-'+g).value)||30}
 function getTabooTimer(){return parseInt(document.getElementById('timer-taboo')?.value)||60}
+function initAppRouting(){
+  if(appRoutingReady)return;
+  appRoutingReady=true;
+  const initialScreen=SCREEN_BY_ROUTE[location.pathname]||'s-hero';
+  if(location.pathname==='/home')history.replaceState({screen:'s-hero'},'',APP_ROUTES['s-hero']);
+  goTo(initialScreen,{pushRoute:false});
+  window.addEventListener('popstate',()=>{
+    const screen=SCREEN_BY_ROUTE[location.pathname]||'s-hero';
+    goTo(screen,{pushRoute:false});
+  });
+}
 function getGameNameFromScreen(id){
-  if(['s-hero','s-setup','s-pick','s-pick2','s-pick-wheel','s-pick-chain','s-pick-taboo','s-pick-hol','s-win'].includes(id))return 'menu';
+  if(['s-hero','s-setup','s-pick','s-pick2','s-pick-wheel','s-pick-chain','s-pick-taboo','s-pick-hol','s-pick-affari','s-pick-movie','s-win'].includes(id))return 'menu';
   if(id==='s-aua')return 'aua';
   if(id==='s-eredita')return 'eredita';
   if(id==='s-wheel')return 'ruota';
@@ -592,6 +621,8 @@ function getGameNameFromScreen(id){
   if(id==='s-sarabanda')return 'sarabanda';
   if(id==='s-guesswho')return 'guesswho';
   if(id==='s-higherlower')return 'higherlower';
+  if(id==='s-affari')return 'affarituoi';
+  if(id==='s-movieguess')return 'movieguess';
   if(id==='s-intesa-score')return 'intesa';
   return 'menu';
 }
@@ -972,7 +1003,8 @@ function getGameStatsLabel(game){
     guesswho:'Indovina Chi',
     higherlower:'Higher or Lower',
     taboo:'Taboo',
-    affarituoi:'Affari Tuoi'
+    affarituoi:'Affari Tuoi',
+    movieguess:'Indovina il Film'
   };
   return labels[game]||game||'—';
 }
@@ -1513,7 +1545,8 @@ const GAME_LABELS={
   sarabanda:'SARABANDA',
   guesswho:'INDOVINA CHI',
   higherlower:'HIGHER OR LOWER',
-  affarituoi:'AFFARI TUOI'
+  affarituoi:'AFFARI TUOI',
+  movieguess:'INDOVINA IL FILM'
 };
 
 const MULTIPLAYER_GAMES=['ruota','eredita','intesa','catena','sarabanda','guesswho'];
@@ -1887,6 +1920,22 @@ function startGame(game,options={}){
     goTo('s-pick-affari');
     return;
   }
+  if(game==='movieguess'){
+    stopAuaAudio();
+    stopRdfAudio();
+    selMoviePid=null;
+    document.getElementById('pick-grid-movie').innerHTML=players.map(p=>{
+      const c=TC[p.ci%TC.length];const t=teams.find(t=>t.mids.includes(p.id));
+      return `<div class="player-pick" id="pp-movie-${p.id}" onclick="selPickMovie(${p.id})">
+        <div class="pp-avatar" style="background:${c.light};color:${c.hex}">${initials(p.name)}</div>
+        <div class="pp-name">${escapeHtml(p.name)}</div>
+        <div class="pp-info">${t?escapeHtml(t.name):'Libero'} · ${p.score}pt</div></div>`;
+    }).join('');
+    document.getElementById('btn-pick-movie-go').disabled=true;
+    document.getElementById('btn-pick-movie-go').onclick=()=>beginMovieGuess();
+    goTo('s-pick-movie');
+    return;
+  }
   if(game==='catena'){
     if(players.length<2){goTo('s-setup');return;}
     stopAuaAudio();
@@ -1963,7 +2012,9 @@ function startGame(game,options={}){
     document.getElementById('btn-pick-go').onclick=()=>beginAUA();
     startAuaIntro();
     goTo('s-pick');
-  } else {
+    return;
+  }
+  if(game==='eredita'){
     selP1=null;selP2=null;
     ['p1','p2'].forEach(slot=>{
       document.getElementById('pick-grid-'+slot).innerHTML=players.map(p=>{
@@ -1978,7 +2029,10 @@ function startGame(game,options={}){
     document.getElementById('btn-pick2-go').textContent='INIZIA LA SFIDA ›';
     document.getElementById('btn-pick2-go').onclick=()=>beginEredita();
     goTo('s-pick2');
+    return;
   }
+  console.warn('Gioco non riconosciuto:',game);
+  goTo('s-hero');
 }
 function selPick1(id){
   selPid=id;
@@ -2003,6 +2057,12 @@ function selPickAffari(id){
   document.querySelectorAll('#pick-grid-affari .player-pick').forEach(e=>e.classList.remove('selected'));
   document.getElementById('pp-affari-'+id)?.classList.add('selected');
   document.getElementById('btn-pick-affari-go').disabled=false;
+}
+function selPickMovie(id){
+  selMoviePid=id;
+  document.querySelectorAll('#pick-grid-movie .player-pick').forEach(e=>e.classList.remove('selected'));
+  document.getElementById('pp-movie-'+id)?.classList.add('selected');
+  updateMovieStartButton();
 }
 function selectHigherLowerCategory(key){
   if(!HIGHER_LOWER_BANKS[key])return;
@@ -2183,6 +2243,184 @@ function endHigherLower(completed=false){
     </div>`;
   recordCompletedGame('higherlower',player?.uid&&points>0?[player.uid]:[]);
   higherLowerState={};
+  goTo('s-win');
+}
+
+/* ══════════════════════════════
+   INDOVINA IL FILM
+══════════════════════════════ */
+let movieGuessState={};
+let movieGuessTimer=null;
+const TMDB_PROXY_BASE='https://tvgn-tmdb-proxy.alupidi888.workers.dev/tmdb';
+
+function updateMovieStartButton(){
+  const btn=document.getElementById('btn-pick-movie-go');
+  if(btn)btn.disabled=!selMoviePid;
+}
+
+async function tmdbFetch(path,params={}){
+  const url=new URL(`${TMDB_PROXY_BASE}${path}`);
+  Object.entries({language:'it-IT',...params}).forEach(([key,value])=>{
+    if(value!==undefined&&value!==null)url.searchParams.set(key,value);
+  });
+  const response=await fetch(url.toString(),{headers:{accept:'application/json'}});
+  if(!response.ok)throw new Error(`TMDB ${response.status}`);
+  return response.json();
+}
+
+function normalizeMovieTitle(text){
+  return (text||'')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-z0-9]/gi,'')
+    .toLowerCase();
+}
+
+async function loadMovieGuessBank(){
+  const page=Math.floor(Math.random()*8)+1;
+  const data=await tmdbFetch('/movie/popular',{page});
+  const movies=(data.results||[])
+    .filter(movie=>movie.poster_path&&movie.title&&movie.overview)
+    .sort(()=>Math.random()-.5)
+    .slice(0,8);
+  const enriched=[];
+  for(const movie of movies){
+    try{
+      const credits=await tmdbFetch(`/movie/${movie.id}/credits`,{});
+      enriched.push({
+        ...movie,
+        cast:(credits.cast||[]).slice(0,4).map(person=>person.name).filter(Boolean)
+      });
+    }catch(err){
+      enriched.push({...movie,cast:[]});
+    }
+  }
+  return enriched;
+}
+
+async function beginMovieGuess(){
+  activeStatsGame='movieguess';
+  const player=players.find(p=>p.id===selMoviePid)||players[0];
+  if(!player)return;
+  movieGuessState={pid:player.id,idx:0,score:0,clueLevel:1,movies:[],message:'Carico film da TMDB...'};
+  goTo('s-movieguess');
+  renderMovieGuess();
+  try{
+    movieGuessState.movies=await loadMovieGuessBank();
+    if(!movieGuessState.movies.length)throw new Error('Nessun film disponibile');
+    movieGuessState.message='Poster oscurato: indovina il film.';
+  }catch(err){
+    movieGuessState.message=`Errore API: ${err.message}. Controlla il proxy Cloudflare TMDB.`;
+  }
+  renderMovieGuess();
+}
+
+function getCurrentMovieGuess(){
+  return movieGuessState.movies?.[movieGuessState.idx]||null;
+}
+
+function renderMovieGuess(){
+  const player=players.find(p=>p.id===movieGuessState.pid);
+  const movie=getCurrentMovieGuess();
+  const poster=document.getElementById('movie-poster');
+  const missing=document.getElementById('movie-poster-missing');
+  const clues=document.getElementById('movie-clues');
+  const answer=document.getElementById('movie-answer');
+  if(document.getElementById('movie-player'))document.getElementById('movie-player').textContent=player?.name||'Giocatore';
+  if(document.getElementById('movie-score'))document.getElementById('movie-score').textContent=movieGuessState.score||0;
+  if(document.getElementById('movie-message'))document.getElementById('movie-message').textContent=movieGuessState.message||'';
+  if(!movie){
+    if(clues)clues.innerHTML='<div class="movie-clue"><div class="movie-clue-value">In attesa dei film...</div></div>';
+    if(poster)poster.style.backgroundImage='';
+    if(missing)missing.style.display='flex';
+    return;
+  }
+  if(answer)answer.value='';
+  if(poster){
+    poster.style.backgroundImage=`url(https://image.tmdb.org/t/p/w500${movie.poster_path})`;
+    poster.classList.toggle('revealed',!!movieGuessState.revealed);
+  }
+  if(missing)missing.style.display=movie.poster_path?'none':'flex';
+  if(clues){
+    const year=(movie.release_date||'').slice(0,4)||'—';
+    const items=[
+      ['Anno',year],
+      ['Voto TMDB',movie.vote_average?`${movie.vote_average.toFixed(1)} / 10`:'—']
+    ];
+    if(movieGuessState.clueLevel>=2)items.push(['Cast',movie.cast?.length?movie.cast.join(', '):'Cast non disponibile']);
+    if(movieGuessState.clueLevel>=3)items.push(['Trama',movie.overview||'Trama non disponibile']);
+    clues.innerHTML=items.map(([label,value])=>`
+      <div class="movie-clue">
+        <div class="movie-clue-label">${escapeHtml(label)}</div>
+        <div class="movie-clue-value">${escapeHtml(value)}</div>
+      </div>
+    `).join('');
+  }
+}
+
+function nextMovieClue(){
+  const movie=getCurrentMovieGuess();
+  if(!movie)return;
+  movieGuessState.clueLevel=Math.min(3,(movieGuessState.clueLevel||1)+1);
+  movieGuessState.message=movieGuessState.clueLevel===3?'Ultimo indizio: la trama.':'Nuovo indizio sbloccato.';
+  renderMovieGuess();
+}
+
+function submitMovieGuess(){
+  const movie=getCurrentMovieGuess();
+  if(!movie)return;
+  const guess=document.getElementById('movie-answer')?.value||'';
+  const ok=normalizeMovieTitle(guess)===normalizeMovieTitle(movie.title)||normalizeMovieTitle(guess)===normalizeMovieTitle(movie.original_title);
+  if(!ok){
+    movieGuessState.message='Non e lui. Prova ancora o chiedi un indizio.';
+    renderMovieGuess();
+    return;
+  }
+  const points=Math.max(1,4-(movieGuessState.clueLevel||1));
+  movieGuessState.score=(movieGuessState.score||0)+points;
+  movieGuessState.revealed=true;
+  movieGuessState.message=`Esatto: ${movie.title}! +${points} pt`;
+  renderMovieGuess();
+}
+
+function revealMovieAnswer(){
+  const movie=getCurrentMovieGuess();
+  if(!movie)return;
+  movieGuessState.revealed=true;
+  movieGuessState.clueLevel=3;
+  movieGuessState.message=`Era: ${movie.title}`;
+  renderMovieGuess();
+}
+
+function nextMovieRound(){
+  if(!movieGuessState.movies?.length)return;
+  if(movieGuessState.idx>=movieGuessState.movies.length-1){
+    endMovieGuess();
+    return;
+  }
+  movieGuessState.idx++;
+  movieGuessState.clueLevel=1;
+  movieGuessState.revealed=false;
+  movieGuessState.message='Nuovo poster: indovina il film.';
+  renderMovieGuess();
+}
+
+function endMovieGuess(){
+  clearTimeout(movieGuessTimer);
+  movieGuessTimer=null;
+  const player=players.find(p=>p.id===movieGuessState.pid);
+  const points=movieGuessState.score||0;
+  if(player&&points>0)awardPlayerPoints(player.id,points,'movieguess');
+  document.getElementById('win-name').textContent=player?.name||'Giocatore';
+  document.getElementById('win-sub').textContent=`Hai totalizzato ${points} punti a Indovina il Film.`;
+  document.getElementById('win-scores').innerHTML=`<div style="font-size:.68rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--mut);margin-bottom:.6rem">Risultato Indovina il Film</div>
+    <div class="sc-row">
+      <div class="sc-rank">🎬</div>
+      <div class="sc-name">${escapeHtml(player?.name||'Giocatore')}</div>
+      <div class="sc-pts">${points}</div>
+    </div>`;
+  recordCompletedGame('movieguess',player?.uid&&points>0?[player.uid]:[]);
+  movieGuessState={};
   goTo('s-win');
 }
 
@@ -4692,6 +4930,7 @@ listenTabooScoreEvents();
 
 document.addEventListener("DOMContentLoaded", () => {
   const overlay = document.getElementById("authOverlay");
+  initAppRouting();
   window.addEventListener('beforeunload',stopSarabandaAudio);
   window.addEventListener('beforeunload',()=>{
     if(presenceRef){
