@@ -2395,6 +2395,11 @@ function makeAffariLabelTexture(text,sub='',color='#ffffff'){
   const ctx=canvas.getContext('2d');
   ctx.fillStyle='rgba(0,0,0,0)';
   ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle='rgba(248,237,210,.95)';
+  ctx.fillRect(56,42,208,78);
+  ctx.strokeStyle='rgba(0,0,0,.22)';
+  ctx.lineWidth=5;
+  ctx.strokeRect(56,42,208,78);
   ctx.fillStyle=color;
   ctx.font='900 78px Arial';
   ctx.textAlign='center';
@@ -2409,6 +2414,30 @@ function makeAffariLabelTexture(text,sub='',color='#ffffff'){
   return texture;
 }
 
+function makeAffariPlaqueTexture(text){
+  if(!window.THREE)return null;
+  const canvas=document.createElement('canvas');
+  canvas.width=512;canvas.height=160;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#ead8b6';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle='rgba(120,82,42,.22)';
+  for(let i=0;i<12;i++){
+    ctx.fillRect(Math.random()*canvas.width,Math.random()*canvas.height,12,8);
+  }
+  ctx.strokeStyle='rgba(76,49,26,.45)';
+  ctx.lineWidth=8;
+  ctx.strokeRect(8,8,canvas.width-16,canvas.height-16);
+  ctx.fillStyle='#1c1a20';
+  ctx.font='900 48px Georgia';
+  ctx.textAlign='center';
+  ctx.textBaseline='middle';
+  ctx.fillText(String(text||'').toUpperCase(),canvas.width/2,canvas.height/2+4,canvas.width-42);
+  const texture=new THREE.CanvasTexture(canvas);
+  texture.needsUpdate=true;
+  return texture;
+}
+
 function initAffariThree(){
   const canvas=document.getElementById('affari-canvas');
   const fallback=document.getElementById('affari-fallback');
@@ -2417,9 +2446,9 @@ function initAffariThree(){
   const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
   renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
   const scene=new THREE.Scene();
-  const camera=new THREE.PerspectiveCamera(42,1,.1,100);
-  camera.position.set(0,6.8,13.2);
-  camera.lookAt(0,0,0);
+  const camera=new THREE.PerspectiveCamera(38,1,.1,100);
+  camera.position.set(0,5.4,14.6);
+  camera.lookAt(0,.25,-1.1);
   scene.add(new THREE.AmbientLight(0xffffff,.62));
   const key=new THREE.SpotLight(0xffdf86,1.5,30,Math.PI/5,.3);
   key.position.set(0,10,7);
@@ -2428,10 +2457,11 @@ function initAffariThree(){
   side.position.set(-7,3,4);
   scene.add(side);
   const floor=new THREE.Mesh(
-    new THREE.CylinderGeometry(10.5,10.5,.16,80),
-    new THREE.MeshStandardMaterial({color:0x17172e,roughness:.48,metalness:.18})
+    new THREE.CylinderGeometry(11.5,11.5,.16,96,1,false,Math.PI*.1,Math.PI*.8),
+    new THREE.MeshStandardMaterial({color:0x073b63,roughness:.42,metalness:.16})
   );
-  floor.position.y=-.9;
+  floor.position.y=-1.12;
+  floor.rotation.y=Math.PI*.1;
   scene.add(floor);
   const backdrop=new THREE.Mesh(
     new THREE.TorusGeometry(5.8,.035,12,100),
@@ -2449,48 +2479,64 @@ function buildAffariThreePackages(){
   affariScene.pallets.forEach(pallet=>affariScene.scene.remove(pallet));
   affariScene.objects=[];
   affariScene.pallets=[];
-  const boxGeo=new THREE.BoxGeometry(1.05,.78,.7);
-  const palletGeo=new THREE.BoxGeometry(8.2,.18,1.04);
-  const palletMat=new THREE.MeshStandardMaterial({color:0x8b5a2b,roughness:.58,metalness:.05});
-  for(let row=0;row<4;row++){
-    const z=(row-1.5)*1.42;
-    const pallet=new THREE.Mesh(palletGeo,palletMat);
-    pallet.position.set(0,-.58,z);
-    affariScene.scene.add(pallet);
-    affariScene.pallets.push(pallet);
-  }
+  const boxGeo=new THREE.BoxGeometry(.92,.7,.64);
+  const benchGeo=new THREE.BoxGeometry(1.25,.38,.95);
+  const benchMat=new THREE.MeshStandardMaterial({color:0x078ac5,roughness:.38,metalness:.12});
   (affariState.packages||[]).forEach((pkg,i)=>{
-    const row=Math.floor(i/5);
-    const col=i%5;
-    const x=(col-2)*1.55+(row%2?.34:-.34);
-    const z=(row-1.5)*1.42;
+    const count=affariState.packages.length||20;
+    const angle=-Math.PI*.74+(Math.PI*1.48)*(i/(count-1));
+    const radiusX=7.25;
+    const radiusZ=3.4;
+    const x=Math.sin(angle)*radiusX;
+    const z=-Math.cos(angle)*radiusZ+.9;
+    const yaw=-angle*.72;
     const mat=new THREE.MeshStandardMaterial({
-      color:pkg.opened?0x3a3a4a:(pkg.num===affariState.ownNum?0x1f9d61:0xb91c1c),
+      color:pkg.opened?0x3a3a4a:(pkg.num===affariState.ownNum?0x1f9d61:0x0b8fc4),
       roughness:.34,
       metalness:.22
     });
+    const bench=new THREE.Mesh(benchGeo,benchMat);
+    bench.position.set(x,-.76,z+.12);
+    bench.rotation.y=yaw;
+    affariScene.scene.add(bench);
+    affariScene.pallets.push(bench);
+    const plaqueTexture=makeAffariPlaqueTexture(pkg.region);
+    const plaque=new THREE.Mesh(
+      new THREE.PlaneGeometry(1.08,.34),
+      new THREE.MeshBasicMaterial({map:plaqueTexture,transparent:true})
+    );
+    plaque.position.set(0,-.03,.481);
+    plaque.rotation.x=-.03;
+    bench.add(plaque);
     const box=new THREE.Mesh(boxGeo,mat);
     const group=new THREE.Group();
-    group.position.set(x,0,z);
-    group.rotation.y=(col-2)*.08;
+    group.position.set(x,-.16,z-.05);
+    group.rotation.y=yaw;
     box.userData.num=pkg.num;
     group.add(box);
     const labelTexture=makeAffariLabelTexture(
       pkg.opened?formatMoney(pkg.prize).replace(' €',''):String(pkg.num),
-      pkg.opened?'':pkg.region,
-      pkg.opened?'#b9b9c8':'#ffffff'
+      '',
+      pkg.opened?'#5f6370':'#1b1b24'
     );
     const label=new THREE.Mesh(
-      new THREE.PlaneGeometry(1.16,.7),
+      new THREE.PlaneGeometry(.72,.42),
       new THREE.MeshBasicMaterial({map:labelTexture,transparent:true})
     );
-    label.position.set(0,0,.356);
+    label.position.set(0,0,.326);
     group.add(label);
-    const handle=new THREE.Mesh(
-      new THREE.TorusGeometry(.32,.035,8,24,Math.PI),
-      new THREE.MeshStandardMaterial({color:0xf5c518,roughness:.25,metalness:.45})
+    const seal=new THREE.Mesh(
+      new THREE.CylinderGeometry(.09,.09,.035,24),
+      new THREE.MeshBasicMaterial({color:0xe83e5c})
     );
-    handle.position.set(0,.43,0);
+    seal.position.set(.32,.04,.346);
+    seal.rotation.x=Math.PI/2;
+    group.add(seal);
+    const handle=new THREE.Mesh(
+      new THREE.TorusGeometry(.25,.026,8,24,Math.PI),
+      new THREE.MeshStandardMaterial({color:0xe9f3f7,roughness:.25,metalness:.45})
+    );
+    handle.position.set(0,.38,0);
     handle.rotation.z=Math.PI;
     group.add(handle);
     affariScene.scene.add(group);
