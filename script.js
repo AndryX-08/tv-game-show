@@ -2335,17 +2335,9 @@ function playAffariOutcomeSound(isGood){
 }
 
 function showAffariPrizeAlert(pkg,isGood){
-  const alert=document.getElementById('affari-reveal-alert');
-  const amount=document.getElementById('affari-reveal-amount');
-  const region=document.getElementById('affari-reveal-region');
-  const label=document.getElementById('affari-reveal-label');
-  if(!alert||!amount)return;
-  alert.classList.remove('show','good','bad');
-  void alert.offsetWidth;
-  amount.textContent=formatMoney(pkg.prize);
-  if(region)region.textContent=`Pacco ${pkg.num} - ${pkg.region}`;
-  if(label)label.textContent='Nel pacco';
-  alert.classList.add(isGood?'good':'bad','show');
+  document.getElementById('affari-reveal-alert')?.remove();
+  affariState.studioReveal={pkg,isGood,until:performance.now()+2600};
+  updateAffariStudioWall();
 }
 
 function getAffariRemaining(){
@@ -2438,6 +2430,95 @@ function makeAffariPlaqueTexture(text){
   return texture;
 }
 
+function makeAffariStudioTexture(reveal=null){
+  if(!window.THREE)return null;
+  const canvas=document.createElement('canvas');
+  canvas.width=1600;canvas.height=720;
+  const ctx=canvas.getContext('2d');
+  const bg=ctx.createLinearGradient(0,0,0,canvas.height);
+  bg.addColorStop(0,'#083b66');
+  bg.addColorStop(.55,'#052d52');
+  bg.addColorStop(1,'#041726');
+  ctx.fillStyle=bg;
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  ctx.fillStyle='rgba(18,174,232,.16)';
+  for(let x=60;x<canvas.width;x+=180){
+    ctx.fillRect(x,70,92,520);
+  }
+  ctx.strokeStyle='rgba(255,255,255,.12)';
+  ctx.lineWidth=4;
+  for(let x=0;x<=canvas.width;x+=200){
+    ctx.beginPath();
+    ctx.moveTo(x,0);
+    ctx.lineTo(x+60,canvas.height);
+    ctx.stroke();
+  }
+
+  ctx.strokeStyle='rgba(245,197,24,.58)';
+  ctx.lineWidth=9;
+  [900,1080,1260].forEach((radius,i)=>{
+    ctx.beginPath();
+    ctx.ellipse(canvas.width/2,canvas.height+360+i*38,radius,560+i*40,0,Math.PI*1.1,Math.PI*1.9);
+    ctx.stroke();
+  });
+
+  ctx.strokeStyle='rgba(34,211,255,.48)';
+  ctx.lineWidth=5;
+  for(let y=105;y<canvas.height-90;y+=95){
+    ctx.beginPath();
+    ctx.moveTo(120,y);
+    ctx.lineTo(canvas.width-120,y);
+    ctx.stroke();
+  }
+
+  const glow=ctx.createRadialGradient(canvas.width/2,330,40,canvas.width/2,330,470);
+  glow.addColorStop(0,'rgba(245,197,24,.25)');
+  glow.addColorStop(1,'rgba(245,197,24,0)');
+  ctx.fillStyle=glow;
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  const revealColor=reveal?(reveal.isGood?'#2ECC71':'#ff4d4d'):null;
+  ctx.fillStyle=reveal?'rgba(5,23,38,.88)':'rgba(5,23,38,.72)';
+  ctx.strokeStyle=reveal?revealColor:'rgba(245,197,24,.62)';
+  ctx.lineWidth=8;
+  const plaqueW=reveal?760:520,plaqueH=reveal?230:120,plaqueX=(canvas.width-plaqueW)/2,plaqueY=reveal?50:68;
+  ctx.roundRect(plaqueX,plaqueY,plaqueW,plaqueH,18);
+  ctx.fill();
+  ctx.stroke();
+  ctx.textAlign='center';
+  ctx.textBaseline='middle';
+  if(reveal){
+    ctx.fillStyle='rgba(255,255,255,.82)';
+    ctx.font='900 30px Arial';
+    ctx.fillText(`PACCO ${reveal.pkg.num} - ${String(reveal.pkg.region||'').toUpperCase()}`,canvas.width/2,plaqueY+46);
+    ctx.fillStyle=revealColor;
+    ctx.shadowColor=revealColor;
+    ctx.shadowBlur=26;
+    ctx.font='900 112px Bebas Neue, Arial';
+    ctx.fillText(formatMoney(reveal.pkg.prize),canvas.width/2,plaqueY+142);
+    ctx.shadowBlur=0;
+  }else{
+    ctx.fillStyle='#F5C518';
+    ctx.font='900 72px Bebas Neue, Arial';
+    ctx.fillText('AFFARI TUOI',canvas.width/2,plaqueY+plaqueH/2+5);
+  }
+
+  const texture=new THREE.CanvasTexture(canvas);
+  texture.needsUpdate=true;
+  return texture;
+}
+
+function updateAffariStudioWall(){
+  if(!affariScene?.studioWall)return;
+  const reveal=affariState.studioReveal&&performance.now()<affariState.studioReveal.until
+    ? affariState.studioReveal
+    : null;
+  affariScene.studioWall.material.map?.dispose?.();
+  affariScene.studioWall.material.map=makeAffariStudioTexture(reveal);
+  affariScene.studioWall.material.needsUpdate=true;
+}
+
 function initAffariThree(){
   const canvas=document.getElementById('affari-canvas');
   const fallback=document.getElementById('affari-fallback');
@@ -2446,9 +2527,9 @@ function initAffariThree(){
   const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
   renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
   const scene=new THREE.Scene();
-  const camera=new THREE.PerspectiveCamera(38,1,.1,100);
-  camera.position.set(0,5.4,14.6);
-  camera.lookAt(0,.25,-1.1);
+  const camera=new THREE.PerspectiveCamera(36,1,.1,100);
+  camera.position.set(0,5.9,17.2);
+  camera.lookAt(0,.18,-1.7);
   scene.add(new THREE.AmbientLight(0xffffff,.62));
   const key=new THREE.SpotLight(0xffdf86,1.5,30,Math.PI/5,.3);
   key.position.set(0,10,7);
@@ -2456,21 +2537,14 @@ function initAffariThree(){
   const side=new THREE.PointLight(0x3498db,.8,24);
   side.position.set(-7,3,4);
   scene.add(side);
-  const floor=new THREE.Mesh(
-    new THREE.CylinderGeometry(11.5,11.5,.16,96,1,false,Math.PI*.1,Math.PI*.8),
-    new THREE.MeshStandardMaterial({color:0x073b63,roughness:.42,metalness:.16})
+  const studioTexture=makeAffariStudioTexture();
+  const studioWall=new THREE.Mesh(
+    new THREE.PlaneGeometry(16.8,7.6),
+    new THREE.MeshBasicMaterial({map:studioTexture,transparent:true,side:THREE.DoubleSide})
   );
-  floor.position.y=-1.12;
-  floor.rotation.y=Math.PI*.1;
-  scene.add(floor);
-  const backdrop=new THREE.Mesh(
-    new THREE.TorusGeometry(5.8,.035,12,100),
-    new THREE.MeshBasicMaterial({color:0xf5c518,transparent:true,opacity:.28})
-  );
-  backdrop.position.set(0,2.1,-2.8);
-  backdrop.rotation.x=Math.PI/2;
-  scene.add(backdrop);
-  return {renderer,scene,camera,objects:[],pallets:[],started:false};
+  studioWall.position.set(0,2.08,-5.35);
+  scene.add(studioWall);
+  return {renderer,scene,camera,objects:[],pallets:[],studioWall,started:false};
 }
 
 function buildAffariThreePackages(){
@@ -2484,9 +2558,9 @@ function buildAffariThreePackages(){
   const benchMat=new THREE.MeshStandardMaterial({color:0x078ac5,roughness:.38,metalness:.12});
   (affariState.packages||[]).forEach((pkg,i)=>{
     const count=affariState.packages.length||20;
-    const angle=-Math.PI*.74+(Math.PI*1.48)*(i/(count-1));
-    const radiusX=7.25;
-    const radiusZ=3.4;
+    const angle=-Math.PI*.82+(Math.PI*1.64)*(i/(count-1));
+    const radiusX=8.85;
+    const radiusZ=4.15;
     const x=Math.sin(angle)*radiusX;
     const z=-Math.cos(angle)*radiusZ+.9;
     const yaw=-angle*.72;
@@ -2568,6 +2642,10 @@ function animateAffariThree(){
     obj.group.rotation.x=pkg?.justOpened?Math.sin(now*12)*.12:0;
     obj.group.rotation.y+=pkg?.opened ? .003 : .006;
   });
+  if(affariState.studioReveal&&now*1000>affariState.studioReveal.until){
+    affariState.studioReveal=null;
+    updateAffariStudioWall();
+  }
   affariScene.renderer.render(affariScene.scene,affariScene.camera);
   requestAnimationFrame(animateAffariThree);
 }
