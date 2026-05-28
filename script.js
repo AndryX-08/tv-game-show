@@ -591,7 +591,12 @@ function goTo(id,options={}){
   }
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
-  if(id==='s-setup')initTtsControls();
+  if(id==='s-setup'){
+    initTtsControls();
+    renderPlayers();
+    renderTeamSection();
+    renderRegisteredUserSelect();
+  }
   updatePresenceState({currentScreen:id,currentGame:getGameNameFromScreen(id)});
   if(pushRoute&&appRoutingReady&&APP_ROUTES[id]&&location.pathname!==APP_ROUTES[id]){
     history.pushState({screen:id},'',APP_ROUTES[id]);
@@ -952,7 +957,7 @@ function renderRegisteredUserSelect(){
     available.map(u=>`<option value="${escapeHtml(u.uid||u.id)}">${escapeHtml(u.name||'Anonimo')}${u.isAnonymous?' (anonimo)':''}</option>`).join('');
 }
 function addTeam(){
-  const inp=document.getElementById('inp-team');if(!inp)return;
+  const inp=document.getElementById('inp-team')||document.querySelector('[data-team-input]');if(!inp)return;
   const name=inp.value.trim()||`Squadra ${teams.length+1}`;
   teams.push({id:nTid++,name,color:TC[teams.length%TC.length],mids:[],score:0});
   inp.value='';renderTeamSection();renderPlayers();
@@ -968,23 +973,27 @@ function renderTeamSection(){
   const el=document.getElementById('team-section');
   if(players.length<2){el.innerHTML='<div class="empty">Aggiungi almeno 2 giocatori</div>';return;}
   const addRow=teams.length<5?`<div class="field-row" style="margin-bottom:.7rem">
-    <input class="tf" id="inp-team" placeholder="Nome squadra..." maxlength="18" onkeydown="if(event.key==='Enter')addTeam()">
-    <button class="btn-add" onclick="addTeam()">＋</button></div>`:'';
+    <input class="tf" id="inp-team" data-team-input="true" placeholder="Nome squadra..." maxlength="18" onkeydown="if(event.key==='Enter')addTeam()">
+    <button class="btn-add" type="button" onclick="addTeam()">＋</button></div>`:'';
   const tHtml=teams.map(t=>`<div class="chip" style="margin-bottom:.35rem;border-left:3px solid ${t.color.hex};border-radius:0 9px 9px 0">
-    <div class="chip-left"><span class="chip-name" style="color:${t.color.hex}">${t.name}</span>
-    <span style="font-size:.72rem;color:var(--mut);margin-left:.4rem">${players.filter(p=>t.mids.includes(p.id)).map(m=>m.name).join(', ')||'(vuota)'}</span></div>
-    <button class="btn-rm" onclick="removeTeam(${t.id})">✕</button></div>`).join('');
+    <div class="chip-left"><span class="chip-name" style="color:${t.color.hex}">${escapeHtml(t.name)}</span>
+    <span style="font-size:.72rem;color:var(--mut);margin-left:.4rem">${escapeHtml(players.filter(p=>t.mids.includes(p.id)).map(m=>m.name).join(', ')||'(vuota)')}</span></div>
+    <button class="btn-rm" type="button" onclick="removeTeam(${t.id})">✕</button></div>`).join('');
   const assignHtml=teams.length?`<div style="margin-top:.8rem;font-size:.68rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--mut);margin-bottom:.5rem">Assegna</div>
     ${players.map(p=>{const cur=teams.find(t=>t.mids.includes(p.id));
     return `<div class="field-row" style="margin-bottom:.35rem">
-      <span style="flex:1;font-size:.86rem;font-weight:800;display:flex;align-items:center">${p.name}</span>
+      <span style="flex:1;font-size:.86rem;font-weight:800;display:flex;align-items:center">${escapeHtml(p.name)}</span>
       <select class="tf" style="flex:1" onchange="assignPlayer(${p.id},this.value)">
         <option value="">— Libero —</option>
-        ${teams.map(t=>`<option value="${t.id}"${cur&&cur.id===t.id?' selected':''}>${t.name}</option>`).join('')}
+        ${teams.map(t=>`<option value="${t.id}"${cur&&cur.id===t.id?' selected':''}>${escapeHtml(t.name)}</option>`).join('')}
       </select></div>`;}).join('')}`:'';
   el.innerHTML=addRow+tHtml+assignHtml;
   renderHomeLeaderboard();
 }
+
+window.addTeam=addTeam;
+window.removeTeam=removeTeam;
+window.assignPlayer=assignPlayer;
 
 function renderHomeLeaderboard(){
   const el=document.getElementById('home-leaderboard');
