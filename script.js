@@ -2837,6 +2837,8 @@ let affariState={};
 let affariScene=null;
 let affariAudio=null;
 let affariAudioUnlocked=false;
+let affariPreparedAudio=null;
+let affariPreparedAudioTimer=null;
 
 function formatMoney(value){
   return `${Math.round(value).toLocaleString('it-IT')} €`;
@@ -2866,6 +2868,11 @@ function speakMystery(text){
 
 function stopAffariAudio(){
   const audio=affariAudio||document.getElementById('affari-audio');
+  if(affariPreparedAudioTimer){
+    clearTimeout(affariPreparedAudioTimer);
+    affariPreparedAudioTimer=null;
+  }
+  affariPreparedAudio=null;
   if(!audio)return;
   audio.pause();
   audio.currentTime=0;
@@ -2968,6 +2975,53 @@ function playAffariOutcomeSound(isGood){
     return playAffariAudio(track?.src,{volume:.72,duration:5600,startAt:8});
   }
   return playAffariAudio('Music theme/aua_errore.mp3',{volume:.9,duration:3200});
+}
+
+function getAffariOutcomeAudioConfig(isGood){
+  if(isGood){
+    const tracks=Array.isArray(SARABANDA_TRACKS)?SARABANDA_TRACKS:[];
+    const track=tracks[Math.floor(Math.random()*tracks.length)];
+    return {src:track?.src,volume:.72,duration:5600,startAt:8};
+  }
+  return {src:'Music theme/aua_errore.mp3',volume:.9,duration:3200,startAt:0};
+}
+
+function prepareAffariOutcomeSound(isGood){
+  const config=getAffariOutcomeAudioConfig(isGood);
+  if(!config.src)return null;
+  stopAffariAudio();
+  const audio=document.getElementById('affari-audio')||new Audio();
+  affariAudio=audio;
+  affariPreparedAudio={audio,config};
+  audio.muted=false;
+  audio.volume=0;
+  audio.src=config.src;
+  audio.load();
+  try{audio.currentTime=config.startAt||0;}catch(err){}
+  const attempt=audio.play();
+  if(attempt&&typeof attempt.catch==='function'){
+    attempt.catch(()=>{affariPreparedAudio=null;});
+  }
+  return affariPreparedAudio;
+}
+
+function releaseAffariOutcomeSound(prepared,isGood=false){
+  const active=prepared||affariPreparedAudio;
+  if(!active?.audio||active.audio.paused){
+    return playAffariOutcomeSound(isGood);
+  }
+  const {audio,config}=active;
+  affariPreparedAudio=null;
+  audio.volume=config.volume;
+  if(affariPreparedAudioTimer)clearTimeout(affariPreparedAudioTimer);
+  affariPreparedAudioTimer=setTimeout(()=>{
+    if(audio===affariAudio){
+      audio.pause();
+      try{audio.currentTime=0;}catch(err){}
+    }
+    affariPreparedAudioTimer=null;
+  },config.duration);
+  return Promise.resolve();
 }
 
 function showAffariPrizeAlert(pkg,isGood){
@@ -3399,16 +3453,17 @@ async function openAffariPackage(num){
   affariState.step='Suspense';
   affariState.message=`Il pacco ${pkg.num}, ${pkg.region}, sta per essere aperto...`;
   renderAffari();
+  const isGood=pkg.prize<=1000;
+  const preparedAudio=prepareAffariOutcomeSound(isGood);
   await playAffariSuspense();
   pkg.opened=true;
   pkg.justOpened=true;
   affariState.openedThisRound++;
   affariState.offer=0;
-  const isGood=pkg.prize<=1000;
   const good=isGood?'Ottimo colpo':'Questo fa male';
   affariState.message=`Pacco ${pkg.num}, ${pkg.region}: ${good}.`;
   showAffariPrizeAlert(pkg,isGood);
-  playAffariOutcomeSound(isGood);
+  releaseAffariOutcomeSound(preparedAudio,isGood);
   setTimeout(()=>{pkg.justOpened=false;renderAffari();},700);
   const openable=getAffariOpenable();
   const roundTarget=AFFARI_ROUNDS[affariState.roundIndex]||1;
@@ -3474,11 +3529,13 @@ async function revealAffariFinal(){
   affariState.step='Pacco finale';
   affariState.message=`Apriamo il tuo pacco ${own.num}, ${own.region}...`;
   renderAffari();
+  const isGood=own.prize>=10000;
+  const preparedAudio=prepareAffariOutcomeSound(isGood);
   await playAffariSuspense();
   own.opened=true;
   own.justOpened=true;
-  showAffariPrizeAlert(own,own.prize>=10000);
-  playAffariOutcomeSound(own.prize>=10000);
+  showAffariPrizeAlert(own,isGood);
+  releaseAffariOutcomeSound(preparedAudio,isGood);
   finishAffariGame(own.prize,'pacco finale');
 }
 
