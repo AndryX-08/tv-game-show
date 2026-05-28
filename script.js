@@ -42,6 +42,8 @@ let presenceRef=null,presenceConnectedRef=null,presenceConnectedCallback=null,al
 let tabooScoreEventsRef=null,tabooScoreEventsStartedAt=Date.now(),processedTabooScoreEvents=new Set();
 let auaAudio=null,auaErrorAudio=null,auaAutoStartListener=null,auaAutoStarted=false,auaThemeResumeTime=0;
 let rdfAudio=null,rdfAutoStartListener=null,rdfAutoStarted=false;
+let wheelIntroVideoPlaying=false,wheelIntroFinishHandler=null;
+let ghigIntroAudio=null,ghigThemeAudio=null,ghigIntroTimer=null;
 let ttsVoices=[];
 let ttsVoiceURI=localStorage.getItem('tvgn-tts-voice')||'';
 let ttsRate=parseFloat(localStorage.getItem('tvgn-tts-rate'))||.9;
@@ -579,7 +581,10 @@ function goTo(id,options={}){
   if(id!=='s-chain')clearChainTimer();
   if(id!=='s-sarabanda')stopSarabandaAudio();
   if(id!=='s-affari')stopAffariAudio();
-  if(id!=='s-ghigliottina')clearGhigliottinaTimer();
+  if(id!=='s-ghigliottina'&&id!=='s-pick-ghigliottina'){
+    clearGhigliottinaTimer();
+    stopGhigliottinaAudio();
+  }
   if(id!=='s-higherlower'){
     clearTimeout(higherLowerTimer);
     higherLowerTimer=null;
@@ -755,10 +760,83 @@ function startRdfAudioAuto(){
 function stopRdfAudio(){
   setRdfAudio();
   hideWheelIntroEffects();
-  if(!rdfAudio)return;
   clearRdfAutoStart();
-  rdfAudio.pause();
-  rdfAudio.currentTime=0;
+  if(rdfAudio){
+    rdfAudio.pause();
+    rdfAudio.currentTime=0;
+  }
+  const overlay=document.getElementById('wheel-video-overlay');
+  const video=document.getElementById('wheel-intro-video');
+  if(video){
+    if(wheelIntroFinishHandler){
+      video.removeEventListener('ended',wheelIntroFinishHandler);
+      video.removeEventListener('error',wheelIntroFinishHandler);
+      wheelIntroFinishHandler=null;
+    }
+    video.pause();
+    try{video.currentTime=0;}catch(err){}
+  }
+  if(overlay){
+    overlay.classList.remove('active','visible');
+  }
+  if(document.fullscreenElement&&document.exitFullscreen){
+    document.exitFullscreen().catch(()=>{});
+  }
+  wheelIntroVideoPlaying=false;
+}
+
+function startWheelIntroVideo(){
+  if(!selWheelPid)return;
+  stopRdfAudio();
+  const overlay=document.getElementById('wheel-video-overlay');
+  const video=document.getElementById('wheel-intro-video');
+  if(!overlay||!video){
+    beginWheel();
+    return;
+  }
+  wheelIntroVideoPlaying=true;
+  overlay.classList.add('active');
+  requestAnimationFrame(()=>overlay.classList.add('visible'));
+  if(overlay.requestFullscreen&&!document.fullscreenElement){
+    overlay.requestFullscreen().catch(()=>{});
+  }
+  video.currentTime=0;
+  video.muted=false;
+  if(wheelIntroFinishHandler){
+    video.removeEventListener('ended',wheelIntroFinishHandler);
+    video.removeEventListener('error',wheelIntroFinishHandler);
+  }
+  wheelIntroFinishHandler=()=>finishWheelIntroVideo();
+  video.addEventListener('ended',wheelIntroFinishHandler);
+  video.addEventListener('error',wheelIntroFinishHandler);
+  const attempt=video.play();
+  if(attempt&&attempt.catch){
+    attempt.catch(()=>finishWheelIntroVideo());
+  }
+}
+
+function finishWheelIntroVideo(){
+  if(!wheelIntroVideoPlaying)return;
+  wheelIntroVideoPlaying=false;
+  const overlay=document.getElementById('wheel-video-overlay');
+  const video=document.getElementById('wheel-intro-video');
+  if(video){
+    if(wheelIntroFinishHandler){
+      video.removeEventListener('ended',wheelIntroFinishHandler);
+      video.removeEventListener('error',wheelIntroFinishHandler);
+      wheelIntroFinishHandler=null;
+    }
+    video.pause();
+    try{video.currentTime=0;}catch(err){}
+  }
+  if(overlay){
+    overlay.classList.remove('visible');
+    setTimeout(()=>overlay.classList.remove('active'),700);
+  }
+  if(document.fullscreenElement&&document.exitFullscreen){
+    document.exitFullscreen().catch(()=>{});
+  }
+  beginWheel();
 }
 
 async function beginIntesa(options={}){
@@ -1953,9 +2031,8 @@ function startGame(game,options={}){
         <div class="pp-name">${escapeHtml(p.name)}</div>
         <div class="pp-info">${t?escapeHtml(t.name):'Libero'} · ${p.score}pt</div></div>`;
     }).join('');
-    document.getElementById('btn-pick-ghigliottina-go').disabled=true;
-    document.getElementById('btn-pick-ghigliottina-go').onclick=()=>beginGhigliottina();
     goTo('s-pick-ghigliottina');
+    startGhigliottinaIntro();
     return;
   }
   if(game==='catena'){
@@ -1986,7 +2063,11 @@ function startGame(game,options={}){
         <div class="pp-name">${p.name}</div>
         <div class="pp-info">${t?t.name:'Libero'} · ${p.score}pt</div></div>`;
     }).join('');
-    startRdfAudioAuto();
+    const btn=document.getElementById('btn-pick-wheel-go');
+    if(btn){
+      btn.disabled=true;
+      btn.onclick=()=>startWheelIntroVideo();
+    }
     goTo('s-pick-wheel');
     return;
   }
@@ -2535,6 +2616,53 @@ function clearGhigliottinaTimer(){
     clearInterval(ghigliottinaState.timerId);
     ghigliottinaState.timerId=null;
   }
+  if(ghigIntroTimer){
+    clearTimeout(ghigIntroTimer);
+    ghigIntroTimer=null;
+  }
+}
+
+function setGhigliottinaAudio(){
+  if(!ghigIntroAudio)ghigIntroAudio=document.getElementById('ghig-intro-audio');
+  if(!ghigThemeAudio)ghigThemeAudio=document.getElementById('ghig-theme-audio');
+}
+
+function stopGhigliottinaAudio(){
+  setGhigliottinaAudio();
+  [ghigIntroAudio,ghigThemeAudio].forEach(audio=>{
+    if(!audio)return;
+    audio.pause();
+    try{audio.currentTime=0;}catch(err){}
+  });
+}
+
+function startGhigliottinaIntro(){
+  clearGhigliottinaTimer();
+  stopGhigliottinaAudio();
+  setGhigliottinaAudio();
+  if(ghigIntroAudio){
+    ghigIntroAudio.currentTime=0;
+    ghigIntroAudio.play().catch(()=>{});
+  }
+  ghigIntroTimer=setTimeout(()=>{
+    ghigIntroTimer=null;
+    if(ghigIntroAudio){
+      ghigIntroAudio.pause();
+      try{ghigIntroAudio.currentTime=0;}catch(err){}
+    }
+    if(!selGhigliottinaPid&&players.length){
+      selGhigliottinaPid=players[0].id;
+      document.getElementById('pp-ghigliottina-'+selGhigliottinaPid)?.classList.add('selected');
+    }
+    beginGhigliottina();
+  },15000);
+}
+
+function startGhigliottinaTheme(){
+  setGhigliottinaAudio();
+  if(!ghigThemeAudio)return;
+  ghigThemeAudio.currentTime=0;
+  ghigThemeAudio.play().catch(()=>{});
 }
 
 function formatGhigliottinaPrize(value){
@@ -2555,6 +2683,11 @@ function beginGhigliottina(){
   if(!player)return;
   const puzzle=GHIGLIOTTINA_BANK[Math.floor(Math.random()*GHIGLIOTTINA_BANK.length)];
   clearGhigliottinaTimer();
+  setGhigliottinaAudio();
+  if(ghigIntroAudio){
+    ghigIntroAudio.pause();
+    try{ghigIntroAudio.currentTime=0;}catch(err){}
+  }
   ghigliottinaState={
     pid:player.id,
     puzzle,
@@ -2641,6 +2774,7 @@ function startGhigliottinaFinal(){
   ghigliottinaState.finalTime=60;
   ghigliottinaState.message='Ora scrivi la parola che lega i cinque indizi.';
   clearGhigliottinaTimer();
+  startGhigliottinaTheme();
   ghigliottinaState.timerId=setInterval(()=>{
     ghigliottinaState.finalTime--;
     renderGhigliottina();
@@ -2659,6 +2793,7 @@ function submitGhigliottinaAnswer(){
 
 function endGhigliottina(won=false){
   clearGhigliottinaTimer();
+  stopGhigliottinaAudio();
   const player=players.find(p=>p.id===ghigliottinaState.pid);
   const prize=won?ghigliottinaState.prize:0;
   const points=won?Math.max(1,Math.round(prize/10000)):0;
@@ -4718,6 +4853,8 @@ function selPickWheel(id){
   selWheelPid=id;
   document.querySelectorAll('#pick-grid-wheel .player-pick').forEach(e=>e.classList.remove('selected'));
   document.getElementById('pp-wheel-'+id)?.classList.add('selected');
+  const btn=document.getElementById('btn-pick-wheel-go');
+  if(btn)btn.disabled=false;
 }
 
 async function beginWheel(options={}){

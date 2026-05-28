@@ -259,6 +259,11 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
 .wheel-turn-box{background:var(--surf);border:2px solid var(--gold);border-radius:16px;padding:1.4rem 1.8rem;text-align:center;box-shadow:0 18px 50px rgba(0,0,0,.45)}
 .wheel-turn-label{font-size:.7rem;font-weight:900;letter-spacing:3px;text-transform:uppercase;color:var(--mut);margin-bottom:.4rem}
 .wheel-turn-name{font-family:'Bebas Neue',sans-serif;font-size:2.2rem;letter-spacing:3px;color:var(--gold)}
+.wheel-video-overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:#000;z-index:80;opacity:0;transition:opacity .7s ease}
+.wheel-video-overlay.active{display:flex}
+.wheel-video-overlay.visible{opacity:1}
+.wheel-video-overlay video{width:100%;height:100%;object-fit:cover;background:#000}
+.wheel-video-skip{position:fixed;right:18px;top:18px;z-index:82;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:999px;padding:.55rem .9rem;font-weight:900;letter-spacing:1px}
 
 /* REAZIONE */
 .chain-head{display:flex;align-items:center;justify-content:space-between;gap:.8rem;margin-bottom:.8rem}
@@ -1014,7 +1019,12 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
 
 <audio id="aua-audio" src="Music theme/aua_music_theme.mp3" preload="auto"></audio>
 <audio id="aua-error-audio" src="Music theme/aua_errore.mp3" preload="auto"></audio>
-<audio id="rdf-audio" src="Music theme/rdf_music_theme.mp3" preload="auto"></audio>
+<audio id="ghig-intro-audio" src="Music theme/ghig_intro_music.mp3" preload="auto"></audio>
+<audio id="ghig-theme-audio" src="Music theme/ghig-music-theme.mp3" preload="auto" loop></audio>
+<div class="wheel-video-overlay" id="wheel-video-overlay">
+  <video id="wheel-intro-video" src="Video Intro/ruota_video_intro.mp4" preload="metadata" playsinline></video>
+  <button class="wheel-video-skip" onclick="finishWheelIntroVideo()">Salta</button>
+</div>
 
 <!-- SETUP -->
 <div class="screen" id="s-setup">
@@ -1174,9 +1184,8 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
 <div class="screen" id="s-pick-ghigliottina">
   <button class="btn-back" onclick="goTo('s-hero')"><img src="Icone_syst/home.png" alt="" aria-hidden="true">Menu</button>
   <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:3px;color:var(--gold);margin-bottom:.25rem">La Ghigliottina</div>
-  <div style="font-size:.82rem;color:var(--mut);margin-bottom:1rem">Scegli il concorrente. Ogni coppia contiene una parola giusta: se sbagli il montepremi si dimezza, poi hai 60 secondi per trovare la parola finale.</div>
+  <div style="font-size:.82rem;color:var(--mut);margin-bottom:1rem">Scegli il concorrente durante la sigla. Dopo 15 secondi la finale parte automaticamente.</div>
   <div class="player-pick-grid" id="pick-grid-ghigliottina"></div>
-  <button class="btn-gold" id="btn-pick-ghigliottina-go" style="width:100%" disabled>VAI ALLA FINALE ›</button>
 </div>
 
 <!-- PICK 2 (EREDITA) -->
@@ -1201,7 +1210,7 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
 <div class="screen" id="s-pick-wheel">
   <button class="btn-back" onclick="goTo('s-hero')"><img src="Icone_syst/home.png" alt="" aria-hidden="true">Menu</button>
   <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:3px;color:var(--gold);margin-bottom:.25rem">Chi inizia?</div>
-  <div style="font-size:.82rem;color:var(--mut);margin-bottom:1.2rem">Seleziona il primo concorrente: la ruota partirà automaticamente al secondo 12 della sigla</div>
+  <div style="font-size:.82rem;color:var(--mut);margin-bottom:1.2rem">Seleziona il primo concorrente: dopo il video introduttivo si entra in gioco.</div>
   <div class="aua-intro-wrapper" id="wheel-intro-effects">
     <div class="intro-card">
       <div class="intro-tag">Anteprima La Ruota</div>
@@ -1216,6 +1225,7 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
     <div class="auu-effect aua-spot d"></div>
   </div>
   <div class="player-pick-grid" id="pick-grid-wheel"></div>
+  <button class="btn-gold" id="btn-pick-wheel-go" style="width:100%" disabled>INIZIA GIOCO ›</button>
 </div>
 
 <!-- AUA GAME -->
