@@ -375,6 +375,30 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
 .movie-actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.6rem;margin-top:auto}
 .movie-actions button{padding:.72rem .75rem}
 
+/* LA GHIGLIOTTINA */
+.ghig-stage{background:var(--surf);border:1px solid var(--bord);border-radius:16px;padding:1rem;margin-bottom:1rem}
+.ghig-head{display:flex;align-items:flex-start;justify-content:space-between;gap:.8rem;margin-bottom:1rem}
+.ghig-title{font-family:'Bebas Neue',sans-serif;font-size:1.7rem;letter-spacing:3px;color:var(--gold)}
+.ghig-prize{text-align:right}
+.ghig-prize span{display:block;font-size:.62rem;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;color:var(--mut)}
+.ghig-prize strong{display:block;font-family:'Bebas Neue',sans-serif;font-size:2.35rem;letter-spacing:2px;color:#2ECC71;line-height:1}
+.ghig-meta{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:1rem}
+.ghig-meta-box{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:.65rem;text-align:center}
+.ghig-meta-box span{display:block;font-size:.62rem;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;color:var(--mut);margin-bottom:.2rem}
+.ghig-meta-box strong{font-family:'Bebas Neue',sans-serif;font-size:1.45rem;letter-spacing:2px;color:var(--gold);line-height:1}
+.ghig-clues{display:grid;grid-template-columns:repeat(5,1fr);gap:.5rem;margin-bottom:1rem}
+.ghig-clue{min-height:74px;border:1px solid rgba(255,255,255,.1);border-radius:12px;background:rgba(255,255,255,.055);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.25rem;text-align:center;padding:.4rem}
+.ghig-clue span{font-size:.62rem;font-weight:900;color:var(--mut)}
+.ghig-clue strong{font-family:'Bebas Neue',sans-serif;font-size:1.35rem;letter-spacing:1.5px;color:var(--txt);line-height:1;overflow-wrap:anywhere}
+.ghig-clue.ok{border-color:rgba(46,204,113,.65)}
+.ghig-clue.wrong{border-color:rgba(231,76,60,.75)}
+.ghig-pair{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:1rem}
+.ghig-word{min-height:88px;border:2px solid rgba(255,255,255,.16);border-radius:14px;background:linear-gradient(180deg,rgba(245,197,24,.14),rgba(255,255,255,.055));color:var(--txt);font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:2px;cursor:pointer;transition:transform .18s,border-color .18s}
+.ghig-word:hover{transform:translateY(-2px);border-color:var(--gold)}
+.ghig-final{display:none;gap:.75rem;margin-bottom:1rem}
+.ghig-final .field-row{margin:0}
+.ghig-message{min-height:36px;font-weight:900;line-height:1.35;color:var(--txt)}
+
 #s-affari{max-width:none;width:100%;min-height:100vh;padding:0;margin:0;overflow-x:hidden;overflow-y:auto}
 #s-affari.active{display:flex;flex-direction:column}
 .affari-stage{position:relative;overflow:hidden;flex:1;display:grid;grid-template-rows:auto minmax(0,1fr) auto;background:radial-gradient(circle at 50% -10%,rgba(245,197,24,.22),transparent 30%),radial-gradient(circle at 10% 35%,rgba(52,152,219,.16),transparent 28%),radial-gradient(circle at 92% 40%,rgba(231,76,60,.13),transparent 30%),linear-gradient(180deg,#070714 0%,#11112a 42%,#05050d 100%);border:none;border-radius:0;margin-bottom:0;box-shadow:none}
@@ -497,6 +521,10 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
   .movie-layout{grid-template-columns:1fr}
   .movie-poster-wrap{min-height:320px}
   .movie-actions{grid-template-columns:1fr}
+  .ghig-head{flex-direction:column}
+  .ghig-prize{text-align:left}
+  .ghig-clues{grid-template-columns:1fr}
+  .ghig-pair{grid-template-columns:1fr}
   .affari-head,.affari-info{grid-template-columns:1fr;display:grid}
   .affari-offer{text-align:left}
   .affari-scene{min-height:330px}
@@ -972,6 +1000,12 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
         <div class="gc-sub">Poster e indizi da TMDB</div>
         <div class="gc-tags"><span class="gc-tag solo">1+ giocatore</span></div>
       </div>
+      <div class="game-card" onclick="startGame('ghigliottina')">
+        <div class="gc-emoji">✂️</div>
+        <div class="gc-name">La Ghigliottina</div>
+        <div class="gc-sub">5 indizi e una parola finale</div>
+        <div class="gc-tags"><span class="gc-tag solo">1+ giocatore</span></div>
+      </div>
     </div>
     <button class="btn-ghost" onclick="goTo('s-setup')">⚙ Configura giocatori &amp; timer</button>
   </div>
@@ -1134,6 +1168,15 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
   </div>
   <div class="player-pick-grid" id="pick-grid-movie"></div>
   <button class="btn-gold" id="btn-pick-movie-go" style="width:100%" disabled>APRI IL SET ›</button>
+</div>
+
+<!-- PICK GHIGLIOTTINA -->
+<div class="screen" id="s-pick-ghigliottina">
+  <button class="btn-back" onclick="goTo('s-hero')"><img src="Icone_syst/home.png" alt="" aria-hidden="true">Menu</button>
+  <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:3px;color:var(--gold);margin-bottom:.25rem">La Ghigliottina</div>
+  <div style="font-size:.82rem;color:var(--mut);margin-bottom:1rem">Scegli il concorrente. Ogni coppia contiene una parola giusta: se sbagli il montepremi si dimezza, poi hai 60 secondi per trovare la parola finale.</div>
+  <div class="player-pick-grid" id="pick-grid-ghigliottina"></div>
+  <button class="btn-gold" id="btn-pick-ghigliottina-go" style="width:100%" disabled>VAI ALLA FINALE ›</button>
 </div>
 
 <!-- PICK 2 (EREDITA) -->
@@ -1449,6 +1492,40 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
   </div>
   <div style="display:flex;gap:.75rem">
     <button class="btn-ghost" style="flex:1" onclick="endMovieGuess()">Termina</button>
+    <button class="btn-ghost" style="flex:1" onclick="goTo('s-hero')"><img src="Icone_syst/home.png" alt="" aria-hidden="true">Menu</button>
+  </div>
+</div>
+
+<!-- GHIGLIOTTINA GAME -->
+<div class="screen" id="s-ghigliottina">
+  <div class="ghig-head">
+    <div>
+      <div class="ghig-title">✂️ La Ghigliottina</div>
+      <div style="font-size:.78rem;color:var(--mut)">Gioca: <span id="ghig-player" style="color:var(--txt);font-weight:900"></span></div>
+    </div>
+    <div class="ghig-prize">
+      <span>Montepremi</span>
+      <strong id="ghig-prize">€0</strong>
+    </div>
+  </div>
+  <div class="ghig-stage">
+    <div class="ghig-meta">
+      <div class="ghig-meta-box"><span>Coppia</span><strong id="ghig-step">1 / 5</strong></div>
+      <div class="ghig-meta-box"><span>Tempo finale</span><strong id="ghig-time">--</strong></div>
+    </div>
+    <div class="ghig-clues" id="ghig-clues"></div>
+    <div class="ghig-pair" id="ghig-pair"></div>
+    <div class="ghig-final" id="ghig-final">
+      <div class="field-row">
+        <input class="tf" id="ghig-answer" placeholder="Parola finale..." onkeydown="if(event.key==='Enter')submitGhigliottinaAnswer()">
+        <button class="btn-gold" onclick="submitGhigliottinaAnswer()">CONFERMA</button>
+      </div>
+      <button class="btn-ghost" onclick="endGhigliottina(false)">RINUNCIA</button>
+    </div>
+    <div class="ghig-message" id="ghig-message"></div>
+  </div>
+  <div style="display:flex;gap:.75rem">
+    <button class="btn-ghost" style="flex:1" onclick="endGhigliottina(false)">Termina</button>
     <button class="btn-ghost" style="flex:1" onclick="goTo('s-hero')"><img src="Icone_syst/home.png" alt="" aria-hidden="true">Menu</button>
   </div>
 </div>

@@ -25,7 +25,7 @@ const TC=[
 ];
 
 let players=[],teams=[],nPid=1,nTid=1;
-let selPid=null,selP1=null,selP2=null,selWheelPid=null,selChainP1=null,selChainP2=null,selTabooPid=null,selHigherPid=null,selAffariPid=null,selMoviePid=null,selectedHolCategory='videogiochi';
+let selPid=null,selP1=null,selP2=null,selWheelPid=null,selChainP1=null,selChainP2=null,selTabooPid=null,selHigherPid=null,selAffariPid=null,selMoviePid=null,selGhigliottinaPid=null,selectedHolCategory='videogiochi';
 let intesaWinner=null;
 let intesaPlayers={p1:null,p2:null};
 let activeStatsGame=null;
@@ -55,7 +55,9 @@ const APP_ROUTES={
   's-pick-affari':'/affari-tuoi',
   's-affari':'/affari-tuoi/studio',
   's-pick-movie':'/indovina-film',
-  's-movieguess':'/indovina-film/gioca'
+  's-movieguess':'/indovina-film/gioca',
+  's-pick-ghigliottina':'/ghigliottina',
+  's-ghigliottina':'/ghigliottina/finale'
 };
 const SCREEN_BY_ROUTE=Object.entries(APP_ROUTES).reduce((acc,[screen,path])=>{
   acc[path]=screen;
@@ -577,6 +579,7 @@ function goTo(id,options={}){
   if(id!=='s-chain')clearChainTimer();
   if(id!=='s-sarabanda')stopSarabandaAudio();
   if(id!=='s-affari')stopAffariAudio();
+  if(id!=='s-ghigliottina')clearGhigliottinaTimer();
   if(id!=='s-higherlower'){
     clearTimeout(higherLowerTimer);
     higherLowerTimer=null;
@@ -613,7 +616,7 @@ function initAppRouting(){
   });
 }
 function getGameNameFromScreen(id){
-  if(['s-hero','s-setup','s-pick','s-pick2','s-pick-wheel','s-pick-chain','s-pick-taboo','s-pick-hol','s-pick-affari','s-pick-movie','s-win'].includes(id))return 'menu';
+  if(['s-hero','s-setup','s-pick','s-pick2','s-pick-wheel','s-pick-chain','s-pick-taboo','s-pick-hol','s-pick-affari','s-pick-movie','s-pick-ghigliottina','s-win'].includes(id))return 'menu';
   if(id==='s-aua')return 'aua';
   if(id==='s-eredita')return 'eredita';
   if(id==='s-wheel')return 'ruota';
@@ -623,6 +626,7 @@ function getGameNameFromScreen(id){
   if(id==='s-higherlower')return 'higherlower';
   if(id==='s-affari')return 'affarituoi';
   if(id==='s-movieguess')return 'movieguess';
+  if(id==='s-ghigliottina')return 'ghigliottina';
   if(id==='s-intesa-score')return 'intesa';
   return 'menu';
 }
@@ -1004,7 +1008,8 @@ function getGameStatsLabel(game){
     higherlower:'Higher or Lower',
     taboo:'Taboo',
     affarituoi:'Affari Tuoi',
-    movieguess:'Indovina il Film'
+    movieguess:'Indovina il Film',
+    ghigliottina:'La Ghigliottina'
   };
   return labels[game]||game||'—';
 }
@@ -1546,7 +1551,8 @@ const GAME_LABELS={
   guesswho:'INDOVINA CHI',
   higherlower:'HIGHER OR LOWER',
   affarituoi:'AFFARI TUOI',
-  movieguess:'INDOVINA IL FILM'
+  movieguess:'INDOVINA IL FILM',
+  ghigliottina:'LA GHIGLIOTTINA'
 };
 
 const MULTIPLAYER_GAMES=['ruota','eredita','intesa','catena','sarabanda','guesswho'];
@@ -1936,6 +1942,22 @@ function startGame(game,options={}){
     goTo('s-pick-movie');
     return;
   }
+  if(game==='ghigliottina'){
+    stopAuaAudio();
+    stopRdfAudio();
+    selGhigliottinaPid=null;
+    document.getElementById('pick-grid-ghigliottina').innerHTML=players.map(p=>{
+      const c=TC[p.ci%TC.length];const t=teams.find(t=>t.mids.includes(p.id));
+      return `<div class="player-pick" id="pp-ghigliottina-${p.id}" onclick="selPickGhigliottina(${p.id})">
+        <div class="pp-avatar" style="background:${c.light};color:${c.hex}">${initials(p.name)}</div>
+        <div class="pp-name">${escapeHtml(p.name)}</div>
+        <div class="pp-info">${t?escapeHtml(t.name):'Libero'} · ${p.score}pt</div></div>`;
+    }).join('');
+    document.getElementById('btn-pick-ghigliottina-go').disabled=true;
+    document.getElementById('btn-pick-ghigliottina-go').onclick=()=>beginGhigliottina();
+    goTo('s-pick-ghigliottina');
+    return;
+  }
   if(game==='catena'){
     if(players.length<2){goTo('s-setup');return;}
     stopAuaAudio();
@@ -2063,6 +2085,13 @@ function selPickMovie(id){
   document.querySelectorAll('#pick-grid-movie .player-pick').forEach(e=>e.classList.remove('selected'));
   document.getElementById('pp-movie-'+id)?.classList.add('selected');
   updateMovieStartButton();
+}
+function selPickGhigliottina(id){
+  selGhigliottinaPid=id;
+  document.querySelectorAll('#pick-grid-ghigliottina .player-pick').forEach(e=>e.classList.remove('selected'));
+  document.getElementById('pp-ghigliottina-'+id)?.classList.add('selected');
+  const btn=document.getElementById('btn-pick-ghigliottina-go');
+  if(btn)btn.disabled=false;
 }
 function selectHigherLowerCategory(key){
   if(!HIGHER_LOWER_BANKS[key])return;
@@ -2421,6 +2450,231 @@ function endMovieGuess(){
     </div>`;
   recordCompletedGame('movieguess',player?.uid&&points>0?[player.uid]:[]);
   movieGuessState={};
+  goTo('s-win');
+}
+
+/* ══════════════════════════════
+   LA GHIGLIOTTINA
+══════════════════════════════ */
+const GHIGLIOTTINA_BANK=[
+  {answer:'TEMPO',prize:200000,pairs:[
+    {options:['Oro','Sale'],correct:'Oro'},
+    {options:['Perso','Lungo'],correct:'Perso'},
+    {options:['Meteo','Ferro'],correct:'Meteo'},
+    {options:['Supplementare','Quadrato'],correct:'Supplementare'},
+    {options:['Libero','Rosso'],correct:'Libero'}
+  ]},
+  {answer:'STELLA',prize:200000,pairs:[
+    {options:['Cometa','Tenda'],correct:'Cometa'},
+    {options:['Cadente','Fermo'],correct:'Cadente'},
+    {options:['Polare','Caldo'],correct:'Polare'},
+    {options:['Cinema','Forno'],correct:'Cinema'},
+    {options:['Alpina','Bassa'],correct:'Alpina'}
+  ]},
+  {answer:'CARTA',prize:200000,pairs:[
+    {options:['Credito','Pietra'],correct:'Credito'},
+    {options:['Identita','Nebbia'],correct:'Identita'},
+    {options:['Geografica','Veloce'],correct:'Geografica'},
+    {options:['Forno','Forbice'],correct:'Forbice'},
+    {options:['Regalo','Motore'],correct:'Regalo'}
+  ]},
+  {answer:'FUOCO',prize:200000,pairs:[
+    {options:['Artificio','Silenzio'],correct:'Artificio'},
+    {options:['Sacro','Freddo'],correct:'Sacro'},
+    {options:['Amico','Nemico'],correct:'Amico'},
+    {options:['Incrociato','Rotondo'],correct:'Incrociato'},
+    {options:['Lento','Vivo'],correct:'Vivo'}
+  ]},
+  {answer:'PONTE',prize:200000,pairs:[
+    {options:['Levate','Letto'],correct:'Levate'},
+    {options:['Radio','Sospeso'],correct:'Sospeso'},
+    {options:['Dentale','Vento'],correct:'Dentale'},
+    {options:['Festivo','Profondo'],correct:'Festivo'},
+    {options:['Comando','Milvio'],correct:'Milvio'}
+  ]},
+  {answer:'LUNA',prize:200000,pairs:[
+    {options:['Piena','Vuota'],correct:'Piena'},
+    {options:['Miele','Sale'],correct:'Miele'},
+    {options:['Park','Nuova'],correct:'Nuova'},
+    {options:['Storta','Dritta'],correct:'Storta'},
+    {options:['Calante','Crescita'],correct:'Calante'}
+  ]},
+  {answer:'CHIAVE',prize:200000,pairs:[
+    {options:['Violino','Volta'],correct:'Violino'},
+    {options:['Inglese','Francese'],correct:'Inglese'},
+    {options:['Accesso','Uscita'],correct:'Accesso'},
+    {options:['Lettura','Cottura'],correct:'Lettura'},
+    {options:['Soluzione','Domanda'],correct:'Soluzione'}
+  ]},
+  {answer:'MARE',prize:200000,pairs:[
+    {options:['Aperto','Chiuso'],correct:'Aperto'},
+    {options:['Nero','Bianco'],correct:'Nero'},
+    {options:['Mosso','Fermo'],correct:'Mosso'},
+    {options:['Lungo','Alto'],correct:'Alto'},
+    {options:['Sale','Zucchero'],correct:'Sale'}
+  ]},
+  {answer:'CORONA',prize:200000,pairs:[
+    {options:['Reale','Locale'],correct:'Reale'},
+    {options:['Alloro','Menta'],correct:'Alloro'},
+    {options:['Dentale','Fiscale'],correct:'Dentale'},
+    {options:['Spine','Fiori'],correct:'Spine'},
+    {options:['Svedese','Tedesca'],correct:'Svedese'}
+  ]},
+  {answer:'FILO',prize:200000,pairs:[
+    {options:['Diretto','Storto'],correct:'Diretto'},
+    {options:['Spinato','Liscio'],correct:'Spinato'},
+    {options:['Logico','Magico'],correct:'Logico'},
+    {options:['Voce','Luce'],correct:'Voce'},
+    {options:['Conduttore','Attore'],correct:'Conduttore'}
+  ]}
+];
+let ghigliottinaState={};
+
+function clearGhigliottinaTimer(){
+  if(ghigliottinaState.timerId){
+    clearInterval(ghigliottinaState.timerId);
+    ghigliottinaState.timerId=null;
+  }
+}
+
+function formatGhigliottinaPrize(value){
+  return new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(value||0);
+}
+
+function normalizeGhigliottinaAnswer(value){
+  return String(value||'')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-z0-9]/gi,'')
+    .toLowerCase();
+}
+
+function beginGhigliottina(){
+  activeStatsGame='ghigliottina';
+  const player=players.find(p=>p.id===selGhigliottinaPid)||players[0];
+  if(!player)return;
+  const puzzle=GHIGLIOTTINA_BANK[Math.floor(Math.random()*GHIGLIOTTINA_BANK.length)];
+  clearGhigliottinaTimer();
+  ghigliottinaState={
+    pid:player.id,
+    puzzle,
+    step:0,
+    prize:puzzle.prize,
+    choices:[],
+    finalMode:false,
+    finalTime:60,
+    message:'Scegli la parola giusta. Ogni errore dimezza il montepremi.'
+  };
+  goTo('s-ghigliottina');
+  renderGhigliottina();
+}
+
+function renderGhigliottina(){
+  const player=players.find(p=>p.id===ghigliottinaState.pid);
+  const puzzle=ghigliottinaState.puzzle;
+  const setText=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=value;};
+  setText('ghig-player',player?.name||'Giocatore');
+  setText('ghig-prize',formatGhigliottinaPrize(ghigliottinaState.prize));
+  setText('ghig-step',`${Math.min((ghigliottinaState.step||0)+1,5)} / 5`);
+  setText('ghig-time',ghigliottinaState.finalMode?`${ghigliottinaState.finalTime}s`:'--');
+  setText('ghig-message',ghigliottinaState.message||'');
+  const clues=document.getElementById('ghig-clues');
+  if(clues){
+    clues.innerHTML=(puzzle?.pairs||[]).map((pair,idx)=>{
+      const choice=ghigliottinaState.choices?.[idx];
+      const word=choice?.correct||'?';
+      const status=choice?choice.ok?'ok':'wrong':'pending';
+      return `<div class="ghig-clue ${status}">
+        <span>${idx+1}</span>
+        <strong>${escapeHtml(word)}</strong>
+      </div>`;
+    }).join('');
+  }
+  const pairBox=document.getElementById('ghig-pair');
+  const finalBox=document.getElementById('ghig-final');
+  if(!pairBox||!finalBox||!puzzle)return;
+  if(ghigliottinaState.finalMode){
+    pairBox.style.display='none';
+    finalBox.style.display='grid';
+    const answer=document.getElementById('ghig-answer');
+    if(answer&&!answer.dataset.ready){
+      answer.value='';
+      answer.dataset.ready='1';
+      setTimeout(()=>answer.focus(),50);
+    }
+    return;
+  }
+  finalBox.style.display='none';
+  const pair=puzzle.pairs[ghigliottinaState.step];
+  if(!pair){
+    startGhigliottinaFinal();
+    return;
+  }
+  pairBox.style.display='grid';
+  pairBox.innerHTML=pair.options.map(word=>`<button class="ghig-word" onclick="selectGhigliottinaWord('${escapeHtml(word)}')">${escapeHtml(word)}</button>`).join('');
+  const answer=document.getElementById('ghig-answer');
+  if(answer)delete answer.dataset.ready;
+}
+
+function selectGhigliottinaWord(word){
+  const puzzle=ghigliottinaState.puzzle;
+  const pair=puzzle?.pairs?.[ghigliottinaState.step];
+  if(!pair||ghigliottinaState.finalMode)return;
+  const ok=normalizeGhigliottinaAnswer(word)===normalizeGhigliottinaAnswer(pair.correct);
+  if(!ok)ghigliottinaState.prize=Math.floor(ghigliottinaState.prize/2);
+  ghigliottinaState.choices.push({selected:word,correct:pair.correct,ok});
+  ghigliottinaState.message=ok
+    ? `Esatto: ${pair.correct}. Il montepremi resta ${formatGhigliottinaPrize(ghigliottinaState.prize)}.`
+    : `Era ${pair.correct}. Montepremi dimezzato a ${formatGhigliottinaPrize(ghigliottinaState.prize)}.`;
+  ghigliottinaState.step++;
+  if(ghigliottinaState.step>=5){
+    renderGhigliottina();
+    setTimeout(startGhigliottinaFinal,650);
+    return;
+  }
+  renderGhigliottina();
+}
+
+function startGhigliottinaFinal(){
+  if(ghigliottinaState.finalMode)return;
+  ghigliottinaState.finalMode=true;
+  ghigliottinaState.finalTime=60;
+  ghigliottinaState.message='Ora scrivi la parola che lega i cinque indizi.';
+  clearGhigliottinaTimer();
+  ghigliottinaState.timerId=setInterval(()=>{
+    ghigliottinaState.finalTime--;
+    renderGhigliottina();
+    if(ghigliottinaState.finalTime<=0){
+      endGhigliottina(false);
+    }
+  },1000);
+  renderGhigliottina();
+}
+
+function submitGhigliottinaAnswer(){
+  const answer=document.getElementById('ghig-answer')?.value||'';
+  const ok=normalizeGhigliottinaAnswer(answer)===normalizeGhigliottinaAnswer(ghigliottinaState.puzzle?.answer);
+  endGhigliottina(ok);
+}
+
+function endGhigliottina(won=false){
+  clearGhigliottinaTimer();
+  const player=players.find(p=>p.id===ghigliottinaState.pid);
+  const prize=won?ghigliottinaState.prize:0;
+  const points=won?Math.max(1,Math.round(prize/10000)):0;
+  if(player&&points>0)awardPlayerPoints(player.id,points,'ghigliottina');
+  document.getElementById('win-name').textContent=player?.name||'Giocatore';
+  document.getElementById('win-sub').textContent=won
+    ? `Hai vinto ${formatGhigliottinaPrize(prize)}. La parola era ${ghigliottinaState.puzzle.answer}.`
+    : `La parola era ${ghigliottinaState.puzzle?.answer||'?'}. Montepremi non assegnato.`;
+  document.getElementById('win-scores').innerHTML=`<div style="font-size:.68rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--mut);margin-bottom:.6rem">Risultato Ghigliottina</div>
+    <div class="sc-row">
+      <div class="sc-rank">✂</div>
+      <div class="sc-name">${escapeHtml(player?.name||'Giocatore')}</div>
+      <div class="sc-pts">${won?formatGhigliottinaPrize(prize):'0 EUR'}</div>
+    </div>`;
+  recordCompletedGame('ghigliottina',won&&player?.uid?[player.uid]:[]);
+  ghigliottinaState={};
   goTo('s-win');
 }
 
