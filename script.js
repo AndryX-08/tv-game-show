@@ -591,6 +591,11 @@ function goTo(id,options={}){
   }
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
+  if(id==='s-win'){
+    startWinFinale();
+  } else {
+    clearWinFinale();
+  }
   if(id==='s-setup'){
     initTtsControls();
     renderPlayers();
@@ -611,6 +616,114 @@ function escapeHtml(value){
     '"':'&quot;',
     "'":'&#39;'
   }[ch]));
+}
+
+let winFinaleTimers=[];
+function clearWinFinale(){
+  winFinaleTimers.forEach(timer=>clearTimeout(timer));
+  winFinaleTimers=[];
+}
+
+function getWinPodiumEntries(){
+  const rows=Array.from(document.querySelectorAll('#win-scores .sc-row')).slice(0,3);
+  const rowEntries=rows.map((row,idx)=>{
+    const name=row.querySelector('.sc-name')?.textContent?.trim()||'Giocatore';
+    const score=row.querySelector('.sc-pts')?.textContent?.trim()||'0';
+    return {
+      name,
+      score,
+      rank:idx+1,
+      color:TC[idx%TC.length],
+      initials:initials(name)
+    };
+  }).filter(entry=>entry.name&&entry.name!=='—');
+  if(rowEntries.length)return rowEntries;
+
+  return [...players]
+    .sort((a,b)=>(b.score||0)-(a.score||0))
+    .slice(0,3)
+    .map((player,idx)=>({
+      name:player.name||'Giocatore',
+      score:player.score||0,
+      rank:idx+1,
+      color:TC[player.ci%TC.length],
+      initials:initials(player.name||'G')
+    }));
+}
+
+function podiumSlotHtml(entry,slotClass){
+  if(!entry)return '';
+  const medal={1:'1',2:'2',3:'3'}[entry.rank]||entry.rank;
+  const c=entry.color||TC[0];
+  return `<div class="podium-slot ${slotClass}" data-rank="${entry.rank}">
+    <div class="podium-avatar" style="background:${c.light};color:${c.hex}">${escapeHtml(entry.initials)}</div>
+    <div class="podium-name">${escapeHtml(entry.name)}</div>
+    <div class="podium-score">${escapeHtml(entry.score)} pt</div>
+    <div class="podium-block">${medal}</div>
+  </div>`;
+}
+
+function renderWinPodium(entries){
+  const podium=document.getElementById('win-podium');
+  if(!podium)return;
+  podium.className=`win-podium ${entries.length===1?'single':entries.length===2?'duo':''}`;
+  const first=entries[0],second=entries[1],third=entries[2];
+  if(entries.length===1){
+    podium.innerHTML=podiumSlotHtml(first,'first');
+    return;
+  }
+  if(entries.length===2){
+    podium.innerHTML=podiumSlotHtml(first,'first')+podiumSlotHtml(second,'second');
+    return;
+  }
+  podium.innerHTML=podiumSlotHtml(second,'second')+podiumSlotHtml(first,'first')+podiumSlotHtml(third,'third');
+}
+
+function startWinFinale(){
+  clearWinFinale();
+  const wrap=document.querySelector('#s-win .win-wrap');
+  const title=document.getElementById('win-title');
+  const name=document.getElementById('win-name');
+  const sub=document.getElementById('win-sub');
+  const suspense=document.getElementById('win-suspense');
+  const suspenseText=document.getElementById('win-suspense-text');
+  const entries=getWinPodiumEntries();
+  const winnerName=(name?.textContent||entries[0]?.name||'Giocatore').trim();
+  const winnerSub=(sub?.textContent||'').trim();
+  renderWinPodium(entries);
+
+  wrap?.classList.remove('ready','winner-only');
+  wrap?.classList.add('revealing');
+  if(title)title.textContent='CHI HA VINTO?';
+  if(name)name.textContent='—';
+  if(sub)sub.textContent='';
+  suspense?.classList.remove('hidden');
+  if(suspenseText)suspenseText.textContent='Prepariamo il podio';
+
+  const reducedMotion=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  const winnerDelay=reducedMotion?0:2100;
+  const summaryDelay=reducedMotion?0:3900;
+
+  winFinaleTimers.push(setTimeout(()=>{
+    const winnerSlot=document.querySelector('#win-podium [data-rank="1"]');
+    if(winnerSlot)winnerSlot.classList.add('reveal');
+    if(title)title.textContent='VINCE';
+    if(name)name.textContent=winnerName;
+    if(sub)sub.textContent=winnerSub;
+    suspense?.classList.add('hidden');
+    wrap?.classList.add('winner-only');
+  },winnerDelay));
+
+  winFinaleTimers.push(setTimeout(()=>{
+    ['2','3'].forEach(rank=>{
+      const slot=document.querySelector(`#win-podium [data-rank="${rank}"]`);
+      if(slot)slot.classList.add('reveal');
+    });
+    if(title)title.textContent='PODIO FINALE';
+    wrap?.classList.remove('winner-only');
+    wrap?.classList.remove('revealing');
+    wrap?.classList.add('ready');
+  },summaryDelay));
 }
 function getTimer(g){return parseInt(document.getElementById('timer-'+g).value)||30}
 function getTabooTimer(){return parseInt(document.getElementById('timer-taboo')?.value)||60}

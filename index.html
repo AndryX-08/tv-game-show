@@ -448,17 +448,55 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
   .wheel-label{transform:rotate(var(--a)) translateY(-96px) rotate(90deg);font-size:.7rem}
 }
 
-.win-wrap{text-align:center;padding:2rem 1rem}
-.win-trophy{font-size:3.5rem;margin-bottom:.8rem}
-.win-title{font-family:'Bebas Neue',sans-serif;font-size:2.8rem;letter-spacing:4px;color:var(--gold)}
-.win-name{font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:2px;margin-bottom:.4rem}
-.win-sub{font-size:.87rem;color:var(--mut);margin-bottom:1.8rem}
+.win-wrap{position:relative;text-align:center;padding:2rem 1rem;overflow:hidden;min-height:calc(100vh - 2.8rem);display:flex;flex-direction:column;justify-content:center}
+.win-wrap::before{content:'';position:absolute;inset:-20%;background:radial-gradient(circle at 50% 20%,rgba(245,197,24,.16),transparent 24%),radial-gradient(circle at 12% 70%,rgba(52,152,219,.18),transparent 22%),radial-gradient(circle at 88% 72%,rgba(231,76,60,.16),transparent 24%);opacity:.85;animation:winGlow 5.5s ease-in-out infinite;pointer-events:none}
+.win-wrap::after{content:'';position:absolute;inset:0;background:linear-gradient(70deg,transparent 0 38%,rgba(245,197,24,.13) 46%,transparent 54% 100%),linear-gradient(110deg,transparent 0 42%,rgba(255,255,255,.11) 48%,transparent 56% 100%);background-size:190% 100%,210% 100%;mix-blend-mode:screen;opacity:.65;animation:winSpotSweep 3.8s ease-in-out infinite;pointer-events:none}
+.win-stage{position:relative;z-index:1}
+.win-trophy{font-size:3.5rem;margin-bottom:.8rem;filter:drop-shadow(0 0 18px rgba(245,197,24,.38));animation:winTrophyFloat 2.8s ease-in-out infinite}
+.win-title{font-family:'Bebas Neue',sans-serif;font-size:2.8rem;letter-spacing:4px;color:var(--gold);text-shadow:0 0 22px rgba(245,197,24,.32)}
+.win-name{font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:2px;margin-bottom:.4rem;min-height:2.2rem}
+.win-sub{font-size:.87rem;color:var(--mut);margin-bottom:1.2rem;min-height:1.3rem}
+.win-suspense{display:grid;gap:.75rem;justify-items:center;margin:1rem 0 1.1rem;transition:opacity .35s,transform .35s}
+.win-suspense.hidden{opacity:0;transform:translateY(-6px);pointer-events:none;height:0;margin:0;overflow:hidden}
+.win-countdown{display:flex;gap:.45rem;align-items:center;justify-content:center}
+.win-countdown span{width:12px;height:12px;border-radius:50%;background:rgba(255,255,255,.18);box-shadow:0 0 0 rgba(245,197,24,0);animation:winPulse 1s ease-in-out infinite}
+.win-countdown span:nth-child(2){animation-delay:.16s}
+.win-countdown span:nth-child(3){animation-delay:.32s}
+.win-suspense-text{font-size:.72rem;font-weight:900;letter-spacing:2.2px;text-transform:uppercase;color:var(--gold)}
+.win-podium{display:grid;grid-template-columns:1fr 1.18fr 1fr;align-items:end;gap:.65rem;margin:1.2rem auto 1.3rem;max-width:560px;min-height:210px}
+.win-podium.single{grid-template-columns:minmax(180px,260px);justify-content:center}
+.win-podium.duo{grid-template-columns:1fr 1.18fr;max-width:420px}
+.win-podium.single .podium-slot.first,.win-podium.duo .podium-slot.first{order:1}
+.win-podium.duo .podium-slot.second{order:2}
+.win-wrap.winner-only .win-podium{grid-template-columns:minmax(180px,280px);justify-content:center}
+.win-wrap.winner-only .podium-slot:not(.first){display:none}
+.podium-slot{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;min-width:0;opacity:0;transform:translateY(24px) scale(.96);transition:opacity .55s ease,transform .55s ease}
+.podium-slot.reveal{opacity:1;transform:translateY(0) scale(1)}
+.podium-avatar{width:54px;height:54px;border-radius:18px;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:1.25rem;letter-spacing:1px;border:1.5px solid rgba(255,255,255,.2);box-shadow:0 0 24px rgba(245,197,24,.2);margin-bottom:.45rem}
+.podium-name{font-weight:900;font-size:.86rem;max-width:100%;overflow-wrap:anywhere;min-height:2.2rem;display:flex;align-items:flex-end;justify-content:center;line-height:1.2}
+.podium-score{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:1px;color:var(--gold);margin:.22rem 0 .35rem}
+.podium-block{width:100%;border:1.5px solid rgba(245,197,24,.32);background:linear-gradient(180deg,rgba(245,197,24,.16),rgba(255,255,255,.06));border-radius:12px 12px 4px 4px;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--gold);box-shadow:inset 0 0 18px rgba(245,197,24,.08),0 14px 35px rgba(0,0,0,.25)}
+.podium-slot.first .podium-avatar{width:68px;height:68px;border-radius:22px;font-size:1.55rem;box-shadow:0 0 34px rgba(245,197,24,.4)}
+.podium-slot.first .podium-block{height:118px}
+.podium-slot.second .podium-block{height:88px}
+.podium-slot.third .podium-block{height:68px}
+.win-wrap.ready .win-name{animation:winWinnerPop .8s cubic-bezier(.2,1.35,.35,1) both}
+.win-wrap.ready .win-title{animation:winTitleFlash .9s ease both}
+.win-wrap.ready .scores-panel,.win-wrap.ready .win-actions{opacity:1;transform:translateY(0)}
+.win-wrap.revealing .scores-panel,.win-wrap.revealing .win-actions{opacity:0;transform:translateY(12px);pointer-events:none}
 .scores-panel{background:var(--surf);border:1px solid var(--bord);border-radius:14px;padding:1rem;margin-bottom:1.4rem;text-align:left}
+.win-actions{display:flex;gap:.75rem}
 .sc-row{display:flex;align-items:center;gap:.7rem;padding:.45rem 0;border-bottom:1px solid rgba(255,255,255,.05)}
 .sc-row:last-child{border-bottom:none}
 .sc-rank{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;width:22px;color:var(--mut)}
 .sc-name{flex:1;font-weight:800;font-size:.88rem}
 .sc-pts{font-family:'Bebas Neue',sans-serif;font-size:1.25rem;color:var(--gold)}
+@keyframes winGlow{0%,100%{transform:scale(1) rotate(0deg);opacity:.72}50%{transform:scale(1.08) rotate(3deg);opacity:1}}
+@keyframes winSpotSweep{0%,100%{background-position:0 0,100% 0}50%{background-position:100% 0,0 0}}
+@keyframes winTrophyFloat{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-8px) rotate(2deg)}}
+@keyframes winPulse{0%,100%{background:rgba(255,255,255,.18);box-shadow:0 0 0 rgba(245,197,24,0);transform:scale(.8)}50%{background:var(--gold);box-shadow:0 0 20px rgba(245,197,24,.75);transform:scale(1.08)}}
+@keyframes winWinnerPop{0%{opacity:.15;transform:scale(.78);filter:blur(7px)}70%{opacity:1;transform:scale(1.08);filter:blur(0)}100%{transform:scale(1)}}
+@keyframes winTitleFlash{0%,100%{text-shadow:0 0 22px rgba(245,197,24,.32)}45%{text-shadow:0 0 36px rgba(245,197,24,.8),0 0 60px rgba(255,255,255,.3)}}
 
 @media(max-width:480px){
   .game-cards,.ere-layout{grid-template-columns:1fr}
@@ -544,6 +582,22 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
   .sc-name{font-size:.82rem}
   .win-title{font-size:2.2rem;letter-spacing:2px}
   .win-name{font-size:1.65rem}
+  .win-wrap{min-height:calc(100vh - 6.6rem);padding:1.1rem .35rem}
+  .win-podium{gap:.35rem;min-height:190px}
+  .podium-avatar{width:44px;height:44px;border-radius:14px;font-size:1rem}
+  .podium-slot.first .podium-avatar{width:56px;height:56px;border-radius:18px;font-size:1.25rem}
+  .podium-name{font-size:.74rem;min-height:2.1rem}
+  .podium-score{font-size:1.05rem}
+  .podium-block{font-size:1.55rem}
+  .podium-slot.first .podium-block{height:104px}
+  .podium-slot.second .podium-block{height:78px}
+  .podium-slot.third .podium-block{height:60px}
+  .win-actions{display:grid;grid-template-columns:1fr}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .win-wrap::before,.win-wrap::after,.win-trophy,.win-countdown span,.win-wrap.ready .win-name,.win-wrap.ready .win-title{animation:none}
+  .podium-slot,.win-suspense,.scores-panel,.win-actions{transition:none}
 }
 
 @media(max-width:380px){
@@ -1583,14 +1637,21 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
 <!-- WIN -->
 <div class="screen" id="s-win">
   <div class="win-wrap">
-    <div class="win-trophy">🏆</div>
-    <div class="win-title">BRAVO!</div>
-    <div class="win-name" id="win-name">—</div>
-    <div class="win-sub" id="win-sub"></div>
-    <div class="scores-panel" id="win-scores"></div>
-    <div style="display:flex;gap:.75rem">
-      <button class="btn-ghost" style="flex:1" onclick="goTo('s-hero')"><img src="Icone_syst/home.png" alt="" aria-hidden="true">Menu</button>
-      <button class="btn-gold" style="flex:2" onclick="goTo('s-hero')"><img src="Icone_syst/replay.png" alt="" aria-hidden="true">Gioca ancora ›</button>
+    <div class="win-stage">
+      <div class="win-trophy">🏆</div>
+      <div class="win-title" id="win-title">CHI HA VINTO?</div>
+      <div class="win-suspense" id="win-suspense">
+        <div class="win-countdown" aria-hidden="true"><span></span><span></span><span></span></div>
+        <div class="win-suspense-text" id="win-suspense-text">Prepariamo il podio</div>
+      </div>
+      <div class="win-name" id="win-name">—</div>
+      <div class="win-sub" id="win-sub"></div>
+      <div class="win-podium" id="win-podium" aria-live="polite"></div>
+      <div class="scores-panel" id="win-scores"></div>
+      <div class="win-actions">
+        <button class="btn-ghost" style="flex:1" onclick="goTo('s-hero')"><img src="Icone_syst/home.png" alt="" aria-hidden="true">Menu</button>
+        <button class="btn-gold" style="flex:2" onclick="goTo('s-hero')"><img src="Icone_syst/replay.png" alt="" aria-hidden="true">Gioca ancora ›</button>
+      </div>
     </div>
   </div>
 </div>
