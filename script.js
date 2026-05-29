@@ -637,9 +637,8 @@ function getWinPodiumEntries(){
       initials:initials(name)
     };
   }).filter(entry=>entry.name&&entry.name!=='—');
-  if(rowEntries.length)return rowEntries;
 
-  return [...players]
+  const playerEntries=[...players]
     .sort((a,b)=>(b.score||0)-(a.score||0))
     .slice(0,3)
     .map((player,idx)=>({
@@ -649,6 +648,24 @@ function getWinPodiumEntries(){
       color:TC[player.ci%TC.length],
       initials:initials(player.name||'G')
     }));
+
+  if(playerEntries.length>1)return playerEntries;
+  if(rowEntries.length)return rowEntries;
+  return playerEntries;
+}
+
+function ensureWinScoresSummary(entries){
+  const scores=document.getElementById('win-scores');
+  if(!scores||!entries.length)return;
+  const existingRows=scores.querySelectorAll('.sc-row').length;
+  if(existingRows>=entries.length)return;
+  scores.innerHTML='<div style="font-size:.68rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--mut);margin-bottom:.6rem">Classifica totale</div>'+
+    entries.map(entry=>`<div class="sc-row">
+      <div class="sc-rank">${entry.rank}</div>
+      <div class="avatar" style="background:${entry.color.light};color:${entry.color.hex};width:24px;height:24px;font-size:.62rem;border-radius:50%;flex-shrink:0">${escapeHtml(entry.initials)}</div>
+      <div class="sc-name">${escapeHtml(entry.name)}</div>
+      <div class="sc-pts">${escapeHtml(entry.score)}</div>
+    </div>`).join('');
 }
 
 function podiumSlotHtml(entry,slotClass){
@@ -690,6 +707,7 @@ function startWinFinale(){
   const entries=getWinPodiumEntries();
   const winnerName=(name?.textContent||entries[0]?.name||'Giocatore').trim();
   const winnerSub=(sub?.textContent||'').trim();
+  ensureWinScoresSummary(entries);
   renderWinPodium(entries);
 
   wrap?.classList.remove('ready','winner-only');
