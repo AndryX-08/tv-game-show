@@ -3261,17 +3261,17 @@ function playAffariSuspense(){
 function playAffariOutcomeSound(isGood){
   if(isGood){
     const src=AFFARI_GOOD_AUDIO_FILES[Math.floor(Math.random()*AFFARI_GOOD_AUDIO_FILES.length)];
-    return playAffariAudio(src,{volume:.72,duration:5600,startAt:8});
+    return playAffariAudio(src,{volume:.72,duration:7800,startAt:8});
   }
-  return playAffariAudio('Music theme/aua_errore.mp3',{volume:.9,duration:3200});
+  return playAffariAudio('Music theme/aua_errore.mp3',{volume:.9,duration:4300});
 }
 
 function getAffariOutcomeAudioConfig(isGood){
   if(isGood){
     const src=AFFARI_GOOD_AUDIO_FILES[Math.floor(Math.random()*AFFARI_GOOD_AUDIO_FILES.length)];
-    return {src:src||'Music theme/aua_music_theme.mp3',volume:.72,duration:5600,startAt:8};
+    return {src:src||'Music theme/aua_music_theme.mp3',volume:.72,duration:7800,startAt:8};
   }
-  return {src:'Music theme/aua_errore.mp3',volume:.9,duration:3200,startAt:0};
+  return {src:'Music theme/aua_errore.mp3',volume:.9,duration:4300,startAt:0};
 }
 
 function prepareAffariOutcomeSound(isGood){
