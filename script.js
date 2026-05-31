@@ -2976,8 +2976,10 @@ let affariState={};
 let affariScene=null;
 let affariAudio=null;
 let affariAudioUnlocked=false;
+let affariAudioUnlocking=false;
 let affariPreparedAudio=null;
 let affariPreparedAudioTimer=null;
+let affariOutcomeAudioKeepAliveUntil=0;
 
 function formatMoney(value){
   return `${Math.round(value).toLocaleString('it-IT')} €`;
@@ -3005,7 +3007,9 @@ function speakMystery(text){
   window.speechSynthesis.speak(msg);
 }
 
-function stopAffariAudio(){
+function stopAffariAudio(force=false){
+  if(!force&&Date.now()<affariOutcomeAudioKeepAliveUntil)return;
+  if(force)affariOutcomeAudioKeepAliveUntil=0;
   const audio=affariAudio||document.getElementById('affari-audio');
   if(affariPreparedAudioTimer){
     clearTimeout(affariPreparedAudioTimer);
@@ -3018,33 +3022,38 @@ function stopAffariAudio(){
 }
 
 function unlockAffariAudio(){
-  if(affariAudioUnlocked)return;
+  if(affariAudioUnlocked||affariAudioUnlocking)return;
   const audio=document.getElementById('affari-audio');
   if(!audio)return;
+  affariAudioUnlocking=true;
   affariAudio=audio;
+  const unlockSrc='Music theme/aua_errore.mp3';
   audio.muted=true;
-  audio.src='Music theme/aua_errore.mp3';
+  audio.src=unlockSrc;
   audio.currentTime=0;
   const attempt=audio.play();
-  if(attempt&&typeof attempt.then==='function'){
-    attempt.then(()=>{
+  const finishUnlock=success=>{
+    affariAudioUnlocking=false;
+    const currentSrc=audio.currentSrc||audio.src||'';
+    if(currentSrc.endsWith(encodeURI(unlockSrc))||currentSrc.endsWith(unlockSrc)){
       audio.pause();
       audio.currentTime=0;
       audio.muted=false;
-      affariAudioUnlocked=true;
-    }).catch(()=>{
+    }
+    if(success)affariAudioUnlocked=true;
+  };
+  if(attempt&&typeof attempt.then==='function'){
+    attempt.then(()=>finishUnlock(true)).catch(()=>{
+      affariAudioUnlocking=false;
       audio.muted=false;
     });
   }else{
-    audio.pause();
-    audio.currentTime=0;
-    audio.muted=false;
-    affariAudioUnlocked=true;
+    finishUnlock(true);
   }
 }
 
 function playAffariAudio(src,{volume=.85,duration=5200,startAt=0}={}){
-  stopAffariAudio();
+  stopAffariAudio(true);
   if(!src)return Promise.resolve();
   return new Promise(resolve=>{
     const audio=document.getElementById('affari-audio')||new Audio();
@@ -3053,6 +3062,7 @@ function playAffariAudio(src,{volume=.85,duration=5200,startAt=0}={}){
     audio.src=src;
     audio.load();
     audio.volume=volume;
+    affariOutcomeAudioKeepAliveUntil=Date.now()+duration;
     try{audio.currentTime=startAt;}catch(err){}
     let done=false;
     const finish=()=>{
@@ -3061,6 +3071,7 @@ function playAffariAudio(src,{volume=.85,duration=5200,startAt=0}={}){
       audio.removeEventListener('ended',finish);
       audio.removeEventListener('error',finish);
       audio.pause();
+      affariOutcomeAudioKeepAliveUntil=0;
       resolve();
     };
     audio.addEventListener('ended',finish);
@@ -3128,7 +3139,8 @@ function getAffariOutcomeAudioConfig(isGood){
 function prepareAffariOutcomeSound(isGood){
   const config=getAffariOutcomeAudioConfig(isGood);
   if(!config.src)return null;
-  stopAffariAudio();
+  affariAudioUnlocking=false;
+  stopAffariAudio(true);
   const audio=document.getElementById('affari-audio')||new Audio();
   affariAudio=audio;
   affariPreparedAudio={audio,config};
@@ -3151,13 +3163,20 @@ function releaseAffariOutcomeSound(prepared,isGood=false){
   }
   const {audio,config}=active;
   affariPreparedAudio=null;
+  audio.muted=false;
   audio.volume=config.volume;
+  affariOutcomeAudioKeepAliveUntil=Date.now()+config.duration;
+  const resumeAttempt=audio.play();
+  if(resumeAttempt&&typeof resumeAttempt.catch==='function'){
+    resumeAttempt.catch(()=>playAffariOutcomeSound(isGood));
+  }
   if(affariPreparedAudioTimer)clearTimeout(affariPreparedAudioTimer);
   affariPreparedAudioTimer=setTimeout(()=>{
     if(audio===affariAudio){
       audio.pause();
       try{audio.currentTime=0;}catch(err){}
     }
+    affariOutcomeAudioKeepAliveUntil=0;
     affariPreparedAudioTimer=null;
   },config.duration);
   return Promise.resolve();
@@ -3546,7 +3565,9 @@ function renderAffari(){
 
 function beginAffariTuoi(){
   activeStatsGame='affarituoi';
+  stopAffariAudio(true);
   affariAudioUnlocked=false;
+  affariAudioUnlocking=false;
   const player=players.find(p=>p.id===selAffariPid)||players[0];
   if(!player)return;
   const prizes=shuffleCopy(AFFARI_PRIZES);
