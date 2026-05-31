@@ -3142,7 +3142,7 @@ function getAffariOutcomeAudioConfig(isGood){
   if(isGood){
     const tracks=Array.isArray(SARABANDA_TRACKS)?SARABANDA_TRACKS:[];
     const track=tracks[Math.floor(Math.random()*tracks.length)];
-    return {src:track?.src,volume:.72,duration:5600,startAt:8};
+    return {src:track?.src||'Music theme/aua_music_theme.mp3',volume:.72,duration:5600,startAt:8};
   }
   return {src:'Music theme/aua_errore.mp3',volume:.9,duration:3200,startAt:0};
 }
@@ -3155,8 +3155,8 @@ function prepareAffariOutcomeSound(isGood){
   const audio=document.getElementById('affari-audio')||new Audio();
   affariAudio=audio;
   affariPreparedAudio={audio,config,blocked:false};
-  audio.muted=true;
-  audio.volume=config.volume;
+  audio.muted=false;
+  audio.volume=.001;
   audio.src=config.src;
   audio.load();
   try{audio.currentTime=config.startAt||0;}catch(err){}
@@ -3178,7 +3178,6 @@ function releaseAffariOutcomeSound(prepared,isGood=false){
   affariPreparedAudio=null;
   audio.volume=config.volume;
   affariOutcomeAudioKeepAliveUntil=Date.now()+config.duration;
-  audio.muted=false;
   const resumeAttempt=audio.play();
   if(resumeAttempt&&typeof resumeAttempt.catch==='function'){
     resumeAttempt.catch(()=>playAffariOutcomeSound(isGood));
@@ -3558,13 +3557,29 @@ function renderAffari(){
   if(msgEl)msgEl.textContent=affariState.message||'Scegli un pacco.';
   const acceptBtn=document.getElementById('affari-accept');
   const rejectBtn=document.getElementById('affari-reject');
+  const swapBtn=document.getElementById('affari-swap');
+  const revealBtn=document.getElementById('affari-reveal');
   if(acceptBtn){
-    acceptBtn.disabled=!(affariState.phase==='offer'||affariState.phase==='final');
-    acceptBtn.textContent=affariState.phase==='final'?'Scopri pacco':'Accetto';
+    const show=affariState.phase==='offer';
+    acceptBtn.style.display=show?'block':'none';
+    acceptBtn.disabled=!show;
+    acceptBtn.textContent='Accetto';
   }
-  if(rejectBtn)rejectBtn.disabled=affariState.phase!=='offer';
+  if(rejectBtn){
+    const show=affariState.phase==='offer';
+    rejectBtn.style.display=show?'block':'none';
+    rejectBtn.disabled=!show;
+  }
   const canSwap=affariState.phase==='final'&&getAffariOpenable().length===1;
-  document.getElementById('affari-swap').disabled=!canSwap;
+  if(swapBtn){
+    swapBtn.style.display=canSwap?'block':'none';
+    swapBtn.disabled=!canSwap;
+  }
+  if(revealBtn){
+    const show=affariState.phase==='final';
+    revealBtn.style.display=show?'block':'none';
+    revealBtn.disabled=!show;
+  }
   if(affariState.phase==='open'){
     affariState.step=`Apri ${remainingToOpen} ${remainingToOpen===1?'pacco':'pacchi'}`;
     if(stepEl)stepEl.textContent=affariState.step;
@@ -3658,10 +3673,6 @@ async function openAffariPackage(num){
 }
 
 function acceptAffariOffer(){
-  if(affariState.phase==='final'){
-    revealAffariFinal();
-    return;
-  }
   if(affariState.phase!=='offer')return;
   finishAffariGame(affariState.offer,'offerta accettata');
 }
