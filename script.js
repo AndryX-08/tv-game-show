@@ -452,6 +452,58 @@ const SARABANDA_TRACKS=[
   {title:"Warzone",artist:"Capo Plaza",src:"Sarabanda/warzone-feat-artie-5ive-capo-plaza-nerissima-serpe-spotdownorg_YMIfakiN.mp3"},
   {title:"Chuck Norris",artist:"Kid Yugi",src:"Sarabanda/chuck-norris-feat-papa-v-rrari-dal-tacco-nerissima-serpe-spotdownorg_aL0dv8Hv.mp3"}
 ];
+const AFFARI_GOOD_AUDIO_FILES=[
+  'Sarabanda/4-gambe-spotdownorg_ahdpSiQy.mp3',
+  'Sarabanda/40-gradi-spotdownorg_NdFO2YGS.mp3',
+  'Sarabanda/4k-spotdownorg_p27mFjnu.mp3',
+  'Sarabanda/64-barre-in-faccia-red-bull-64-bars-spotdownorg_PzuleJn6.mp3',
+  'Sarabanda/7eleven-spotdownorg_96rBRsEg.mp3',
+  'Sarabanda/apparecchiato-feat-nerissima-serpe-spotdownorg_UHztB2in.mp3',
+  'Sarabanda/assistente-sociale-feat-simba-la-rue-spotdownorg_gSiDlMe6.mp3',
+  'Sarabanda/auto-tedesca-spotdownorg_nLKFBkge.mp3',
+  'Sarabanda/berserker-spotdownorg_21oW21Ad.mp3',
+  'Sarabanda/bullet-ballet-feat-artie-5ive-spotdownorg_udtb7zPG.mp3',
+  'Sarabanda/cambiare-adesso-spotdownorg_pKZLqjvg.mp3',
+  'Sarabanda/chuck-norris-feat-papa-v-rrari-dal-tacco-nerissima-serpe-spotdownorg_aL0dv8Hv.mp3',
+  'Sarabanda/cupido-feat-quavo-spotdownorg_laJDpsUu.mp3',
+  'Sarabanda/davverodavvero-spotdownorg_ggk0EC8Y.mp3',
+  'Sarabanda/dende-spotdownorg_4NO55bBS.mp3',
+  'Sarabanda/diego-armando-maradona-spotdownorg_YjnSVhZG.mp3',
+  'Sarabanda/dodge-durango-spotdownorg_A1IIquP0.mp3',
+  'Sarabanda/duomo-spotdownorg_0xM5I9NX.mp3',
+  'Sarabanda/eoo-spotdownorg_R3s93Tzw.mp3',
+  'Sarabanda/gilgamesh-spotdownorg_Sa9vkHAB.mp3',
+  'Sarabanda/guarda-come-flexo-spotdownorg_vHZd4xjM.mp3',
+  'Sarabanda/highest-in-the-room-spotdownorg_iqeLCYXa.mp3',
+  'Sarabanda/hoodrich-spotdownorg_YQKq8VsT.mp3',
+  'Sarabanda/kriminal-prod-by-roberto-ferrante-spotdownorg_UaY6SkYw.mp3',
+  'Sarabanda/lo-so-che-spotdownorg_OQrSe6FU.mp3',
+  'Sarabanda/mirandote-spotdownorg_OJDsAMH9.mp3',
+  'Sarabanda/mu-ammar-gheddafi-feat-simba-la-rue-spotdownorg_RT8ye2pj.mp3',
+  'Sarabanda/nisida-spotdownorg_zvNUfiBE.mp3',
+  'Sarabanda/nuevayol-spotdownorg_O6bqnvIK.mp3',
+  'Sarabanda/obsessed-spotdownorg_xfKTnGZT.mp3',
+  'Sarabanda/pura-purissima-feat-nerissima-serpe-spotdownorg_A14efeYT.mp3',
+  'Sarabanda/rollercoaster-spotdownorg_I1JSCQQ1.mp3',
+  'Sarabanda/rozzi-spotdownorg_TKPb0hKz.mp3',
+  'Sarabanda/serpenti-a-sonagli-spotdownorg_2RlEGL2t.mp3',
+  'Sarabanda/sicko-mode-spotdownorg_LKj1Fu0c.mp3',
+  'Sarabanda/slatt-feat-capo-plaza-spotdownorg_A9k6udvk.mp3',
+  'Sarabanda/sogno-americano-spotdownorg_D8jDPuZH.mp3',
+  'Sarabanda/soldi-in-nero-feat-sfera-ebbasta-spotdownorg_OeJNjolX.mp3',
+  'Sarabanda/spie-spotdownorg_nosI7WU5.mp3',
+  'Sarabanda/sportswear-spotdownorg_7pC8nc6q.mp3',
+  'Sarabanda/star-feat-shiva-spotdownorg_GKes0eff.mp3',
+  'Sarabanda/take-6-spotdownorg_H4hLIkm9.mp3',
+  'Sarabanda/titi-me-pregunto-spotdownorg_eKPTgu8m.mp3',
+  'Sarabanda/tran-tran-spotdownorg_B78eu9SP.mp3',
+  'Sarabanda/tranne-te-spotdownorg_j8t5XIf4.mp3',
+  'Sarabanda/tuta-black-spotdownorg_BLjCb5Df.mp3',
+  'Sarabanda/visiera-a-becco-spotdownorg_oGUVigMu.mp3',
+  'Sarabanda/vrp-spotdownorg_LDQ6R2d5.mp3',
+  'Sarabanda/warzone-feat-artie-5ive-capo-plaza-nerissima-serpe-spotdownorg_YMIfakiN.mp3',
+  'Sarabanda/wop-wop-feat-shiva-spotdownorg_ysKnIkjV.mp3'
+];
 
 const GUESS_WHO_CHARACTERS=[
   {name:"Leonardo da Vinci",aliases:["Leonardo","Da Vinci"],category:"Arte e genio",clues:["Sono nato in Toscana nel Rinascimento.","Ho studiato arte, anatomia, macchine e volo.","Uno dei miei dipinti e conservato al Louvre.","Ho dipinto anche L'Ultima Cena.","La Gioconda e la mia opera piu famosa."]},
@@ -3131,18 +3183,16 @@ function playAffariSuspense(){
 
 function playAffariOutcomeSound(isGood){
   if(isGood){
-    const tracks=Array.isArray(SARABANDA_TRACKS)?SARABANDA_TRACKS:[];
-    const track=tracks[Math.floor(Math.random()*tracks.length)];
-    return playAffariAudio(track?.src,{volume:.72,duration:5600,startAt:8});
+    const src=AFFARI_GOOD_AUDIO_FILES[Math.floor(Math.random()*AFFARI_GOOD_AUDIO_FILES.length)];
+    return playAffariAudio(src,{volume:.72,duration:5600,startAt:8});
   }
   return playAffariAudio('Music theme/aua_errore.mp3',{volume:.9,duration:3200});
 }
 
 function getAffariOutcomeAudioConfig(isGood){
   if(isGood){
-    const tracks=Array.isArray(SARABANDA_TRACKS)?SARABANDA_TRACKS:[];
-    const track=tracks[Math.floor(Math.random()*tracks.length)];
-    return {src:track?.src||'Music theme/aua_music_theme.mp3',volume:.72,duration:5600,startAt:8};
+    const src=AFFARI_GOOD_AUDIO_FILES[Math.floor(Math.random()*AFFARI_GOOD_AUDIO_FILES.length)];
+    return {src:src||'Music theme/aua_music_theme.mp3',volume:.72,duration:5600,startAt:8};
   }
   return {src:'Music theme/aua_errore.mp3',volume:.9,duration:3200,startAt:0};
 }
