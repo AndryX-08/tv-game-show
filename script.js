@@ -67,6 +67,44 @@ const SCREEN_BY_ROUTE=Object.entries(APP_ROUTES).reduce((acc,[screen,path])=>{
 },{'/home':'s-hero','/index.html':'s-hero'});
 let appRoutingReady=false;
 
+const APP_ASSET_BASE=(()=>{
+  const scripts=Array.from(document.scripts||[]);
+  const appScript=document.currentScript||scripts.reverse().find(script=>/script\.js(?:[?#].*)?$/.test(script.getAttribute('src')||''));
+  try{
+    return new URL('./',appScript?.src||window.location.href).href;
+  }catch(err){
+    return './';
+  }
+})();
+
+function getAppAssetUrl(src){
+  if(!src||/^(?:[a-z]+:|\/\/|#)/i.test(src))return src;
+  try{
+    return new URL(src.replace(/^\.\//,''),APP_ASSET_BASE).href;
+  }catch(err){
+    return src;
+  }
+}
+
+function setAppMediaSource(id,src){
+  const el=document.getElementById(id);
+  if(!el)return null;
+  if(el.dataset.appSrc!==src){
+    el.dataset.appSrc=src;
+    el.src=getAppAssetUrl(src);
+  }
+  return el;
+}
+
+function normalizeStaticAssetSources(){
+  setAppMediaSource('openingIntroMusic','Music theme/intro_music_theme.mp3');
+  setAppMediaSource('aua-audio','Music theme/aua_music_theme.mp3');
+  setAppMediaSource('aua-error-audio','Music theme/aua_errore.mp3');
+  setAppMediaSource('ghig-intro-audio','Music theme/ghig_intro_music.mp3');
+  setAppMediaSource('ghig-theme-audio','Music theme/ghig-music-theme.mp3');
+  setAppMediaSource('wheel-intro-video','Video Intro/ruota_video_intro.mp4');
+}
+
 const PROFILE_COLORS=[
   {bg:'#F5C518',color:'#08081A'},
   {bg:'#3498DB',color:'#fff'},
@@ -810,10 +848,10 @@ function initTtsControls(){
 }
 
 function setAuaAudio(){
-  if(!auaAudio){auaAudio=document.getElementById('aua-audio');}
+  if(!auaAudio){auaAudio=setAppMediaSource('aua-audio','Music theme/aua_music_theme.mp3');}
 }
 function setAuaErrorAudio(){
-  if(!auaErrorAudio){auaErrorAudio=document.getElementById('aua-error-audio');}
+  if(!auaErrorAudio){auaErrorAudio=setAppMediaSource('aua-error-audio','Music theme/aua_errore.mp3');}
 }
 function showAuaIntroEffects(){
   const el=document.getElementById('aua-intro-effects');
@@ -962,6 +1000,7 @@ function startWheelIntroVideo(){
     beginWheel();
     return;
   }
+  video.src=getAppAssetUrl('Video Intro/ruota_video_intro.mp4');
   wheelIntroVideoPlaying=true;
   overlay.classList.add('active');
   requestAnimationFrame(()=>overlay.classList.add('visible'));
@@ -2834,8 +2873,8 @@ function clearGhigliottinaTimer(){
 }
 
 function setGhigliottinaAudio(){
-  if(!ghigIntroAudio)ghigIntroAudio=document.getElementById('ghig-intro-audio');
-  if(!ghigThemeAudio)ghigThemeAudio=document.getElementById('ghig-theme-audio');
+  if(!ghigIntroAudio)ghigIntroAudio=setAppMediaSource('ghig-intro-audio','Music theme/ghig_intro_music.mp3');
+  if(!ghigThemeAudio)ghigThemeAudio=setAppMediaSource('ghig-theme-audio','Music theme/ghig-music-theme.mp3');
 }
 
 function stopGhigliottinaAudio(){
@@ -3098,11 +3137,7 @@ function stopAffariAudio(force=false){
 }
 
 function getAffariAssetUrl(src){
-  try{
-    return new URL(src,document.baseURI).href;
-  }catch(err){
-    return src;
-  }
+  return getAppAssetUrl(src);
 }
 
 function getAffariAudioContext(){
@@ -3125,7 +3160,7 @@ function unlockAffariAudio(){
   affariAudio=audio;
   const unlockSrc='Music theme/aua_errore.mp3';
   audio.muted=true;
-  audio.src=unlockSrc;
+  audio.src=getAffariAssetUrl(unlockSrc);
   audio.currentTime=0;
   const attempt=audio.play();
   const finishUnlock=success=>{
@@ -4367,8 +4402,9 @@ function renderSarabanda(){
   const active=sarabandaState.players.find(p=>p.id===sarabandaState.activePid);
   document.getElementById('sara-hidden-artist').textContent=sarabandaState.revealed?track.artist:`Turno di ${active?.name||'Giocatore'}`;
   document.getElementById('sara-status').textContent=sarabandaState.revealed?'Soluzione':'Ascolta e indovina';
-  if(audio.getAttribute('src')!==track.src){
-    audio.src=track.src;
+  if(audio.dataset.appSrc!==track.src){
+    audio.dataset.appSrc=track.src;
+    audio.src=getAppAssetUrl(track.src);
     audio.load();
   }
   setupSarabandaAudioPreview();
@@ -5675,6 +5711,7 @@ listenTabooScoreEvents();
 
 document.addEventListener("DOMContentLoaded", () => {
   const overlay = document.getElementById("authOverlay");
+  normalizeStaticAssetSources();
   initAppRouting();
   window.addEventListener('beforeunload',stopSarabandaAudio);
   window.addEventListener('beforeunload',()=>{
