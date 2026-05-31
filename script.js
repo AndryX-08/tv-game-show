@@ -874,12 +874,6 @@ function clearNightEvents(){
   renderHomeLeaderboard();
 }
 
-function getTopNightEvents(limit=8){
-  return [...nightEvents]
-    .sort((a,b)=>(b.score||0)-(a.score||0)||(a.at||0)-(b.at||0))
-    .slice(0,limit);
-}
-
 let nightRecapTimers=[];
 function clearNightRecapTimers(){
   nightRecapTimers.forEach(timer=>clearTimeout(timer));
@@ -889,9 +883,89 @@ function clearNightRecapTimers(){
 function updateFinishNightButton(){
   const btn=document.getElementById('finish-night-btn');
   if(!btn)return;
-  const count=nightEvents.length;
+  const count=getNightRecapScenes().length;
   btn.disabled=count===0&&players.every(p=>!(p.score||0));
   btn.textContent=count?`Finisci serata (${count})`:'Finisci serata';
+}
+
+function getRecapStatMap(){
+  const stats=new Map();
+  const ensure=name=>{
+    const key=name||'Qualcuno';
+    if(!stats.has(key)){
+      stats.set(key,{name:key,moneyLost:0,moneySaved:0,wrong:0,points:0,biggestOffer:0,offerPain:0,biggestBankrupt:0});
+    }
+    return stats.get(key);
+  };
+  players.forEach(player=>{
+    const row=ensure(player.name);
+    row.points=Number(player.score)||0;
+  });
+  nightEvents.forEach(event=>{
+    const row=ensure(event.player);
+    if(event.type==='affari_reject_pain'){
+      row.moneyLost+=Number(event.loss)||0;
+      row.offerPain=Math.max(row.offerPain,Number(event.loss)||0);
+      row.biggestOffer=Math.max(row.biggestOffer,Number(event.offer)||0);
+    }
+    if(event.type==='affari_accept_regret'){
+      row.moneyLost+=Number(event.loss)||0;
+    }
+    if(event.type==='ghigliottina_halved'){
+      row.moneyLost+=(Number(event.before)||0)-(Number(event.after)||0);
+    }
+    if(event.type==='ghigliottina_final_loss'){
+      row.moneyLost+=Number(event.prize)||0;
+    }
+    if(event.type==='affari_big_loss'){
+      row.moneyLost+=Number(event.prize)||0;
+    }
+    if(event.type==='affari_low_saved'){
+      row.moneySaved+=Number(event.prize)<=1000?1000-(Number(event.prize)||0):0;
+    }
+    if(['aua_easy_miss','sarabanda_wrong','guesswho_wrong','movie_wrong','wheel_wrong_solution'].includes(event.type)){
+      row.wrong++;
+    }
+    if(event.type==='affari_huge_offer'){
+      row.biggestOffer=Math.max(row.biggestOffer,Number(event.offer)||0);
+    }
+    if(event.type==='wheel_bankrupt'){
+      row.biggestBankrupt=Math.max(row.biggestBankrupt,Number(event.bank)||0);
+    }
+  });
+  return stats;
+}
+
+function getTeamRecapBuyingPower(team){
+  const score=Number(team?.score)||0;
+  const budget=score*10000;
+  let item='una pizza in compagnia';
+  if(budget>=350000)item='una casa da sogno';
+  else if(budget>=180000)item='un appartamento niente male';
+  else if(budget>=60000)item='una macchina nuova';
+  else if(budget>=15000)item='una vacanza seria';
+  return {budget,item};
+}
+
+function makeRecapScene({kind='event',kicker,title,detail,metric='',score=50,accent='#F5C518'}){
+  return {id:`scene-${kind}-${Math.random().toString(16).slice(2)}`,kind,kicker,title,detail,metric,score,accent};
+}
+
+function getRawHighlightScenes(){
+  return nightEvents
+    .filter(event=>!['game_completed','points_awarded','ghigliottina_halved','ghigliottina_final_loss'].includes(event.type))
+    .filter(event=>!String(event.type||'').startsWith('affari_'))
+    .sort((a,b)=>(b.score||0)-(a.score||0))
+    .slice(0,3)
+    .map(event=>makeRecapScene({
+      kind:event.type||'event',
+      kicker:event.kicker||'Highlight',
+      title:event.title||'Momento della serata',
+      detail:event.detail||event.gameLabel||'',
+      metric:Math.round(event.score||0),
+      score:event.score||50,
+      accent:event.type?.includes('wrong')?'#E74C3C':event.type?.includes('affari')?'#2ECC71':'#F5C518'
+    }));
 }
 
 function getFallbackRecapEvents(){
@@ -909,13 +983,92 @@ function getFallbackRecapEvents(){
   }));
 }
 
+function getNightRecapScenes(){
+  const scenes=[];
+  const stats=[...getRecapStatMap().values()];
+  const topPlayer=[...players].sort((a,b)=>(b.score||0)-(a.score||0)).find(p=>p.score>0);
+  if(topPlayer){
+    scenes.push(makeRecapScene({
+      kind:'winner',
+      kicker:'Dominio totale',
+      title:`${topPlayer.name} si prende la serata`,
+      detail:`Ha chiuso davanti a tutti con ${topPlayer.score} punti.`,
+      metric:`${topPlayer.score} PT`,
+      score:86+Math.min(10,topPlayer.score),
+      accent:'#F5C518'
+    }));
+  }
+  const moneyLost=stats.filter(row=>row.moneyLost>0).sort((a,b)=>b.moneyLost-a.moneyLost)[0];
+  if(moneyLost){
+    scenes.push(makeRecapScene({
+      kind:'money',
+      kicker:'Bilancio da brividi',
+      title:`${moneyLost.name} ha perso in totale ${formatMoney(moneyLost.moneyLost)}`,
+      detail:moneyLost.offerPain?`La ferita piu grossa pesa ${formatMoney(moneyLost.offerPain)}.`:'Una serata economicamente discutibile.',
+      metric:formatMoney(moneyLost.moneyLost),
+      score:96,
+      accent:'#E74C3C'
+    }));
+  }
+  const topTeam=[...teams].map(team=>({team,...getTeamRecapBuyingPower(team)})).filter(row=>row.budget>0).sort((a,b)=>b.budget-a.budget)[0];
+  if(topTeam){
+    scenes.push(makeRecapScene({
+      kind:'team',
+      kicker:'Patrimonio di squadra',
+      title:`${topTeam.team.name} puo comprare ${topTeam.item}`,
+      detail:`Con ${topTeam.team.score} punti, il budget simbolico sale a ${formatMoney(topTeam.budget)}.`,
+      metric:formatMoney(topTeam.budget),
+      score:82+Math.min(12,Math.round(topTeam.team.score/4)),
+      accent:'#2ECC71'
+    }));
+  }
+  const failLeader=stats.filter(row=>row.wrong>=2).sort((a,b)=>b.wrong-a.wrong)[0];
+  if(failLeader){
+    scenes.push(makeRecapScene({
+      kind:'fail',
+      kicker:'Compilation errori',
+      title:`${failLeader.name} firma ${failLeader.wrong} scivoloni`,
+      detail:'Il montaggio li avrebbe messi tutti in slow motion.',
+      metric:`${failLeader.wrong} FAIL`,
+      score:78+Math.min(18,failLeader.wrong*4),
+      accent:'#9B59B6'
+    }));
+  }
+  const bankrupt=stats.filter(row=>row.biggestBankrupt>0).sort((a,b)=>b.biggestBankrupt-a.biggestBankrupt)[0];
+  if(bankrupt){
+    scenes.push(makeRecapScene({
+      kind:'bankrupt',
+      kicker:'Caduta libera',
+      title:`${bankrupt.name} ha visto sparire ${bankrupt.biggestBankrupt} punti`,
+      detail:'Bancarotta: quel rumore che spegne una stanza intera.',
+      metric:`-${bankrupt.biggestBankrupt}`,
+      score:88,
+      accent:'#3498DB'
+    }));
+  }
+  scenes.push(...getRawHighlightScenes());
+  const deduped=[];
+  scenes.sort((a,b)=>b.score-a.score).forEach(scene=>{
+    if(!deduped.some(existing=>existing.title===scene.title))deduped.push(scene);
+  });
+  if(deduped.length)return deduped.slice(0,7);
+  return getFallbackRecapEvents().map(event=>makeRecapScene({
+    kind:'fallback',
+    kicker:event.kicker,
+    title:event.title,
+    detail:event.detail,
+    metric:event.points?`${event.points} PT`:'',
+    score:event.score,
+    accent:'#F5C518'
+  }));
+}
+
 function renderNightRecap(activeIndex=0){
   const body=document.getElementById('recap-body');
   const counter=document.getElementById('recap-counter');
   const subtitle=document.getElementById('recap-subtitle');
   if(!body)return;
-  const events=getTopNightEvents(8);
-  const slides=events.length?events:getFallbackRecapEvents();
+  const slides=getNightRecapScenes();
   if(!slides.length){
     body.innerHTML=`<div class="recap-empty">
       <div class="recap-empty-title">Nessun highlight salvato</div>
@@ -928,28 +1081,35 @@ function renderNightRecap(activeIndex=0){
   const safeIndex=((activeIndex%slides.length)+slides.length)%slides.length;
   const active=slides[safeIndex];
   if(counter)counter.textContent=String(safeIndex+1).padStart(2,'0');
-  if(subtitle)subtitle.textContent=`${slides.length} momenti selezionati dal motore highlights.`;
-  body.innerHTML=`<div class="recap-main">
-      <div class="recap-hype">${Math.round(active.score||0)}</div>
-      <div class="recap-badge">${escapeHtml(active.kicker||'Highlight')}</div>
-      <div class="recap-event-title">${escapeHtml(active.title||'Momento della serata')}</div>
-      <div class="recap-event-detail">${escapeHtml(active.detail||'')}</div>
+  if(subtitle)subtitle.textContent=`${slides.length} scene costruite aggregando i momenti davvero pesanti.`;
+  body.className=`recap-body scene-${escapeHtml(active.kind||'event')}`;
+  body.style.setProperty('--recap-accent',active.accent||'#F5C518');
+  body.innerHTML=`<div class="recap-viewport">
+    <div class="recap-world" style="--scene-index:${safeIndex}">
+      <div class="recap-depth floor"></div>
+      <div class="recap-depth back"></div>
+      <div class="recap-depth left"></div>
+      <div class="recap-depth right"></div>
+      <div class="recap-orbit one"></div>
+      <div class="recap-orbit two"></div>
+      <section class="recap-shot">
+        <div class="recap-hype">${escapeHtml(active.metric||Math.round(active.score||0))}</div>
+        <div class="recap-badge">${escapeHtml(active.kicker||'Highlight')}</div>
+        <div class="recap-event-title">${escapeHtml(active.title||'Momento della serata')}</div>
+        <div class="recap-event-detail">${escapeHtml(active.detail||'')}</div>
+      </section>
+      <div class="recap-stat-card primary">${escapeHtml(active.kind||'scene')}</div>
+      <div class="recap-stat-card secondary">${String(Math.round(active.score||0)).padStart(2,'0')} hype</div>
     </div>
-    <div class="recap-list">
-      ${slides.map((event,i)=>`<div class="recap-mini${i===safeIndex?' active':''}">
-        <div class="recap-mini-rank">${i+1}</div>
-        <div>
-          <div class="recap-mini-title">${escapeHtml(event.title||'Highlight')}</div>
-          <div class="recap-mini-meta">${escapeHtml(event.gameLabel||event.kicker||'Serata')}</div>
-        </div>
-        <div class="recap-mini-score">${Math.round(event.score||0)}</div>
-      </div>`).join('')}
-    </div>`;
+    <div class="recap-filmstrip">
+      ${slides.map((scene,i)=>`<button class="${i===safeIndex?'active':''}" onclick="renderNightRecap(${i})" aria-label="Scena ${i+1}: ${escapeHtml(scene.kicker||'Highlight')}"></button>`).join('')}
+    </div>
+  </div>`;
 }
 
 function playNightRecap(){
   clearNightRecapTimers();
-  const slides=getTopNightEvents(8).length?getTopNightEvents(8):getFallbackRecapEvents();
+  const slides=getNightRecapScenes();
   renderNightRecap(0);
   slides.forEach((_,idx)=>{
     if(idx===0)return;
@@ -1635,10 +1795,6 @@ function recordGameStats(game,winnerUids=[]){
 }
 
 function recordCompletedGame(game=activeStatsGame,winnerUids=[]){
-  if(game){
-    const winners=players.filter(p=>winnerUids?.includes(p.uid)).map(p=>p.name);
-    recordNightEvent('game_completed',{game,winners,weight:winners.length?6:0});
-  }
   recordGameStats(game,winnerUids);
   if(game&&activeStatsGame===game)activeStatsGame=null;
 }

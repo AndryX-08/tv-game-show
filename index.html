@@ -139,26 +139,36 @@ select.tf option{background:#1C1C3A}
 .recap-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(2.5rem,9vw,7rem);letter-spacing:4px;line-height:.9;color:var(--gold);text-shadow:0 0 24px rgba(245,197,24,.22)}
 .recap-sub{font-size:.9rem;color:var(--txt);opacity:.82;max-width:620px;margin-top:.45rem}
 .recap-counter{font-family:'Bebas Neue',sans-serif;font-size:clamp(2rem,5vw,4rem);letter-spacing:2px;color:#fff;text-align:right}
-.recap-body{display:grid;grid-template-columns:minmax(280px,.85fr) minmax(320px,1.15fr);gap:1rem;align-items:stretch;min-height:0}
-.recap-main{position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);border-radius:18px;padding:clamp(1rem,3vw,2rem);display:flex;flex-direction:column;justify-content:flex-end;min-height:380px;box-shadow:0 24px 70px rgba(0,0,0,.32)}
-.recap-main::before{content:'';position:absolute;inset:-30% -10%;background:linear-gradient(115deg,transparent,rgba(255,255,255,.14),transparent);animation:recapFlash 3.2s ease-in-out infinite}
-.recap-badge{position:relative;width:max-content;max-width:100%;padding:.36rem .7rem;border-radius:999px;background:rgba(46,204,113,.16);border:1px solid rgba(46,204,113,.36);color:#7CFFB1;font-size:.7rem;font-weight:1000;letter-spacing:2px;text-transform:uppercase;margin-bottom:.8rem}
-.recap-event-title{position:relative;font-family:'Bebas Neue',sans-serif;font-size:clamp(2.2rem,6vw,5.2rem);letter-spacing:2px;line-height:.95;color:#fff;overflow-wrap:anywhere}
-.recap-event-detail{position:relative;margin-top:.8rem;font-size:clamp(.95rem,1.7vw,1.25rem);line-height:1.4;color:rgba(240,238,228,.86);max-width:780px}
-.recap-hype{position:absolute;right:1rem;top:1rem;width:74px;aspect-ratio:1;border-radius:50%;display:grid;place-items:center;background:rgba(245,197,24,.14);border:1px solid rgba(245,197,24,.42);font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:var(--gold)}
-.recap-list{display:grid;gap:.65rem;align-content:start;overflow:auto;padding-right:.2rem}
-.recap-mini{display:grid;grid-template-columns:auto 1fr auto;gap:.7rem;align-items:center;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:.7rem;transform:translateX(0);transition:transform .18s,border-color .18s,background .18s}
-.recap-mini.active{transform:translateX(-6px);border-color:rgba(245,197,24,.55);background:rgba(245,197,24,.12)}
-.recap-mini-rank{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:rgba(255,255,255,.08);font-weight:1000;color:var(--gold)}
-.recap-mini-title{font-weight:1000;font-size:.86rem;line-height:1.2}
-.recap-mini-meta{font-size:.7rem;color:var(--mut);margin-top:.15rem}
-.recap-mini-score{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:#2ECC71}
+.recap-body{position:relative;min-height:0;perspective:1200px;--recap-accent:var(--gold)}
+.recap-viewport{position:relative;height:100%;min-height:440px;overflow:hidden;border:1px solid rgba(255,255,255,.12);border-radius:20px;background:radial-gradient(circle at 50% 30%,color-mix(in srgb,var(--recap-accent) 24%,transparent),transparent 34%),linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03));box-shadow:0 30px 90px rgba(0,0,0,.36);transform-style:preserve-3d}
+.recap-world{position:absolute;inset:0;transform-style:preserve-3d;animation:recapCamera 2.8s cubic-bezier(.18,.82,.18,1) both}
+.recap-depth{position:absolute;left:50%;top:50%;width:120%;height:120%;border:1px solid rgba(255,255,255,.08);background:linear-gradient(135deg,rgba(255,255,255,.08),rgba(255,255,255,.015));transform-style:preserve-3d}
+.recap-depth.floor{top:auto;bottom:-52%;height:70%;transform:translateX(-50%) rotateX(72deg) translateZ(-170px);background:linear-gradient(90deg,rgba(255,255,255,.06) 1px,transparent 1px),linear-gradient(180deg,rgba(255,255,255,.06) 1px,transparent 1px);background-size:54px 54px}
+.recap-depth.back{transform:translate(-50%,-50%) translateZ(-330px)}
+.recap-depth.left{width:70%;transform:translate(-104%,-50%) rotateY(74deg) translateZ(-120px)}
+.recap-depth.right{width:70%;transform:translate(4%,-50%) rotateY(-74deg) translateZ(-120px)}
+.recap-orbit{position:absolute;left:50%;top:50%;border:1px solid color-mix(in srgb,var(--recap-accent) 55%,transparent);border-radius:50%;transform-style:preserve-3d;box-shadow:0 0 34px color-mix(in srgb,var(--recap-accent) 24%,transparent)}
+.recap-orbit.one{width:280px;height:280px;transform:translate3d(-62%,-58%,80px) rotateX(68deg) rotateZ(18deg);animation:recapOrbit 8s linear infinite}
+.recap-orbit.two{width:430px;height:430px;transform:translate3d(-12%,-45%,-70px) rotateY(56deg) rotateZ(-12deg);animation:recapOrbit 11s linear infinite reverse}
+.recap-shot{position:absolute;left:clamp(1rem,6vw,5rem);right:clamp(1rem,18vw,12rem);bottom:clamp(1.2rem,8vw,5rem);transform:translateZ(180px) rotateY(-7deg);transform-style:preserve-3d}
+.recap-shot::before{content:'';position:absolute;inset:-1rem -1.2rem;border-left:4px solid var(--recap-accent);background:linear-gradient(90deg,color-mix(in srgb,var(--recap-accent) 16%,transparent),transparent);transform:translateZ(-18px);pointer-events:none}
+.recap-badge{position:relative;width:max-content;max-width:100%;padding:.38rem .75rem;border-radius:999px;background:color-mix(in srgb,var(--recap-accent) 18%,transparent);border:1px solid color-mix(in srgb,var(--recap-accent) 45%,transparent);color:var(--recap-accent);font-size:.7rem;font-weight:1000;letter-spacing:2px;text-transform:uppercase;margin-bottom:.8rem}
+.recap-event-title{position:relative;font-family:'Bebas Neue',sans-serif;font-size:clamp(2.5rem,7vw,6.4rem);letter-spacing:2px;line-height:.9;color:#fff;overflow-wrap:anywhere;text-shadow:0 12px 34px rgba(0,0,0,.38)}
+.recap-event-detail{position:relative;margin-top:.8rem;font-size:clamp(.95rem,1.8vw,1.35rem);line-height:1.4;color:rgba(240,238,228,.9);max-width:820px}
+.recap-hype{position:absolute;right:clamp(1rem,4vw,3rem);top:clamp(1rem,4vw,2.4rem);min-width:120px;min-height:92px;padding:.8rem 1rem;border-radius:18px;display:grid;place-items:center;text-align:center;background:color-mix(in srgb,var(--recap-accent) 15%,rgba(255,255,255,.04));border:1px solid color-mix(in srgb,var(--recap-accent) 42%,transparent);font-family:'Bebas Neue',sans-serif;font-size:clamp(1.6rem,4vw,3rem);letter-spacing:1px;color:var(--recap-accent);transform:translateZ(260px) rotateY(10deg);box-shadow:0 18px 45px rgba(0,0,0,.28)}
+.recap-stat-card{position:absolute;padding:.7rem .9rem;border-radius:14px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);font-size:.75rem;font-weight:1000;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.78);transform-style:preserve-3d}
+.recap-stat-card.primary{left:8%;top:16%;transform:translateZ(40px) rotateY(18deg)}
+.recap-stat-card.secondary{right:10%;bottom:17%;transform:translateZ(90px) rotateY(-16deg);color:var(--recap-accent)}
+.recap-filmstrip{position:absolute;left:50%;bottom:1rem;display:flex;gap:.45rem;transform:translateX(-50%) translateZ(300px);z-index:3}
+.recap-filmstrip button{width:34px;height:6px;border:none;border-radius:999px;background:rgba(255,255,255,.28);cursor:pointer;transition:width .2s,background .2s}
+.recap-filmstrip button.active{width:58px;background:var(--recap-accent)}
 .recap-controls{display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap}
 .recap-empty{position:relative;z-index:1;text-align:center;align-self:center;justify-self:center;max-width:560px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:1.4rem}
 .recap-empty-title{font-family:'Bebas Neue',sans-serif;font-size:2.2rem;letter-spacing:2px;color:var(--gold)}
 .recap-empty p{color:var(--mut);line-height:1.45;margin-top:.35rem}
 @keyframes recapSweep{to{transform:rotate(360deg)}}
-@keyframes recapFlash{0%,100%{transform:translateX(-45%) skewX(-14deg);opacity:.35}50%{transform:translateX(45%) skewX(-14deg);opacity:.8}}
+@keyframes recapCamera{0%{transform:translate3d(0,18px,-260px) rotateX(8deg) rotateY(-18deg);filter:blur(8px);opacity:.15}70%{filter:blur(0);opacity:1}100%{transform:translate3d(0,0,0) rotateX(0) rotateY(0);filter:blur(0);opacity:1}}
+@keyframes recapOrbit{to{rotate:360deg}}
 
 .step-block{background:var(--surf);border:1px solid var(--bord);border-radius:14px;padding:1.2rem;margin-bottom:1rem}
 .step-label{font-size:.68rem;font-weight:900;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:.8rem}
@@ -482,8 +492,10 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
   .wheel-label{transform:rotate(var(--a)) translateY(-96px) rotate(90deg);font-size:.7rem}
   .recap-head{display:grid}
   .recap-counter{text-align:left}
-  .recap-body{grid-template-columns:1fr}
-  .recap-main{min-height:330px}
+  .recap-viewport{min-height:440px}
+  .recap-shot{left:1rem;right:1rem;bottom:4.2rem;transform:translateZ(150px) rotateY(0deg)}
+  .recap-hype{right:1rem;top:1rem;min-width:94px;min-height:72px;font-size:1.6rem}
+  .recap-stat-card{display:none}
   .recap-screen{padding:0}
   .recap-stage{padding:calc(1rem + env(safe-area-inset-top)) .85rem calc(1rem + env(safe-area-inset-bottom))}
 }
