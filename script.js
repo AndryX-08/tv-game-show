@@ -655,18 +655,42 @@ function getWinPodiumEntries(){
       initials:initials(player.name||'G')
     }));
 
-  if(rowEntries.length)return rowEntries;
-  return playerEntries;
+  return playerEntries.length ? playerEntries : rowEntries;
+}
+
+function normalizeWinPodiumEntries(entries){
+  const normalized=[...entries].slice(0,3);
+  while(normalized.length<3){
+    normalized.push({
+      name:'',
+      score:'',
+      rank:normalized.length+1,
+      color:TC[normalized.length%TC.length],
+      initials:'—',
+      empty:true
+    });
+  }
+  return normalized.map((entry,idx)=>({
+    ...entry,
+    rank:idx+1,
+    color:entry.color||TC[idx%TC.length]||TC[0],
+    initials:entry.initials||initials(entry.name||'—')
+  }));
+}
+
+function formatPodiumScore(score){
+  const text=String(score??'').trim();
+  if(!text)return '—';
+  return /pt|€|eur/i.test(text)?escapeHtml(text):`${escapeHtml(text)} pt`;
 }
 
 function podiumSlotHtml(entry,slotClass){
-  if(!entry)return '';
   const medal={1:'1',2:'2',3:'3'}[entry.rank]||entry.rank;
   const c=entry.color||TC[0];
-  return `<div class="podium-slot ${slotClass}" data-rank="${entry.rank}">
-    <div class="podium-avatar" style="background:${c.light};color:${c.hex}">${escapeHtml(entry.initials)}</div>
-    <div class="podium-name">${escapeHtml(entry.name)}</div>
-    <div class="podium-score">${escapeHtml(entry.score)} pt</div>
+  return `<div class="podium-slot ${slotClass}${entry.empty?' empty':''}" data-rank="${entry.rank}">
+    <div class="podium-avatar" style="background:${c.light};color:${c.hex}">${escapeHtml(entry.empty?'—':entry.initials)}</div>
+    <div class="podium-name">${escapeHtml(entry.empty?'':entry.name)}</div>
+    <div class="podium-score">${entry.empty?'—':formatPodiumScore(entry.score)}</div>
     <div class="podium-block">${medal}</div>
   </div>`;
 }
@@ -674,16 +698,8 @@ function podiumSlotHtml(entry,slotClass){
 function renderWinPodium(entries){
   const podium=document.getElementById('win-podium');
   if(!podium)return;
-  podium.className=`win-podium ${entries.length===1?'single':entries.length===2?'duo':''}`;
-  const first=entries[0],second=entries[1],third=entries[2];
-  if(entries.length===1){
-    podium.innerHTML=podiumSlotHtml(first,'first');
-    return;
-  }
-  if(entries.length===2){
-    podium.innerHTML=podiumSlotHtml(first,'first')+podiumSlotHtml(second,'second');
-    return;
-  }
+  podium.className='win-podium';
+  const [first,second,third]=normalizeWinPodiumEntries(entries);
   podium.innerHTML=podiumSlotHtml(second,'second')+podiumSlotHtml(first,'first')+podiumSlotHtml(third,'third');
 }
 
@@ -694,41 +710,17 @@ function startWinFinale(){
   const name=document.getElementById('win-name');
   const sub=document.getElementById('win-sub');
   const suspense=document.getElementById('win-suspense');
-  const suspenseText=document.getElementById('win-suspense-text');
   const entries=getWinPodiumEntries();
   const winnerName=(name?.textContent||entries[0]?.name||'Giocatore').trim();
   const winnerSub=(sub?.textContent||'').trim();
   renderWinPodium(entries);
 
-  wrap?.classList.remove('ready');
-  wrap?.classList.add('revealing');
-  if(title)title.textContent='CHI HA VINTO?';
-  if(name)name.textContent='—';
-  if(sub)sub.textContent='';
-  suspense?.classList.remove('hidden');
-  if(suspenseText)suspenseText.textContent='Prepariamo il podio';
-
-  const reducedMotion=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-  const steps=reducedMotion
-    ? [{delay:0,rank:3,text:'Terzo posto'},{delay:0,rank:2,text:'Secondo posto'},{delay:0,rank:1,text:'Vince'}]
-    : [{delay:900,rank:3,text:'Terzo posto'},{delay:1900,rank:2,text:'Secondo posto'},{delay:3200,rank:1,text:'Il vincitore e'}];
-
-  steps.forEach(step=>{
-    winFinaleTimers.push(setTimeout(()=>{
-      const slot=document.querySelector(`#win-podium [data-rank="${step.rank}"]`);
-      if(slot)slot.classList.add('reveal');
-      if(suspenseText)suspenseText.textContent=step.text;
-    },step.delay));
-  });
-
-  winFinaleTimers.push(setTimeout(()=>{
-    if(title)title.textContent='VINCE';
-    if(name)name.textContent=winnerName;
-    if(sub)sub.textContent=winnerSub;
-    suspense?.classList.add('hidden');
-    wrap?.classList.remove('revealing');
-    wrap?.classList.add('ready');
-  },reducedMotion?0:4300));
+  if(title)title.textContent='PODIO FINALE';
+  if(name)name.textContent=winnerName||'—';
+  if(sub)sub.textContent=winnerSub;
+  suspense?.classList.add('hidden');
+  wrap?.classList.remove('revealing');
+  wrap?.classList.add('ready');
 }
 function getTimer(g){return parseInt(document.getElementById('timer-'+g).value)||30}
 function getTabooTimer(){return parseInt(document.getElementById('timer-taboo')?.value)||60}
@@ -2258,18 +2250,26 @@ function startGame(game,options={}){
   }
   if(game==='aua'){
     selPid=null;
+    const renderAuaPlayers=()=>{
+      document.getElementById('pick-grid').innerHTML=players.map(p=>{
+        const c=TC[p.ci%TC.length];const t=teams.find(t=>t.mids.includes(p.id));
+        return `<div class="player-pick" id="pp1-${p.id}" onclick="selPick1(${p.id})">
+          <div class="pp-avatar" style="background:${c.light};color:${c.hex}">${initials(p.name)}</div>
+          <div class="pp-name">${p.name}</div>
+          <div class="pp-info">${t?t.name:'Libero'} · ${p.score}pt</div></div>`;
+      }).join('');
+    };
     if(players.length===1){
       selPid=players[0].id;
-      beginAUA();
+      renderAuaPlayers();
+      document.getElementById('pp1-'+selPid)?.classList.add('selected');
+      document.getElementById('btn-pick-go').disabled=false;
+      document.getElementById('btn-pick-go').onclick=()=>beginAUA();
+      startAuaIntro();
+      goTo('s-pick');
       return;
     }
-    document.getElementById('pick-grid').innerHTML=players.map(p=>{
-      const c=TC[p.ci%TC.length];const t=teams.find(t=>t.mids.includes(p.id));
-      return `<div class="player-pick" id="pp1-${p.id}" onclick="selPick1(${p.id})">
-        <div class="pp-avatar" style="background:${c.light};color:${c.hex}">${initials(p.name)}</div>
-        <div class="pp-name">${p.name}</div>
-        <div class="pp-info">${t?t.name:'Libero'} · ${p.score}pt</div></div>`;
-    }).join('');
+    renderAuaPlayers();
     document.getElementById('btn-pick-go').disabled=true;
     document.getElementById('btn-pick-go').onclick=()=>beginAUA();
     startAuaIntro();
