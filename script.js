@@ -59,7 +59,8 @@ const APP_ROUTES={
   's-pick-movie':'/indovina-film',
   's-movieguess':'/indovina-film/gioca',
   's-pick-ghigliottina':'/ghigliottina',
-  's-ghigliottina':'/ghigliottina/finale'
+  's-ghigliottina':'/ghigliottina/finale',
+  's-recap':'/recap-serata'
 };
 const SCREEN_BY_ROUTE=Object.entries(APP_ROUTES).reduce((acc,[screen,path])=>{
   acc[path]=screen;
@@ -119,6 +120,8 @@ const DEFAULT_PROFILE_STATS={
   wins:0,
   lastGame:'—'
 };
+const NIGHT_RECAP_STORAGE_KEY='tvgn-night-events-v1';
+let nightEvents=loadNightEvents();
 
 const ONBOARDING_STEPS=[
   {
@@ -672,6 +675,7 @@ function goTo(id,options={}){
   if(id!=='s-chain')clearChainTimer();
   if(id!=='s-sarabanda')stopSarabandaAudio();
   if(id!=='s-affari')stopAffariAudio();
+  if(id!=='s-recap')clearNightRecapTimers();
   if(id!=='s-ghigliottina'&&id!=='s-pick-ghigliottina'){
     clearGhigliottinaTimer();
     stopGhigliottinaAudio();
@@ -712,6 +716,250 @@ function playerColor(player, fallbackIndex=0){
   const ci=Number(player?.ci);
   const idx=Number.isFinite(ci)?ci:fallbackIndex;
   return TC[((idx%TC.length)+TC.length)%TC.length]||TC[0];
+}
+
+function loadNightEvents(){
+  try{
+    const saved=JSON.parse(localStorage.getItem(NIGHT_RECAP_STORAGE_KEY)||'[]');
+    return Array.isArray(saved)?saved:[];
+  }catch(err){
+    return [];
+  }
+}
+
+function saveNightEvents(){
+  try{
+    localStorage.setItem(NIGHT_RECAP_STORAGE_KEY,JSON.stringify(nightEvents.slice(-80)));
+  }catch(err){}
+}
+
+function getPlayerNameById(pid,fallback='Giocatore'){
+  return players.find(p=>p.id===pid)?.name||fallback;
+}
+
+function classifyNightEvent(event){
+  const base={
+    points_awarded:18,
+    game_completed:30,
+    aua_easy_miss:82,
+    affari_low_saved:72,
+    affari_big_loss:88,
+    affari_huge_offer:76,
+    affari_reject_pain:96,
+    affari_accept_regret:84,
+    ghigliottina_halved:66,
+    ghigliottina_final_loss:90,
+    sarabanda_wrong:52,
+    guesswho_wrong:48,
+    movie_wrong:45,
+    higherlower_streak_end:70,
+    wheel_bankrupt:88,
+    wheel_wrong_solution:64
+  }[event.type]||40;
+  return Math.max(1,Math.min(100,base+(Number(event.weight)||0)));
+}
+
+function getNightEventCopy(event){
+  const player=event.player||'Qualcuno';
+  const game=event.gameLabel||getGameStatsLabel(event.game);
+  const amount=value=>formatMoney(Number(value)||0);
+  const copies={
+    points_awarded:{
+      kicker:'Power move',
+      title:`${player} ha incassato ${event.points} punti`,
+      detail:`Colpo pesante in ${game}.`
+    },
+    game_completed:{
+      kicker:'Capitolo chiuso',
+      title:`${game} è finito`,
+      detail:event.winners?.length?`Vittoria per ${event.winners.join(', ')}.`:'Altro round consegnato alla storia.'
+    },
+    aua_easy_miss:{
+      kicker:'Momento no',
+      title:`${player} ha sbagliato una domanda impossibile da sbagliare`,
+      detail:`"${event.question}" - ha scelto "${event.chosen}".`
+    },
+    affari_low_saved:{
+      kicker:'Respiro enorme',
+      title:`${player} ha tolto un pacco leggerissimo`,
+      detail:`Nel pacco ${event.packageNum} c'erano solo ${amount(event.prize)}.`
+    },
+    affari_big_loss:{
+      kicker:'Doccia gelata',
+      title:`${player} ha bruciato ${amount(event.prize)}`,
+      detail:`Il pacco ${event.packageNum} era una mazzata vera.`
+    },
+    affari_huge_offer:{
+      kicker:'Chiamata bollente',
+      title:`${player} ha rifiutato ${amount(event.offer)}`,
+      detail:'Il dottore aveva messo sul tavolo una cifra seria.'
+    },
+    affari_reject_pain:{
+      kicker:'Scelta da ricordare',
+      title:`${player} ha rifiutato ${amount(event.offer)} ed è finito con ${amount(event.finalPrize)}`,
+      detail:`Differenza dolorosa: ${amount(event.loss)} lasciati per strada.`
+    },
+    affari_accept_regret:{
+      kicker:'Rimpianto',
+      title:`${player} ha accettato ${amount(event.offer)}, ma il pacco valeva ${amount(event.packagePrize)}`,
+      detail:`Sul tavolo sono rimasti ${amount(event.loss)}.`
+    },
+    ghigliottina_halved:{
+      kicker:'Taglio netto',
+      title:`${player} ha dimezzato la Ghigliottina`,
+      detail:`Da ${amount(event.before)} a ${amount(event.after)} sulla parola "${event.selected}".`
+    },
+    ghigliottina_final_loss:{
+      kicker:'Finale amaro',
+      title:`${player} ha perso ${amount(event.prize)} alla Ghigliottina`,
+      detail:`La parola finale era "${event.answer}".`
+    },
+    sarabanda_wrong:{
+      kicker:'Stonatura',
+      title:`${player} ha bucato Sarabanda`,
+      detail:event.track?`Brano: ${event.track}.`:'Risposta sbagliata nel momento caldo.'
+    },
+    guesswho_wrong:{
+      kicker:'Identikit fallito',
+      title:`${player} non ha riconosciuto ${event.character}`,
+      detail:`Indizi usati: ${event.clues}.`
+    },
+    movie_wrong:{
+      kicker:'Ciak sbagliato',
+      title:`${player} ha sbagliato film`,
+      detail:event.guess?`Tentativo: "${event.guess}".`:'Il poster non ha aiutato.'
+    },
+    higherlower_streak_end:{
+      kicker:'Serie spezzata',
+      title:`${player} si è fermato dopo ${event.streak} risposte`,
+      detail:`Scelta sbagliata tra ${event.left} e ${event.right}.`
+    },
+    wheel_bankrupt:{
+      kicker:'Crollo verticale',
+      title:`${player} ha perso tutto alla Ruota`,
+      detail:`Bancarotta con ${event.bank} punti in banca.`
+    },
+    wheel_wrong_solution:{
+      kicker:'Occasione sprecata',
+      title:`${player} ha provato la soluzione sbagliata`,
+      detail:`"${event.guess}" non era la frase.`
+    }
+  };
+  return copies[event.type]||{
+    kicker:'Highlight',
+    title:event.title||`${player} protagonista`,
+    detail:event.detail||game
+  };
+}
+
+function recordNightEvent(type,data={}){
+  const event={
+    id:`ev-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    type,
+    at:Date.now(),
+    ...data
+  };
+  event.gameLabel=event.gameLabel||getGameStatsLabel(event.game);
+  event.score=classifyNightEvent(event);
+  Object.assign(event,getNightEventCopy(event));
+  nightEvents.push(event);
+  nightEvents=nightEvents.slice(-80);
+  saveNightEvents();
+  return event;
+}
+
+function clearNightEvents(){
+  nightEvents=[];
+  saveNightEvents();
+  renderHomeLeaderboard();
+}
+
+function getTopNightEvents(limit=8){
+  return [...nightEvents]
+    .sort((a,b)=>(b.score||0)-(a.score||0)||(a.at||0)-(b.at||0))
+    .slice(0,limit);
+}
+
+let nightRecapTimers=[];
+function clearNightRecapTimers(){
+  nightRecapTimers.forEach(timer=>clearTimeout(timer));
+  nightRecapTimers=[];
+}
+
+function updateFinishNightButton(){
+  const btn=document.getElementById('finish-night-btn');
+  if(!btn)return;
+  const count=nightEvents.length;
+  btn.disabled=count===0&&players.every(p=>!(p.score||0));
+  btn.textContent=count?`Finisci serata (${count})`:'Finisci serata';
+}
+
+function getFallbackRecapEvents(){
+  const topPlayers=[...players].sort((a,b)=>(b.score||0)-(a.score||0)).filter(p=>p.score>0).slice(0,3);
+  return topPlayers.map((p,idx)=>({
+    id:`fallback-${p.id}`,
+    type:'points_awarded',
+    player:p.name,
+    points:p.score,
+    gameLabel:'Classifica generale',
+    score:70-(idx*8),
+    kicker:idx===0?'Dominatore':'Classifica',
+    title:idx===0?`${p.name} si prende la serata`:`${p.name} chiude con ${p.score} punti`,
+    detail:`Totale finale: ${p.score} punti.`
+  }));
+}
+
+function renderNightRecap(activeIndex=0){
+  const body=document.getElementById('recap-body');
+  const counter=document.getElementById('recap-counter');
+  const subtitle=document.getElementById('recap-subtitle');
+  if(!body)return;
+  const events=getTopNightEvents(8);
+  const slides=events.length?events:getFallbackRecapEvents();
+  if(!slides.length){
+    body.innerHTML=`<div class="recap-empty">
+      <div class="recap-empty-title">Nessun highlight salvato</div>
+      <p>Giocate qualche round: il sito registrera automaticamente errori assurdi, offerte pesanti, colpi di scena e vittorie.</p>
+    </div>`;
+    if(counter)counter.textContent='00';
+    if(subtitle)subtitle.textContent='La serata non ha ancora abbastanza materiale per il montaggio.';
+    return;
+  }
+  const safeIndex=((activeIndex%slides.length)+slides.length)%slides.length;
+  const active=slides[safeIndex];
+  if(counter)counter.textContent=String(safeIndex+1).padStart(2,'0');
+  if(subtitle)subtitle.textContent=`${slides.length} momenti selezionati dal motore highlights.`;
+  body.innerHTML=`<div class="recap-main">
+      <div class="recap-hype">${Math.round(active.score||0)}</div>
+      <div class="recap-badge">${escapeHtml(active.kicker||'Highlight')}</div>
+      <div class="recap-event-title">${escapeHtml(active.title||'Momento della serata')}</div>
+      <div class="recap-event-detail">${escapeHtml(active.detail||'')}</div>
+    </div>
+    <div class="recap-list">
+      ${slides.map((event,i)=>`<div class="recap-mini${i===safeIndex?' active':''}">
+        <div class="recap-mini-rank">${i+1}</div>
+        <div>
+          <div class="recap-mini-title">${escapeHtml(event.title||'Highlight')}</div>
+          <div class="recap-mini-meta">${escapeHtml(event.gameLabel||event.kicker||'Serata')}</div>
+        </div>
+        <div class="recap-mini-score">${Math.round(event.score||0)}</div>
+      </div>`).join('')}
+    </div>`;
+}
+
+function playNightRecap(){
+  clearNightRecapTimers();
+  const slides=getTopNightEvents(8).length?getTopNightEvents(8):getFallbackRecapEvents();
+  renderNightRecap(0);
+  slides.forEach((_,idx)=>{
+    if(idx===0)return;
+    nightRecapTimers.push(setTimeout(()=>renderNightRecap(idx),idx*2800));
+  });
+}
+
+function showNightRecap(){
+  goTo('s-recap');
+  playNightRecap();
 }
 
 let winFinaleTimers=[];
@@ -1199,6 +1447,7 @@ window.assignPlayer=assignPlayer;
 
 function renderHomeLeaderboard(){
   const el=document.getElementById('home-leaderboard');
+  updateFinishNightButton();
   if(!el){return;}
   const sortedPlayers=[...players].sort((a,b)=>b.score-a.score).slice(0,3);
   const sortedTeams=[...teams].sort((a,b)=>b.score-a.score).slice(0,3);
@@ -1243,6 +1492,14 @@ function awardPlayerPoints(pid,points=1,source='game',scoreTeam=true){
   p.score+=value;
   const t=scoreTeam?teams.find(tm=>tm.mids.includes(pid)):null;
   if(t)t.score+=value;
+  if(value>=8){
+    recordNightEvent('points_awarded',{
+      player:p.name,
+      points:value,
+      game:source,
+      weight:Math.min(22,value)
+    });
+  }
   savePlayerScoreOnline(p,value,source);
 }
 
@@ -1295,10 +1552,13 @@ function getGameStatsLabel(game){
     sarabanda:'Sarabanda',
     guesswho:'Indovina Chi',
     higherlower:'Higher or Lower',
+    'higher-lower':'Higher or Lower',
     taboo:'Taboo',
     affarituoi:'Affari Tuoi',
+    'affari-tuoi':'Affari Tuoi',
     movieguess:'Indovina il Film',
-    ghigliottina:'La Ghigliottina'
+    ghigliottina:'La Ghigliottina',
+    manche:'Manche'
   };
   return labels[game]||game||'—';
 }
@@ -1375,6 +1635,10 @@ function recordGameStats(game,winnerUids=[]){
 }
 
 function recordCompletedGame(game=activeStatsGame,winnerUids=[]){
+  if(game){
+    const winners=players.filter(p=>winnerUids?.includes(p.uid)).map(p=>p.name);
+    recordNightEvent('game_completed',{game,winners,weight:winners.length?6:0});
+  }
   recordGameStats(game,winnerUids);
   if(game&&activeStatsGame===game)activeStatsGame=null;
 }
@@ -2564,6 +2828,16 @@ function chooseHigherLower(side){
     return;
   }
   state.message=`Sbagliato: ${higher==='a'?a.name:b.name} valeva di piu.`;
+  if((state.streak||0)>=3){
+    recordNightEvent('higherlower_streak_end',{
+      game:'higherlower',
+      player:getPlayerNameById(state.pid),
+      streak:state.streak||0,
+      left:a.name,
+      right:b.name,
+      weight:Math.min(18,(state.streak||0)*3)
+    });
+  }
   document.getElementById('hol-message').textContent=state.message;
   higherLowerTimer=setTimeout(()=>endHigherLower(false),1400);
 }
@@ -2732,6 +3006,13 @@ function submitMovieGuess(){
   const guess=document.getElementById('movie-answer')?.value||'';
   const ok=normalizeMovieTitle(guess)===normalizeMovieTitle(movie.title)||normalizeMovieTitle(guess)===normalizeMovieTitle(movie.original_title);
   if(!ok){
+    recordNightEvent('movie_wrong',{
+      game:'movieguess',
+      player:getPlayerNameById(movieGuessState.pid),
+      guess:guess.trim(),
+      movie:movie.title,
+      weight:(movieGuessState.clueLevel||1) >= 3?8:0
+    });
     movieGuessState.message='Non e lui. Prova ancora o chiedi un indizio.';
     renderMovieGuess();
     return;
@@ -3004,7 +3285,19 @@ function selectGhigliottinaWord(word){
   const pair=puzzle?.pairs?.[ghigliottinaState.step];
   if(!pair||ghigliottinaState.finalMode)return;
   const ok=normalizeGhigliottinaAnswer(word)===normalizeGhigliottinaAnswer(pair.correct);
-  if(!ok)ghigliottinaState.prize=Math.floor(ghigliottinaState.prize/2);
+  const beforePrize=ghigliottinaState.prize;
+  if(!ok){
+    ghigliottinaState.prize=Math.floor(ghigliottinaState.prize/2);
+    recordNightEvent('ghigliottina_halved',{
+      game:'ghigliottina',
+      player:getPlayerNameById(ghigliottinaState.pid),
+      selected:word,
+      correct:pair.correct,
+      before:beforePrize,
+      after:ghigliottinaState.prize,
+      weight:beforePrize>=100000?16:6
+    });
+  }
   ghigliottinaState.choices.push({selected:word,correct:pair.correct,ok});
   ghigliottinaState.message=ok
     ? `Esatto: ${pair.correct}. Il montepremi resta ${formatGhigliottinaPrize(ghigliottinaState.prize)}.`
@@ -3048,6 +3341,15 @@ function endGhigliottina(won=false){
   const prize=won?ghigliottinaState.prize:0;
   const points=won?Math.max(1,Math.round(prize/10000)):0;
   if(player&&points>0)awardPlayerPoints(player.id,points,'ghigliottina');
+  if(!won&&ghigliottinaState.prize>=25000){
+    recordNightEvent('ghigliottina_final_loss',{
+      game:'ghigliottina',
+      player:player?.name||'Giocatore',
+      prize:ghigliottinaState.prize,
+      answer:ghigliottinaState.puzzle?.answer||'?',
+      weight:ghigliottinaState.prize>=100000?16:6
+    });
+  }
   document.getElementById('win-name').textContent=player?.name||'Giocatore';
   document.getElementById('win-sub').textContent=won
     ? `Hai vinto ${formatGhigliottinaPrize(prize)}. La parola era ${ghigliottinaState.puzzle.answer}.`
@@ -3751,6 +4053,7 @@ function beginAffariTuoi(){
     roundIndex:0,
     openedThisRound:0,
     offer:0,
+    rejectedOffers:[],
     step:'Scelta del pacco',
     message:'Scegli il tuo pacco. Da qui comincia la partita.'
   };
@@ -3792,6 +4095,24 @@ async function openAffariPackage(num){
   affariState.offer=0;
   const good=isGood?'Ottimo colpo':'Questo fa male';
   affariState.message=`Pacco ${pkg.num}, ${pkg.region}: ${good}.`;
+  const affariPlayer=getPlayerNameById(affariState.pid,'Concorrente');
+  if(pkg.prize<=1000){
+    recordNightEvent('affari_low_saved',{
+      game:'affarituoi',
+      player:affariPlayer,
+      packageNum:pkg.num,
+      prize:pkg.prize,
+      weight:pkg.prize<=50?16:8
+    });
+  }else if(pkg.prize>=50000){
+    recordNightEvent('affari_big_loss',{
+      game:'affarituoi',
+      player:affariPlayer,
+      packageNum:pkg.num,
+      prize:pkg.prize,
+      weight:pkg.prize>=200000?18:8
+    });
+  }
   showAffariPrizeAlert(pkg,isGood);
   releaseAffariOutcomeSound(preparedAudio,isGood);
   setTimeout(()=>{pkg.justOpened=false;renderAffari();},700);
@@ -3822,6 +4143,16 @@ function acceptAffariOffer(){
 
 function rejectAffariOffer(){
   if(affariState.phase!=='offer')return;
+  const rejectedOffer=affariState.offer||0;
+  affariState.rejectedOffers=[...(affariState.rejectedOffers||[]),rejectedOffer];
+  if(rejectedOffer>=50000){
+    recordNightEvent('affari_huge_offer',{
+      game:'affarituoi',
+      player:getPlayerNameById(affariState.pid,'Concorrente'),
+      offer:rejectedOffer,
+      weight:rejectedOffer>=100000?18:8
+    });
+  }
   affariState.roundIndex++;
   affariState.openedThisRound=0;
   affariState.offer=0;
@@ -3867,6 +4198,27 @@ function finishAffariGame(amount,reason){
   const points=Math.max(1,Math.round(amount/10000));
   if(player)awardPlayerPoints(player.id,points,'affari-tuoi');
   const own=affariState.packages?.find(pkg=>pkg.num===affariState.ownNum);
+  const bestRejected=Math.max(0,...(affariState.rejectedOffers||[]));
+  if(reason==='pacco finale'&&bestRejected>=30000&&bestRejected>amount*1.8){
+    recordNightEvent('affari_reject_pain',{
+      game:'affarituoi',
+      player:player?.name||'Concorrente',
+      offer:bestRejected,
+      finalPrize:amount,
+      loss:bestRejected-amount,
+      weight:bestRejected>=100000?18:8
+    });
+  }
+  if(reason==='offerta accettata'&&own?.prize>amount*1.8&&own.prize>=30000){
+    recordNightEvent('affari_accept_regret',{
+      game:'affarituoi',
+      player:player?.name||'Concorrente',
+      offer:amount,
+      packagePrize:own.prize,
+      loss:own.prize-amount,
+      weight:own.prize>=100000?16:8
+    });
+  }
   document.getElementById('win-name').textContent=player?.name||'Concorrente';
   document.getElementById('win-sub').textContent=`${reason}: ${formatMoney(amount)} (${points} pt).`;
   document.getElementById('win-scores').innerHTML=`<div style="font-size:.68rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--mut);margin-bottom:.6rem">Risultato Affari Tuoi</div>
@@ -4488,7 +4840,7 @@ function submitSarabandaAnswer(){
   const guess=document.getElementById('sara-answer')?.value||'';
   const ok=isSarabandaGuessCorrect(guess,track);
   if(ok)awardSarabandaPoint();
-  else wrongSarabandaAnswer();
+  else wrongSarabandaAnswer(guess);
 }
 
 function awardSarabandaPoint(){
@@ -4510,8 +4862,16 @@ function awardSarabandaPoint(){
   syncSarabandaState();
 }
 
-function wrongSarabandaAnswer(){
+function wrongSarabandaAnswer(guess=''){
   const p=sarabandaState.players.find(pl=>pl.id===sarabandaState.activePid);
+  const track=getCurrentSarabandaTrack();
+  recordNightEvent('sarabanda_wrong',{
+    game:'sarabanda',
+    player:p?.name||'Giocatore',
+    track:track?[track.title,track.artist].filter(Boolean).join(' - '):'',
+    guess:guess.trim(),
+    weight:guess.trim()?4:0
+  });
   setSarabandaMessage(p?`${p.name} ha sbagliato. Riprova o passa alla prossima canzone.`:'Risposta sbagliata.');
   renderSarabanda();
   syncSarabandaState();
@@ -4715,7 +5075,18 @@ function submitGuessWhoAnswer(){
   if(!character||guessWhoState.revealed)return;
   const guess=document.getElementById('gw-answer')?.value||'';
   if(isGuessWhoAnswerCorrect(guess,character))awardGuessWhoPoint();
-  else nextGuessWhoClue(true);
+  else{
+    const p=guessWhoState.players.find(pl=>pl.id===guessWhoState.activePid);
+    recordNightEvent('guesswho_wrong',{
+      game:'guesswho',
+      player:p?.name||'Giocatore',
+      character:character.name,
+      guess:guess.trim(),
+      clues:(guessWhoState.clueIdx||0)+1,
+      weight:(guessWhoState.clueIdx||0)>=3?8:0
+    });
+    nextGuessWhoClue(true);
+  }
 }
 
 function awardGuessWhoPoint(){
@@ -4864,6 +5235,13 @@ function answerAUA(chosen,idx){
       else{auaState.qIdx++;renderAUAQ();}
     },600);
   } else {
+    recordNightEvent('aua_easy_miss',{
+      game:'aua',
+      player:getPlayerNameById(auaState.pid),
+      question:q.q,
+      chosen,
+      weight:auaState.answered>=10?12:0
+    });
     q.a.forEach((a,i)=>{if(a===q.wrong)document.getElementById('ans-'+i)?.classList.add('correct');});
     setTimeout(()=>showAUAFail(),600);
   }
@@ -5527,7 +5905,16 @@ function spinWheel(){
     ws.lastPrize=prize;
     if(prize.bankrupt){
       const active=getActiveWheelPlayer();
+      const bankBefore=active?.bank||0;
       if(active)active.bank=0;
+      if(active&&bankBefore>=1000){
+        recordNightEvent('wheel_bankrupt',{
+          game:'ruota',
+          player:active.name,
+          bank:bankBefore,
+          weight:Math.min(18,Math.round(bankBefore/800))
+        });
+      }
       ws.pendingPrize=null;
       passWheelTurn('Bancarotta!');
     } else if(prize.pass){
@@ -5608,6 +5995,13 @@ function submitWheelSolution(){
     return;
   }
   if(normalizeWheelSolution(guess)!==normalizeWheelSolution(ws.phrase)){
+    const active=getActiveWheelPlayer();
+    recordNightEvent('wheel_wrong_solution',{
+      game:'ruota',
+      player:active?.name||'Giocatore',
+      guess:guess.trim(),
+      weight:getHiddenWheelLetters().length<=3?12:0
+    });
     if(input){
       input.value='';
     }
@@ -5724,6 +6118,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
   renderRegisteredUserSelect();
+  updateFinishNightButton();
   auth.onAuthStateChanged(user => {
     console.log("USER:", user);
     currentUser = user;

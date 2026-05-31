@@ -125,6 +125,40 @@ select.tf option{background:#1C1C3A}
 .gc-tag{font-size:.6rem;font-weight:900;letter-spacing:.6px;text-transform:uppercase;padding:.18rem .48rem;border-radius:20px;border:1px solid transparent;line-height:1.2}
 .gc-tag.solo{background:rgba(52,152,219,.14);border-color:rgba(52,152,219,.34);color:#7EC8FF}
 .gc-tag.multi{background:rgba(245,197,24,.13);border-color:rgba(245,197,24,.35);color:var(--gold)}
+.home-actions{display:flex;justify-content:center;gap:.75rem;flex-wrap:wrap;margin-top:.3rem}
+.btn-finale{background:linear-gradient(135deg,#F5C518,#2ECC71);color:#070714;border:none;border-radius:12px;padding:.85rem 1.8rem;font-family:'Nunito',sans-serif;font-size:.9rem;font-weight:1000;letter-spacing:.5px;cursor:pointer;box-shadow:0 12px 30px rgba(46,204,113,.18),0 0 0 1px rgba(255,255,255,.14) inset}
+.btn-finale:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
+
+.recap-screen{max-width:none;width:100%;min-height:100vh;padding:0;overflow:hidden;background:#05050d}
+.recap-stage{position:relative;min-height:100vh;padding:clamp(1rem,3vw,2.2rem);display:grid;grid-template-rows:auto 1fr auto;gap:1rem;background:radial-gradient(circle at 18% 18%,rgba(245,197,24,.2),transparent 28%),radial-gradient(circle at 84% 22%,rgba(46,204,113,.15),transparent 26%),linear-gradient(135deg,#05050d,#14142e 54%,#070714)}
+.recap-stage::before{content:'';position:absolute;inset:-20%;background:conic-gradient(from 30deg,transparent,rgba(255,255,255,.08),transparent,rgba(245,197,24,.12),transparent);animation:recapSweep 9s linear infinite;pointer-events:none}
+.recap-stage::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(180deg,rgba(255,255,255,.028) 1px,transparent 1px);background-size:68px 68px;mask-image:linear-gradient(180deg,rgba(0,0,0,.85),transparent 84%);pointer-events:none}
+.recap-head,.recap-body,.recap-controls{position:relative;z-index:1}
+.recap-head{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem}
+.recap-kicker{font-size:.68rem;font-weight:1000;letter-spacing:3px;text-transform:uppercase;color:#2ECC71}
+.recap-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(2.5rem,9vw,7rem);letter-spacing:4px;line-height:.9;color:var(--gold);text-shadow:0 0 24px rgba(245,197,24,.22)}
+.recap-sub{font-size:.9rem;color:var(--txt);opacity:.82;max-width:620px;margin-top:.45rem}
+.recap-counter{font-family:'Bebas Neue',sans-serif;font-size:clamp(2rem,5vw,4rem);letter-spacing:2px;color:#fff;text-align:right}
+.recap-body{display:grid;grid-template-columns:minmax(280px,.85fr) minmax(320px,1.15fr);gap:1rem;align-items:stretch;min-height:0}
+.recap-main{position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);border-radius:18px;padding:clamp(1rem,3vw,2rem);display:flex;flex-direction:column;justify-content:flex-end;min-height:380px;box-shadow:0 24px 70px rgba(0,0,0,.32)}
+.recap-main::before{content:'';position:absolute;inset:-30% -10%;background:linear-gradient(115deg,transparent,rgba(255,255,255,.14),transparent);animation:recapFlash 3.2s ease-in-out infinite}
+.recap-badge{position:relative;width:max-content;max-width:100%;padding:.36rem .7rem;border-radius:999px;background:rgba(46,204,113,.16);border:1px solid rgba(46,204,113,.36);color:#7CFFB1;font-size:.7rem;font-weight:1000;letter-spacing:2px;text-transform:uppercase;margin-bottom:.8rem}
+.recap-event-title{position:relative;font-family:'Bebas Neue',sans-serif;font-size:clamp(2.2rem,6vw,5.2rem);letter-spacing:2px;line-height:.95;color:#fff;overflow-wrap:anywhere}
+.recap-event-detail{position:relative;margin-top:.8rem;font-size:clamp(.95rem,1.7vw,1.25rem);line-height:1.4;color:rgba(240,238,228,.86);max-width:780px}
+.recap-hype{position:absolute;right:1rem;top:1rem;width:74px;aspect-ratio:1;border-radius:50%;display:grid;place-items:center;background:rgba(245,197,24,.14);border:1px solid rgba(245,197,24,.42);font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:var(--gold)}
+.recap-list{display:grid;gap:.65rem;align-content:start;overflow:auto;padding-right:.2rem}
+.recap-mini{display:grid;grid-template-columns:auto 1fr auto;gap:.7rem;align-items:center;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:.7rem;transform:translateX(0);transition:transform .18s,border-color .18s,background .18s}
+.recap-mini.active{transform:translateX(-6px);border-color:rgba(245,197,24,.55);background:rgba(245,197,24,.12)}
+.recap-mini-rank{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:rgba(255,255,255,.08);font-weight:1000;color:var(--gold)}
+.recap-mini-title{font-weight:1000;font-size:.86rem;line-height:1.2}
+.recap-mini-meta{font-size:.7rem;color:var(--mut);margin-top:.15rem}
+.recap-mini-score{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:#2ECC71}
+.recap-controls{display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap}
+.recap-empty{position:relative;z-index:1;text-align:center;align-self:center;justify-self:center;max-width:560px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:1.4rem}
+.recap-empty-title{font-family:'Bebas Neue',sans-serif;font-size:2.2rem;letter-spacing:2px;color:var(--gold)}
+.recap-empty p{color:var(--mut);line-height:1.45;margin-top:.35rem}
+@keyframes recapSweep{to{transform:rotate(360deg)}}
+@keyframes recapFlash{0%,100%{transform:translateX(-45%) skewX(-14deg);opacity:.35}50%{transform:translateX(45%) skewX(-14deg);opacity:.8}}
 
 .step-block{background:var(--surf);border:1px solid var(--bord);border-radius:14px;padding:1.2rem;margin-bottom:1rem}
 .step-label{font-size:.68rem;font-weight:900;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:.8rem}
@@ -446,6 +480,12 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
   .wheel-letter-row{flex-wrap:wrap;justify-content:center}
   .phrase-tile{width:22px;height:31px;font-size:1.08rem}
   .wheel-label{transform:rotate(var(--a)) translateY(-96px) rotate(90deg);font-size:.7rem}
+  .recap-head{display:grid}
+  .recap-counter{text-align:left}
+  .recap-body{grid-template-columns:1fr}
+  .recap-main{min-height:330px}
+  .recap-screen{padding:0}
+  .recap-stage{padding:calc(1rem + env(safe-area-inset-top)) .85rem calc(1rem + env(safe-area-inset-bottom))}
 }
 
 .win-wrap{position:relative;text-align:center;padding:2rem 1rem;overflow:hidden;min-height:calc(100vh - 2.8rem);display:flex;flex-direction:column;justify-content:center}
@@ -1062,9 +1102,31 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
         <div class="gc-tags"><span class="gc-tag solo">1+ giocatore</span></div>
       </div>
     </div>
-    <button class="btn-ghost" onclick="goTo('s-setup')">⚙ Configura giocatori &amp; timer</button>
+    <div class="home-actions">
+      <button class="btn-ghost" onclick="goTo('s-setup')">⚙ Configura giocatori &amp; timer</button>
+      <button class="btn-finale" id="finish-night-btn" onclick="showNightRecap()">Finisci serata</button>
+    </div>
   </div>
   <div class="scores-panel" id="home-leaderboard"></div>
+</div>
+
+<div class="screen recap-screen" id="s-recap">
+  <div class="recap-stage">
+    <div class="recap-head">
+      <div>
+        <div class="recap-kicker">Recap generato dalla serata</div>
+        <div class="recap-title">Final Cut</div>
+        <div class="recap-sub" id="recap-subtitle">Momenti salienti, scelte discutibili e colpi di scena.</div>
+      </div>
+      <div class="recap-counter" id="recap-counter">00</div>
+    </div>
+    <div class="recap-body" id="recap-body"></div>
+    <div class="recap-controls">
+      <button class="btn-gold" onclick="playNightRecap()">Rivedi recap</button>
+      <button class="btn-ghost" onclick="goTo('s-hero')">Torna alla home</button>
+      <button class="btn-ghost" onclick="clearNightEvents();goTo('s-hero')">Nuova serata</button>
+    </div>
+  </div>
 </div>
 
 <audio id="aua-audio" preload="auto"></audio>
