@@ -2103,6 +2103,11 @@ function startGame(game,options={}){
     stopRdfAudio();
     selHigherPid=null;
     selectedHolCategory=selectedHolCategory||Object.keys(HIGHER_LOWER_BANKS)[0];
+    if(players.length===1){
+      selHigherPid=players[0].id;
+      beginHigherLower();
+      return;
+    }
     document.getElementById('pick-grid-hol').innerHTML=players.map(p=>{
       const c=TC[p.ci%TC.length];const t=teams.find(t=>t.mids.includes(p.id));
       return `<div class="player-pick" id="pp-hol-${p.id}" onclick="selPickHigherLower(${p.id})">
@@ -2120,6 +2125,11 @@ function startGame(game,options={}){
     stopAuaAudio();
     stopRdfAudio();
     selAffariPid=null;
+    if(players.length===1){
+      selAffariPid=players[0].id;
+      beginAffariTuoi();
+      return;
+    }
     document.getElementById('pick-grid-affari').innerHTML=players.map(p=>{
       const c=TC[p.ci%TC.length];const t=teams.find(t=>t.mids.includes(p.id));
       return `<div class="player-pick" id="pp-affari-${p.id}" onclick="selPickAffari(${p.id})">
@@ -2136,6 +2146,11 @@ function startGame(game,options={}){
     stopAuaAudio();
     stopRdfAudio();
     selMoviePid=null;
+    if(players.length===1){
+      selMoviePid=players[0].id;
+      beginMovieGuess();
+      return;
+    }
     document.getElementById('pick-grid-movie').innerHTML=players.map(p=>{
       const c=TC[p.ci%TC.length];const t=teams.find(t=>t.mids.includes(p.id));
       return `<div class="player-pick" id="pp-movie-${p.id}" onclick="selPickMovie(${p.id})">
@@ -2152,6 +2167,11 @@ function startGame(game,options={}){
     stopAuaAudio();
     stopRdfAudio();
     selGhigliottinaPid=null;
+    if(players.length===1){
+      selGhigliottinaPid=players[0].id;
+      beginGhigliottina();
+      return;
+    }
     document.getElementById('pick-grid-ghigliottina').innerHTML=players.map(p=>{
       const c=TC[p.ci%TC.length];const t=teams.find(t=>t.mids.includes(p.id));
       return `<div class="player-pick" id="pp-ghigliottina-${p.id}" onclick="selPickGhigliottina(${p.id})">
@@ -2218,6 +2238,12 @@ function startGame(game,options={}){
   }
   if(game==='taboo'){
     selPid=null;
+    selTabooPid=null;
+    if(players.length===1){
+      selTabooPid=players[0].id;
+      beginTaboo();
+      return;
+    }
     document.getElementById('pick-grid-taboo').innerHTML=players.map(p=>{
       const c=TC[p.ci%TC.length];const t=teams.find(t=>t.mids.includes(p.id));
       return `<div class="player-pick" id="pp-taboo-${p.id}" onclick="selPickTaboo(${p.id})">
@@ -2232,6 +2258,11 @@ function startGame(game,options={}){
   }
   if(game==='aua'){
     selPid=null;
+    if(players.length===1){
+      selPid=players[0].id;
+      beginAUA();
+      return;
+    }
     document.getElementById('pick-grid').innerHTML=players.map(p=>{
       const c=TC[p.ci%TC.length];const t=teams.find(t=>t.mids.includes(p.id));
       return `<div class="player-pick" id="pp1-${p.id}" onclick="selPick1(${p.id})">
