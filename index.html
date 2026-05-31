@@ -449,10 +449,9 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
 }
 
 .win-wrap{position:relative;text-align:center;padding:2rem 1rem;overflow:hidden;min-height:calc(100vh - 2.8rem);display:flex;flex-direction:column;justify-content:center}
-.screen#s-win{max-width:none;width:100%;padding:0}
 .win-wrap::before{content:'';position:absolute;inset:-20%;background:radial-gradient(circle at 50% 20%,rgba(245,197,24,.16),transparent 24%),radial-gradient(circle at 12% 70%,rgba(52,152,219,.18),transparent 22%),radial-gradient(circle at 88% 72%,rgba(231,76,60,.16),transparent 24%);opacity:.85;animation:winGlow 5.5s ease-in-out infinite;pointer-events:none}
 .win-wrap::after{content:'';position:absolute;inset:0;background:linear-gradient(70deg,transparent 0 38%,rgba(245,197,24,.13) 46%,transparent 54% 100%),linear-gradient(110deg,transparent 0 42%,rgba(255,255,255,.11) 48%,transparent 56% 100%);background-size:190% 100%,210% 100%;mix-blend-mode:screen;opacity:.65;animation:winSpotSweep 3.8s ease-in-out infinite;pointer-events:none}
-.win-stage{position:relative;z-index:1;width:min(100%,1180px);margin:0 auto;padding:0 1.1rem}
+.win-stage{position:relative;z-index:1}
 .win-trophy{font-size:3.5rem;margin-bottom:.8rem;filter:drop-shadow(0 0 18px rgba(245,197,24,.38));animation:winTrophyFloat 2.8s ease-in-out infinite}
 .win-title{font-family:'Bebas Neue',sans-serif;font-size:2.8rem;letter-spacing:4px;color:var(--gold);text-shadow:0 0 22px rgba(245,197,24,.32)}
 .win-name{font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:2px;margin-bottom:.4rem;min-height:2.2rem}
@@ -464,13 +463,11 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
 .win-countdown span:nth-child(2){animation-delay:.16s}
 .win-countdown span:nth-child(3){animation-delay:.32s}
 .win-suspense-text{font-size:.72rem;font-weight:900;letter-spacing:2.2px;text-transform:uppercase;color:var(--gold)}
-.win-podium{display:grid;grid-template-columns:1fr 1.18fr 1fr;align-items:end;gap:1rem;margin:1.2rem auto 1.3rem;max-width:900px;min-height:230px}
+.win-podium{display:grid;grid-template-columns:1fr 1.18fr 1fr;align-items:end;gap:.65rem;margin:1.2rem auto 1.3rem;max-width:560px;min-height:210px}
 .win-podium.single{grid-template-columns:minmax(180px,260px);justify-content:center}
 .win-podium.duo{grid-template-columns:1fr 1.18fr;max-width:420px}
 .win-podium.single .podium-slot.first,.win-podium.duo .podium-slot.first{order:1}
 .win-podium.duo .podium-slot.second{order:2}
-.win-wrap.winner-only .win-podium{grid-template-columns:minmax(180px,280px);justify-content:center}
-.win-wrap.winner-only .podium-slot:not(.first){display:none}
 .podium-slot{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;min-width:0;opacity:0;transform:translateY(24px) scale(.96);transition:opacity .55s ease,transform .55s ease}
 .podium-slot.reveal{opacity:1;transform:translateY(0) scale(1)}
 .podium-avatar{width:54px;height:54px;border-radius:18px;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:1.25rem;letter-spacing:1px;border:1.5px solid rgba(255,255,255,.2);box-shadow:0 0 24px rgba(245,197,24,.2);margin-bottom:.45rem}
@@ -485,8 +482,8 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
 .win-wrap.ready .win-title{animation:winTitleFlash .9s ease both}
 .win-wrap.ready .scores-panel,.win-wrap.ready .win-actions{opacity:1;transform:translateY(0)}
 .win-wrap.revealing .scores-panel,.win-wrap.revealing .win-actions{opacity:0;transform:translateY(12px);pointer-events:none}
-.scores-panel{background:var(--surf);border:1px solid var(--bord);border-radius:14px;padding:1rem;margin:0 auto 1.4rem;text-align:left;width:min(100%,860px)}
-.win-actions{display:flex;gap:.75rem;width:min(100%,640px);margin:0 auto}
+.scores-panel{background:var(--surf);border:1px solid var(--bord);border-radius:14px;padding:1rem;margin-bottom:1.4rem;text-align:left}
+.win-actions{display:flex;gap:.75rem}
 .sc-row{display:flex;align-items:center;gap:.7rem;padding:.45rem 0;border-bottom:1px solid rgba(255,255,255,.05)}
 .sc-row:last-child{border-bottom:none}
 .sc-rank{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;width:22px;color:var(--mut)}

@@ -577,6 +577,7 @@ function speakQuestion(text){
 function goTo(id,options={}){
   const pushRoute=options.pushRoute!==false;
   if(id!=='s-aua'&&id!=='s-eredita')stopQuestionSpeech();
+  if(id!=='s-aua'&&id!=='s-pick')stopAuaAudio();
   if(id!=='s-pick-wheel'&&id!=='s-wheel')stopRdfAudio();
   if(id!=='s-chain')clearChainTimer();
   if(id!=='s-sarabanda')stopSarabandaAudio();
@@ -654,26 +655,8 @@ function getWinPodiumEntries(){
       initials:initials(player.name||'G')
     }));
 
-  if(playerEntries.length>1)return playerEntries;
   if(rowEntries.length)return rowEntries;
   return playerEntries;
-}
-
-function ensureWinScoresSummary(entries){
-  const scores=document.getElementById('win-scores');
-  if(!scores||!entries.length)return;
-  const existingRows=scores.querySelectorAll('.sc-row').length;
-  if(existingRows>=entries.length)return;
-  scores.innerHTML='<div style="font-size:.68rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--mut);margin-bottom:.6rem">Classifica totale</div>'+
-    entries.map((entry,idx)=>{
-      const c=entry.color||TC[idx%TC.length]||TC[0];
-      return `<div class="sc-row">
-      <div class="sc-rank">${entry.rank}</div>
-      <div class="avatar" style="background:${c.light};color:${c.hex};width:24px;height:24px;font-size:.62rem;border-radius:50%;flex-shrink:0">${escapeHtml(entry.initials)}</div>
-      <div class="sc-name">${escapeHtml(entry.name)}</div>
-      <div class="sc-pts">${escapeHtml(entry.score)}</div>
-    </div>`;
-    }).join('');
 }
 
 function podiumSlotHtml(entry,slotClass){
@@ -715,10 +698,9 @@ function startWinFinale(){
   const entries=getWinPodiumEntries();
   const winnerName=(name?.textContent||entries[0]?.name||'Giocatore').trim();
   const winnerSub=(sub?.textContent||'').trim();
-  ensureWinScoresSummary(entries);
   renderWinPodium(entries);
 
-  wrap?.classList.remove('ready','winner-only');
+  wrap?.classList.remove('ready');
   wrap?.classList.add('revealing');
   if(title)title.textContent='CHI HA VINTO?';
   if(name)name.textContent='—';
@@ -727,29 +709,26 @@ function startWinFinale(){
   if(suspenseText)suspenseText.textContent='Prepariamo il podio';
 
   const reducedMotion=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-  const winnerDelay=reducedMotion?0:2100;
-  const summaryDelay=reducedMotion?0:3900;
+  const steps=reducedMotion
+    ? [{delay:0,rank:3,text:'Terzo posto'},{delay:0,rank:2,text:'Secondo posto'},{delay:0,rank:1,text:'Vince'}]
+    : [{delay:900,rank:3,text:'Terzo posto'},{delay:1900,rank:2,text:'Secondo posto'},{delay:3200,rank:1,text:'Il vincitore e'}];
+
+  steps.forEach(step=>{
+    winFinaleTimers.push(setTimeout(()=>{
+      const slot=document.querySelector(`#win-podium [data-rank="${step.rank}"]`);
+      if(slot)slot.classList.add('reveal');
+      if(suspenseText)suspenseText.textContent=step.text;
+    },step.delay));
+  });
 
   winFinaleTimers.push(setTimeout(()=>{
-    const winnerSlot=document.querySelector('#win-podium [data-rank="1"]');
-    if(winnerSlot)winnerSlot.classList.add('reveal');
     if(title)title.textContent='VINCE';
     if(name)name.textContent=winnerName;
     if(sub)sub.textContent=winnerSub;
     suspense?.classList.add('hidden');
-    wrap?.classList.add('winner-only');
-  },winnerDelay));
-
-  winFinaleTimers.push(setTimeout(()=>{
-    ['2','3'].forEach(rank=>{
-      const slot=document.querySelector(`#win-podium [data-rank="${rank}"]`);
-      if(slot)slot.classList.add('reveal');
-    });
-    if(title)title.textContent='PODIO FINALE';
-    wrap?.classList.remove('winner-only');
     wrap?.classList.remove('revealing');
     wrap?.classList.add('ready');
-  },summaryDelay));
+  },reducedMotion?0:4300));
 }
 function getTimer(g){return parseInt(document.getElementById('timer-'+g).value)||30}
 function getTabooTimer(){return parseInt(document.getElementById('timer-taboo')?.value)||60}
@@ -861,6 +840,7 @@ function startAuaIntro(){
 function stopAuaAudio(){
   setAuaAudio();
   setAuaErrorAudio();
+  clearInterval(auaInt);
   if(!auaAudio) return;
   clearAuaAutoStart();
   auaAudio.pause();
