@@ -3040,6 +3040,9 @@ let affariScene=null;
 let affariAudio=null;
 let affariAudioUnlocked=false;
 let affariAudioUnlocking=false;
+let affariAudioContext=null;
+let affariOutcomeSource=null;
+let affariOutcomeGain=null;
 let affariPreparedAudio=null;
 let affariPreparedAudioTimer=null;
 let affariOutcomeAudioKeepAliveUntil=0;
@@ -3078,10 +3081,40 @@ function stopAffariAudio(force=false){
     clearTimeout(affariPreparedAudioTimer);
     affariPreparedAudioTimer=null;
   }
+  if(affariPreparedAudio)affariPreparedAudio.cancelled=true;
   affariPreparedAudio=null;
+  if(affariOutcomeSource){
+    try{affariOutcomeSource.stop();}catch(err){}
+    try{affariOutcomeSource.disconnect();}catch(err){}
+    affariOutcomeSource=null;
+  }
+  if(affariOutcomeGain){
+    try{affariOutcomeGain.disconnect();}catch(err){}
+    affariOutcomeGain=null;
+  }
   if(!audio)return;
   audio.pause();
   audio.currentTime=0;
+}
+
+function getAffariAssetUrl(src){
+  try{
+    return new URL(src,document.baseURI).href;
+  }catch(err){
+    return src;
+  }
+}
+
+function getAffariAudioContext(){
+  const AudioContext=window.AudioContext||window.webkitAudioContext;
+  if(!AudioContext)return null;
+  if(!affariAudioContext||affariAudioContext.state==='closed'){
+    affariAudioContext=new AudioContext();
+  }
+  if(affariAudioContext.state==='suspended'){
+    affariAudioContext.resume().catch(()=>{});
+  }
+  return affariAudioContext;
 }
 
 function unlockAffariAudio(){
@@ -3122,7 +3155,7 @@ function playAffariAudio(src,{volume=.85,duration=5200,startAt=0}={}){
     const audio=document.getElementById('affari-audio')||new Audio();
     affariAudio=audio;
     audio.muted=false;
-    audio.src=src;
+    audio.src=getAffariAssetUrl(src);
     audio.load();
     audio.volume=volume;
     affariOutcomeAudioKeepAliveUntil=Date.now()+duration;
@@ -3147,37 +3180,46 @@ function playAffariAudio(src,{volume=.85,duration=5200,startAt=0}={}){
 
 function playAffariSuspense(){
   return new Promise(resolve=>{
-    const AudioContext=window.AudioContext||window.webkitAudioContext;
-    if(!AudioContext){
+    const ctx=getAffariAudioContext();
+    if(!ctx){
       setTimeout(resolve,1300);
       return;
     }
-    const ctx=new AudioContext();
-    const master=ctx.createGain();
-    const osc=ctx.createOscillator();
-    const tremolo=ctx.createOscillator();
-    const tremoloGain=ctx.createGain();
-    master.gain.setValueAtTime(.0001,ctx.currentTime);
-    master.gain.exponentialRampToValueAtTime(.14,ctx.currentTime+.2);
-    master.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+1.55);
-    osc.type='sawtooth';
-    osc.frequency.setValueAtTime(96,ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(176,ctx.currentTime+1.45);
-    tremolo.type='sine';
-    tremolo.frequency.value=9;
-    tremoloGain.gain.value=.06;
-    tremolo.connect(tremoloGain);
-    tremoloGain.connect(master.gain);
-    osc.connect(master);
-    master.connect(ctx.destination);
-    osc.start();
-    tremolo.start();
-    setTimeout(()=>{
-      osc.stop();
-      tremolo.stop();
-      ctx.close().catch(()=>{});
-      resolve();
-    },1600);
+    const startSuspense=()=>{
+      const master=ctx.createGain();
+      const osc=ctx.createOscillator();
+      const tremolo=ctx.createOscillator();
+      const tremoloGain=ctx.createGain();
+      master.gain.setValueAtTime(.0001,ctx.currentTime);
+      master.gain.exponentialRampToValueAtTime(.14,ctx.currentTime+.2);
+      master.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+1.55);
+      osc.type='sawtooth';
+      osc.frequency.setValueAtTime(96,ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(176,ctx.currentTime+1.45);
+      tremolo.type='sine';
+      tremolo.frequency.value=9;
+      tremoloGain.gain.value=.06;
+      tremolo.connect(tremoloGain);
+      tremoloGain.connect(master.gain);
+      osc.connect(master);
+      master.connect(ctx.destination);
+      osc.start();
+      tremolo.start();
+      setTimeout(()=>{
+        try{osc.stop();}catch(err){}
+        try{tremolo.stop();}catch(err){}
+        try{osc.disconnect();}catch(err){}
+        try{tremolo.disconnect();}catch(err){}
+        try{tremoloGain.disconnect();}catch(err){}
+        try{master.disconnect();}catch(err){}
+        resolve();
+      },1600);
+    };
+    if(ctx.state==='suspended'){
+      ctx.resume().then(startSuspense).catch(()=>setTimeout(resolve,1300));
+    }else{
+      startSuspense();
+    }
   });
 }
 
@@ -3202,12 +3244,35 @@ function prepareAffariOutcomeSound(isGood){
   if(!config.src)return null;
   affariAudioUnlocking=false;
   stopAffariAudio(true);
+  const ctx=getAffariAudioContext();
+  if(ctx){
+    const prepared={mode:'buffer',ctx,config,buffer:null,error:null,cancelled:false};
+    const resumeReady=ctx.state==='suspended'?ctx.resume().catch(()=>{}):Promise.resolve();
+    const bufferReady=fetch(getAffariAssetUrl(config.src),{cache:'force-cache'})
+      .then(response=>{
+        if(!response.ok)throw new Error(`Audio ${response.status}: ${config.src}`);
+        return response.arrayBuffer();
+      })
+      .then(buffer=>ctx.decodeAudioData(buffer))
+      .then(buffer=>{
+        prepared.buffer=buffer;
+        return prepared;
+      });
+    prepared.ready=Promise.all([resumeReady,bufferReady])
+      .then(()=>prepared)
+      .catch(error=>{
+        prepared.error=error;
+        return null;
+      });
+    affariPreparedAudio=prepared;
+    return prepared;
+  }
   const audio=document.getElementById('affari-audio')||new Audio();
   affariAudio=audio;
-  affariPreparedAudio={audio,config,blocked:false};
+  affariPreparedAudio={mode:'element',audio,config,blocked:false};
   audio.muted=false;
   audio.volume=.001;
-  audio.src=config.src;
+  audio.src=getAffariAssetUrl(config.src);
   audio.load();
   try{audio.currentTime=config.startAt||0;}catch(err){}
   const attempt=audio.play();
@@ -3219,8 +3284,67 @@ function prepareAffariOutcomeSound(isGood){
   return affariPreparedAudio;
 }
 
+function startAffariBufferedOutcome(active,isGood=false){
+  if(!active?.ctx||!active.buffer||active.cancelled)return playAffariOutcomeSound(isGood);
+  const {ctx,config,buffer}=active;
+  if(ctx.state==='suspended'){
+    ctx.resume().catch(()=>{});
+  }
+  if(affariOutcomeSource){
+    try{affariOutcomeSource.stop();}catch(err){}
+    try{affariOutcomeSource.disconnect();}catch(err){}
+    affariOutcomeSource=null;
+  }
+  if(affariOutcomeGain){
+    try{affariOutcomeGain.disconnect();}catch(err){}
+    affariOutcomeGain=null;
+  }
+  const source=ctx.createBufferSource();
+  const gain=ctx.createGain();
+  source.buffer=buffer;
+  gain.gain.value=config.volume;
+  source.connect(gain);
+  gain.connect(ctx.destination);
+  affariOutcomeSource=source;
+  affariOutcomeGain=gain;
+  const offset=Math.min(config.startAt||0,Math.max(0,buffer.duration-.25));
+  const seconds=Math.min(config.duration/1000,Math.max(.25,buffer.duration-offset));
+  affariOutcomeAudioKeepAliveUntil=Date.now()+config.duration;
+  source.onended=()=>{
+    if(source===affariOutcomeSource){
+      try{source.disconnect();}catch(err){}
+      try{gain.disconnect();}catch(err){}
+      affariOutcomeSource=null;
+      affariOutcomeGain=null;
+      affariOutcomeAudioKeepAliveUntil=0;
+    }
+  };
+  try{
+    source.start(0,offset,seconds);
+  }catch(err){
+    affariOutcomeSource=null;
+    affariOutcomeGain=null;
+    return playAffariOutcomeSound(isGood);
+  }
+  if(affariPreparedAudioTimer)clearTimeout(affariPreparedAudioTimer);
+  affariPreparedAudioTimer=setTimeout(()=>{
+    if(source===affariOutcomeSource){
+      try{source.stop();}catch(err){}
+    }
+    affariPreparedAudioTimer=null;
+  },config.duration);
+  return Promise.resolve();
+}
+
 function releaseAffariOutcomeSound(prepared,isGood=false){
   const active=prepared||affariPreparedAudio;
+  if(active?.mode==='buffer'){
+    affariPreparedAudio=null;
+    return active.ready.then(result=>{
+      if(!result)return playAffariOutcomeSound(isGood);
+      return startAffariBufferedOutcome(result,isGood);
+    }).catch(()=>playAffariOutcomeSound(isGood));
+  }
   if(!active?.audio||active.blocked||active.audio.paused){
     return playAffariOutcomeSound(isGood);
   }
