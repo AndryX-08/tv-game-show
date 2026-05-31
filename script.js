@@ -3244,112 +3244,46 @@ function prepareAffariOutcomeSound(isGood){
   if(!config.src)return null;
   affariAudioUnlocking=false;
   stopAffariAudio(true);
-  const ctx=getAffariAudioContext();
-  if(ctx){
-    const prepared={mode:'buffer',ctx,config,buffer:null,error:null,cancelled:false};
-    const resumeReady=ctx.state==='suspended'?ctx.resume().catch(()=>{}):Promise.resolve();
-    const bufferReady=fetch(getAffariAssetUrl(config.src),{cache:'force-cache'})
-      .then(response=>{
-        if(!response.ok)throw new Error(`Audio ${response.status}: ${config.src}`);
-        return response.arrayBuffer();
-      })
-      .then(buffer=>ctx.decodeAudioData(buffer))
-      .then(buffer=>{
-        prepared.buffer=buffer;
-        return prepared;
-      });
-    prepared.ready=Promise.all([resumeReady,bufferReady])
-      .then(()=>prepared)
-      .catch(error=>{
-        prepared.error=error;
-        return null;
-      });
-    affariPreparedAudio=prepared;
-    return prepared;
-  }
+  getAffariAudioContext();
   const audio=document.getElementById('affari-audio')||new Audio();
   affariAudio=audio;
-  affariPreparedAudio={mode:'element',audio,config,blocked:false};
-  audio.muted=false;
-  audio.volume=.001;
+  const prepared={mode:'element',audio,config,blocked:false,started:false};
+  affariPreparedAudio=prepared;
+  audio.muted=true;
+  audio.volume=0;
+  audio.preload='auto';
   audio.src=getAffariAssetUrl(config.src);
   audio.load();
-  try{audio.currentTime=config.startAt||0;}catch(err){}
+  const setStartTime=()=>{
+    try{audio.currentTime=config.startAt||0;}catch(err){}
+  };
+  if(audio.readyState>=1){
+    setStartTime();
+  }else{
+    audio.addEventListener('loadedmetadata',setStartTime,{once:true});
+  }
   const attempt=audio.play();
   if(attempt&&typeof attempt.catch==='function'){
-    attempt.catch(()=>{
-      if(affariPreparedAudio?.audio===audio)affariPreparedAudio.blocked=true;
+    prepared.playPromise=attempt.then(()=>{
+      prepared.started=true;
+    }).catch(error=>{
+      prepared.blocked=true;
+      prepared.error=error;
     });
+  }else{
+    prepared.started=true;
   }
-  return affariPreparedAudio;
-}
-
-function startAffariBufferedOutcome(active,isGood=false){
-  if(!active?.ctx||!active.buffer||active.cancelled)return playAffariOutcomeSound(isGood);
-  const {ctx,config,buffer}=active;
-  if(ctx.state==='suspended'){
-    ctx.resume().catch(()=>{});
-  }
-  if(affariOutcomeSource){
-    try{affariOutcomeSource.stop();}catch(err){}
-    try{affariOutcomeSource.disconnect();}catch(err){}
-    affariOutcomeSource=null;
-  }
-  if(affariOutcomeGain){
-    try{affariOutcomeGain.disconnect();}catch(err){}
-    affariOutcomeGain=null;
-  }
-  const source=ctx.createBufferSource();
-  const gain=ctx.createGain();
-  source.buffer=buffer;
-  gain.gain.value=config.volume;
-  source.connect(gain);
-  gain.connect(ctx.destination);
-  affariOutcomeSource=source;
-  affariOutcomeGain=gain;
-  const offset=Math.min(config.startAt||0,Math.max(0,buffer.duration-.25));
-  const seconds=Math.min(config.duration/1000,Math.max(.25,buffer.duration-offset));
-  affariOutcomeAudioKeepAliveUntil=Date.now()+config.duration;
-  source.onended=()=>{
-    if(source===affariOutcomeSource){
-      try{source.disconnect();}catch(err){}
-      try{gain.disconnect();}catch(err){}
-      affariOutcomeSource=null;
-      affariOutcomeGain=null;
-      affariOutcomeAudioKeepAliveUntil=0;
-    }
-  };
-  try{
-    source.start(0,offset,seconds);
-  }catch(err){
-    affariOutcomeSource=null;
-    affariOutcomeGain=null;
-    return playAffariOutcomeSound(isGood);
-  }
-  if(affariPreparedAudioTimer)clearTimeout(affariPreparedAudioTimer);
-  affariPreparedAudioTimer=setTimeout(()=>{
-    if(source===affariOutcomeSource){
-      try{source.stop();}catch(err){}
-    }
-    affariPreparedAudioTimer=null;
-  },config.duration);
-  return Promise.resolve();
+  return prepared;
 }
 
 function releaseAffariOutcomeSound(prepared,isGood=false){
   const active=prepared||affariPreparedAudio;
-  if(active?.mode==='buffer'){
-    affariPreparedAudio=null;
-    return active.ready.then(result=>{
-      if(!result)return playAffariOutcomeSound(isGood);
-      return startAffariBufferedOutcome(result,isGood);
-    }).catch(()=>playAffariOutcomeSound(isGood));
-  }
-  if(!active?.audio||active.blocked||active.audio.paused){
+  if(!active?.audio){
     return playAffariOutcomeSound(isGood);
   }
   const {audio,config}=active;
   affariPreparedAudio=null;
+  audio.muted=false;
   audio.volume=config.volume;
   affariOutcomeAudioKeepAliveUntil=Date.now()+config.duration;
   const resumeAttempt=audio.play();
