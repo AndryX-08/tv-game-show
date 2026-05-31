@@ -617,6 +617,11 @@ function escapeHtml(value){
     "'":'&#39;'
   }[ch]));
 }
+function playerColor(player, fallbackIndex=0){
+  const ci=Number(player?.ci);
+  const idx=Number.isFinite(ci)?ci:fallbackIndex;
+  return TC[((idx%TC.length)+TC.length)%TC.length]||TC[0];
+}
 
 let winFinaleTimers=[];
 function clearWinFinale(){
@@ -645,7 +650,7 @@ function getWinPodiumEntries(){
       name:player.name||'Giocatore',
       score:player.score||0,
       rank:idx+1,
-      color:TC[player.ci%TC.length],
+      color:playerColor(player,idx),
       initials:initials(player.name||'G')
     }));
 
@@ -660,12 +665,15 @@ function ensureWinScoresSummary(entries){
   const existingRows=scores.querySelectorAll('.sc-row').length;
   if(existingRows>=entries.length)return;
   scores.innerHTML='<div style="font-size:.68rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--mut);margin-bottom:.6rem">Classifica totale</div>'+
-    entries.map(entry=>`<div class="sc-row">
+    entries.map((entry,idx)=>{
+      const c=entry.color||TC[idx%TC.length]||TC[0];
+      return `<div class="sc-row">
       <div class="sc-rank">${entry.rank}</div>
-      <div class="avatar" style="background:${entry.color.light};color:${entry.color.hex};width:24px;height:24px;font-size:.62rem;border-radius:50%;flex-shrink:0">${escapeHtml(entry.initials)}</div>
+      <div class="avatar" style="background:${c.light};color:${c.hex};width:24px;height:24px;font-size:.62rem;border-radius:50%;flex-shrink:0">${escapeHtml(entry.initials)}</div>
       <div class="sc-name">${escapeHtml(entry.name)}</div>
       <div class="sc-pts">${escapeHtml(entry.score)}</div>
-    </div>`).join('');
+    </div>`;
+    }).join('');
 }
 
 function podiumSlotHtml(entry,slotClass){
