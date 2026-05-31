@@ -3154,29 +3154,31 @@ function prepareAffariOutcomeSound(isGood){
   stopAffariAudio(true);
   const audio=document.getElementById('affari-audio')||new Audio();
   affariAudio=audio;
-  affariPreparedAudio={audio,config};
-  audio.muted=false;
-  audio.volume=0;
+  affariPreparedAudio={audio,config,blocked:false};
+  audio.muted=true;
+  audio.volume=config.volume;
   audio.src=config.src;
   audio.load();
   try{audio.currentTime=config.startAt||0;}catch(err){}
   const attempt=audio.play();
   if(attempt&&typeof attempt.catch==='function'){
-    attempt.catch(()=>{affariPreparedAudio=null;});
+    attempt.catch(()=>{
+      if(affariPreparedAudio?.audio===audio)affariPreparedAudio.blocked=true;
+    });
   }
   return affariPreparedAudio;
 }
 
 function releaseAffariOutcomeSound(prepared,isGood=false){
   const active=prepared||affariPreparedAudio;
-  if(!active?.audio||active.audio.paused){
+  if(!active?.audio||active.blocked||active.audio.paused){
     return playAffariOutcomeSound(isGood);
   }
   const {audio,config}=active;
   affariPreparedAudio=null;
-  audio.muted=false;
   audio.volume=config.volume;
   affariOutcomeAudioKeepAliveUntil=Date.now()+config.duration;
+  audio.muted=false;
   const resumeAttempt=audio.play();
   if(resumeAttempt&&typeof resumeAttempt.catch==='function'){
     resumeAttempt.catch(()=>playAffariOutcomeSound(isGood));
@@ -3601,7 +3603,6 @@ function beginAffariTuoi(){
 }
 
 function chooseAffariPackage(num){
-  unlockAffariAudio();
   if(!affariState.packages?.length)return;
   if(affariState.phase==='reveal')return;
   if(affariState.phase==='choose'){
@@ -3657,7 +3658,6 @@ async function openAffariPackage(num){
 }
 
 function acceptAffariOffer(){
-  unlockAffariAudio();
   if(affariState.phase==='final'){
     revealAffariFinal();
     return;
@@ -3667,7 +3667,6 @@ function acceptAffariOffer(){
 }
 
 function rejectAffariOffer(){
-  unlockAffariAudio();
   if(affariState.phase!=='offer')return;
   affariState.roundIndex++;
   affariState.openedThisRound=0;
@@ -3680,7 +3679,6 @@ function rejectAffariOffer(){
 }
 
 function swapAffariPackage(){
-  unlockAffariAudio();
   if(affariState.phase!=='final')return;
   const other=getAffariOpenable()[0];
   if(!other)return;
