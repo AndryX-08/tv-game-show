@@ -51,7 +51,7 @@ let ttsRate=parseFloat(localStorage.getItem('tvgn-tts-rate'))||.9;
 let onboardingStep=0,onboardingStarted=false;
 const ANON_IDLE_LIMIT_MS=30*60*1000;
 let anonymousCleanupTimer=null,anonymousCleanupInProgress=false,anonymousLifecycleBound=false;
-const FCM_VAPID_KEY='';
+const FCM_VAPID_KEY='BBxXOj1JjJimGUo7f3f5VbnFGoGP20wEXR2n8xnsC3G9KM3Ho6T603WgdG6bPXVFJv-La7lmameZ-J7dGfs6TOI';
 
 const APP_ROUTES={
   's-hero':'/',
