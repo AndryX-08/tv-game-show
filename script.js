@@ -1764,16 +1764,25 @@ function savePlayerScoreOnline(player,points,source='game'){
     updatedAt:now
   };
   const targetUid=player.uid;
-  const batch=db.batch();
-  batch.set(db.collection('users').doc(targetUid),{
+  const leaderboardWrite=db.collection('leaderboard').doc(targetUid).set({
     ...userData,
     totalScore:inc
   },{merge:true});
-  batch.set(db.collection('leaderboard').doc(targetUid),{
+  const userWrite=db.collection('users').doc(targetUid).set({
     ...userData,
     totalScore:inc
   },{merge:true});
-  batch.commit().catch(err=>console.error('Errore salvataggio punti Firestore:',err));
+  const eventWrite=db.collection('scoreEvents').add({
+    uid:targetUid,
+    playerName:player.name||'Anonimo',
+    points:value,
+    source,
+    createdBy:currentUser.uid,
+    createdAt:now
+  });
+  leaderboardWrite.catch(err=>console.error('Errore salvataggio classifica Firestore:',err));
+  userWrite.catch(err=>console.warn('Profilo non aggiornato, classifica gia tentata:',err));
+  eventWrite.catch(err=>console.warn('Evento punteggio non salvato:',err));
 }
 
 function recordGameStats(game,winnerUids=[]){
