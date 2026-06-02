@@ -1,4 +1,38 @@
-const CACHE_NAME = 'tv-game-night-v33';
+importScripts('https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js');
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAs9kwrZnnBTOaBzkLn6ZhLN5mfWWmXcl4",
+  authDomain: "tv-game-night.firebaseapp.com",
+  databaseURL: "https://tv-game-night-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "tv-game-night",
+  storageBucket: "tv-game-night.firebasestorage.app",
+  messagingSenderId: "570468387403",
+  appId: "1:570468387403:web:1bcd29c85f8e8d00539bce",
+  measurementId: "G-6LYXHB8VCJ"
+};
+
+try{
+  firebase.initializeApp(firebaseConfig);
+  const messaging=firebase.messaging();
+  messaging.onBackgroundMessage(payload=>{
+    const title=payload.notification?.title||payload.data?.title||'Invito a giocare';
+    const body=payload.notification?.body||payload.data?.body||'Qualcuno ti ha invitato a giocare.';
+    self.registration.showNotification(title,{
+      body,
+      icon:'./Icone/icon-192.png',
+      badge:'./Icone/favicon.svg',
+      data:{
+        url:payload.data?.url||'./',
+        inviteId:payload.data?.inviteId||''
+      }
+    });
+  });
+}catch(err){
+  console.warn('Firebase Messaging non inizializzato nel service worker:',err);
+}
+
+const CACHE_NAME = 'tv-game-night-v34';
 const APP_SHELL = [
   './',
   './index.html',
@@ -35,6 +69,21 @@ self.addEventListener('activate', event => {
         .map(key => caches.delete(key))
       ))
       .then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  const url=event.notification.data?.url||'./';
+  event.waitUntil(
+    clients.matchAll({type:'window',includeUncontrolled:true}).then(clientList=>{
+      const target=clientList.find(client=>client.url.includes(self.location.origin));
+      if(target){
+        target.focus();
+        return target.navigate?target.navigate(url):undefined;
+      }
+      return clients.openWindow(url);
+    })
   );
 });
 

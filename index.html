@@ -725,6 +725,7 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics-compat.js"></script>
 <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
 </head><body>
@@ -1002,6 +1003,7 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
         <button class="auth-btn anon" style="flex:1" onclick="closeProfilePopup()">Annulla</button>
         <button class="auth-btn google" style="flex:1" onclick="saveProfilePopup()">Salva</button>
       </div>
+      <button class="btn-ghost" id="notificationToggleBtn" type="button" style="width:100%;margin-top:.75rem" onclick="enableInviteNotifications()">Attiva notifiche inviti</button>
     </div>
     <div id="profileTabFriends" class="hidden">
       <input class="tf friends-search" id="friendsSearch" type="search" placeholder="Cerca per nickname..." oninput="renderFriendsList()">

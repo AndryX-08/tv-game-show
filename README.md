@@ -34,12 +34,14 @@ Il progetto usa:
 - Firebase Authentication
 - Cloud Firestore
 - Realtime Database
+- Cloud Messaging
 
 Nel codice e gia presente la configurazione Firebase del progetto. Per usare una tua istanza Firebase, sostituisci `firebaseConfig` in:
 
 - `script.js`
 - `host.html`
 - `play.html`
+- `service-worker.js`
 
 ## Firestore
 
@@ -51,6 +53,21 @@ Collezioni usate:
 - `questionBanks/{bankId}`
 - `gameSessions/{sessionId}`
 - `users/{uid}/gameInvites/{inviteId}`
+- `users/{uid}/fcmTokens/{tokenId}`
+
+## Notifiche inviti
+
+Le notifiche PWA usano Firebase Cloud Messaging:
+
+1. genera una Web Push certificate key in Firebase Console;
+2. inserisci la chiave pubblica in `FCM_VAPID_KEY` dentro `script.js`;
+3. installa e deploya le Cloud Functions da `functions/`.
+
+La funzione `notifyGameInvite` invia una notifica quando viene creato un documento `users/{uid}/gameInvites/{inviteId}`.
+
+## Letture e scritture Firebase
+
+La parte piu costosa era `updatePresenceState()`: prima veniva chiamata a ogni `goTo(...)`, scriveva `currentGame/currentScreen` in Realtime Database e anche nel documento Firestore `users/{uid}`. Ora la presenza resta limitata a online/offline e lobby, senza tracciare il gioco corrente.
 
 Per caricare le domande su Firestore una volta sola, apri l'app nel browser, fai login, apri la console e lancia:
 

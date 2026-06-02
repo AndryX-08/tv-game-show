@@ -35,6 +35,7 @@ let userPresenceMap={};
 let currentUserProfile=null;
 let currentUserLeaderboard=null;
 let pendingGameInvite=null;
+let inviteMessaging=null,inviteMessagingBound=false;
 let pendingPlayModeGame=null,selectedPlayMode='local';
 let activeGameSessionId=null,activeGameSessionGame=null,unsubscribeGameSession=null,applyingRemoteWheelState=false,applyingRemoteSessionState=false;
 let unsubscribeLeaderboard=null,unsubscribeRegisteredUsers=null,unsubscribeCurrentUserProfile=null,unsubscribeCurrentUserLeaderboard=null,unsubscribeGameInvites=null;
@@ -50,6 +51,7 @@ let ttsRate=parseFloat(localStorage.getItem('tvgn-tts-rate'))||.9;
 let onboardingStep=0,onboardingStarted=false;
 const ANON_IDLE_LIMIT_MS=30*60*1000;
 let anonymousCleanupTimer=null,anonymousCleanupInProgress=false,anonymousLifecycleBound=false;
+const FCM_VAPID_KEY='';
 
 const APP_ROUTES={
   's-hero':'/',
@@ -697,7 +699,6 @@ function goTo(id,options={}){
     renderTeamSection();
     renderRegisteredUserSelect();
   }
-  updatePresenceState({currentScreen:id,currentGame:getGameNameFromScreen(id)});
   if(pushRoute&&appRoutingReady&&APP_ROUTES[id]&&location.pathname!==APP_ROUTES[id]){
     history.pushState({screen:id},'',APP_ROUTES[id]);
   }
@@ -2106,14 +2107,11 @@ function renderFriendsList(){
     const presence=userPresenceMap[u.uid]||{};
     const online=!!presence.online;
     const name=getProfileDisplayName(u,{uid:u.uid,displayName:u.name});
-    const currentGame=presence.currentGame&&presence.currentGame!=='menu'&&presence.currentGame!=='offline'
-      ? getGameStatsLabel(presence.currentGame)
-      : (online?'Nel menu':'Offline');
     return `<div class="friend-row">
       ${renderProfileAvatar(u,name,'friend-avatar')}
       <div>
         <div class="friend-name">${escapeHtml(name)}</div>
-        <div class="friend-status"><span class="status-dot${online?' on':''}"></span>${escapeHtml(currentGame)}</div>
+        <div class="friend-status"><span class="status-dot${online?' on':''}"></span>${online?'Online':'Offline'}</div>
       </div>
       <button class="btn-ghost" style="padding:.55rem .8rem" onclick="inviteFriendToLobby('${escapeHtml(u.uid)}')">Invita</button>
     </div>`;
@@ -2169,6 +2167,7 @@ function hydrateProfilePopup(){
   if(gamesPlayed)gamesPlayed.textContent=stats.gamesPlayed;
   if(wins)wins.textContent=stats.wins;
   if(lastGame)lastGame.textContent=stats.lastGame;
+  updateNotificationButton();
 }
 
 function normalizeNickname(value){
@@ -2201,29 +2200,124 @@ function saveProfilePopup(){
   }).catch(err=>console.error('Errore salvataggio profilo:',err)).finally(closeProfilePopup);
 }
 
+function updateNotificationButton(){
+  const btn=document.getElementById('notificationToggleBtn');
+  if(!btn)return;
+  if(!('Notification' in window)){
+    btn.textContent='Notifiche non supportate';
+    btn.disabled=true;
+    return;
+  }
+  if(Notification.permission==='granted'){
+    btn.textContent='Notifiche inviti attive';
+    btn.disabled=true;
+    return;
+  }
+  if(Notification.permission==='denied'){
+    btn.textContent='Notifiche bloccate dal browser';
+    btn.disabled=true;
+    return;
+  }
+  btn.textContent='Attiva notifiche inviti';
+  btn.disabled=!currentUser;
+}
+
+async function isInviteMessagingSupported(){
+  if(!window.firebase||typeof firebase.messaging!=='function'||!('serviceWorker' in navigator)||!('Notification' in window))return false;
+  try{
+    if(typeof firebase.messaging.isSupported==='function')return !!(await firebase.messaging.isSupported());
+    return true;
+  }catch(err){
+    console.warn('Firebase Messaging non supportato:',err);
+    return false;
+  }
+}
+
+function getFcmTokenDocId(token){
+  let hash=0;
+  String(token||'').split('').forEach(ch=>{hash=((hash<<5)-hash+ch.charCodeAt(0))|0;});
+  const suffix=String(token||'').slice(-16).replace(/[^a-zA-Z0-9_-]/g,'_');
+  return `token-${Math.abs(hash)}-${suffix}`;
+}
+
+async function getServiceWorkerRegistration(){
+  if(!('serviceWorker' in navigator))return null;
+  const existing=await navigator.serviceWorker.getRegistration('./');
+  if(existing)return existing;
+  return navigator.serviceWorker.register('./service-worker.js');
+}
+
+async function initInviteMessaging(user=currentUser,{prompt=false}={}){
+  updateNotificationButton();
+  if(!user||!window.db)return null;
+  if(!(await isInviteMessagingSupported()))return null;
+  if(Notification.permission==='denied')return null;
+  if(Notification.permission!=='granted'){
+    if(!prompt)return null;
+    const permission=await Notification.requestPermission();
+    updateNotificationButton();
+    if(permission!=='granted')return null;
+  }
+  if(!FCM_VAPID_KEY){
+    if(prompt)alert('Aggiungi la Web Push certificate key pubblica Firebase in FCM_VAPID_KEY dentro script.js.');
+    console.warn('FCM_VAPID_KEY mancante: token notifiche non registrato.');
+    return null;
+  }
+  const registration=await getServiceWorkerRegistration();
+  inviteMessaging=inviteMessaging||firebase.messaging(firebaseApp);
+  if(!inviteMessagingBound&&typeof inviteMessaging.onMessage==='function'){
+    inviteMessaging.onMessage(payload=>{
+      const title=payload.notification?.title||payload.data?.title||'Nuovo invito';
+      const body=payload.notification?.body||payload.data?.body||'Qualcuno ti ha invitato a giocare.';
+      showBrowserInviteNotification({title,body,inviteId:payload.data?.inviteId});
+    });
+    inviteMessagingBound=true;
+  }
+  const token=await inviteMessaging.getToken({
+    vapidKey:FCM_VAPID_KEY,
+    serviceWorkerRegistration:registration
+  });
+  if(!token)return null;
+  await db.collection('users').doc(user.uid).collection('fcmTokens').doc(getFcmTokenDocId(token)).set({
+    token,
+    platform:'web',
+    userAgent:navigator.userAgent||'',
+    updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+  },{merge:true});
+  updateNotificationButton();
+  return token;
+}
+
+function enableInviteNotifications(){
+  initInviteMessaging(currentUser,{prompt:true}).catch(err=>{
+    console.error('Errore attivazione notifiche inviti:',err);
+    alert('Non sono riuscito ad attivare le notifiche. Controlla console e configurazione Firebase.');
+  });
+}
+
+function showBrowserInviteNotification({title='Nuovo invito',body='Qualcuno ti ha invitato a giocare.',inviteId=''}={}){
+  if(!('Notification' in window)||Notification.permission!=='granted'||document.visibilityState==='visible')return;
+  navigator.serviceWorker?.ready?.then(registration=>{
+    registration.showNotification(title,{
+      body,
+      icon:'./Icone/icon-192.png',
+      badge:'./Icone/favicon.svg',
+      data:{url:'./',inviteId}
+    });
+  }).catch(()=>{});
+}
+
 function updatePresenceState(patch={}){
   if(!currentUser||!database)return;
   const data={
     uid:currentUser.uid,
     name:getProfileDisplayName(currentUserProfile||{},currentUser),
     online:true,
-    currentGame:patch.currentGame,
-    currentScreen:patch.currentScreen,
     currentLobby:patch.currentLobby ?? currentUserProfile?.currentLobby ?? '',
     updatedAt:firebase.database.ServerValue.TIMESTAMP
   };
   Object.keys(data).forEach(key=>data[key]===undefined&&delete data[key]);
   database.ref(`status/${currentUser.uid}`).update(data).catch(err=>console.error('Errore presenza RTDB:',err));
-  if(window.db){
-    const fsData={
-      online:true,
-      currentLobby:data.currentLobby||'',
-      updatedAt:firebase.firestore.FieldValue.serverTimestamp()
-    };
-    if(data.currentGame)fsData.currentGame=data.currentGame;
-    if(data.currentScreen)fsData.currentScreen=data.currentScreen;
-    db.collection('users').doc(currentUser.uid).set(fsData,{merge:true}).catch(()=>{});
-  }
 }
 
 function setupPresence(user){
@@ -2235,11 +2329,9 @@ function setupPresence(user){
     if(!snap.val())return;
     presenceRef.onDisconnect().update({
       online:false,
-      currentGame:'offline',
       updatedAt:firebase.database.ServerValue.TIMESTAMP
     });
-    const activeScreen=document.querySelector('.screen.active')?.id||'s-hero';
-    updatePresenceState({currentScreen:activeScreen,currentGame:getGameNameFromScreen(activeScreen)});
+    updatePresenceState();
   };
   presenceConnectedRef.on('value',presenceConnectedCallback);
   allPresenceRef=database.ref('status');
@@ -2252,7 +2344,7 @@ function setupPresence(user){
 function teardownPresence(){
   if(presenceConnectedRef&&presenceConnectedCallback)presenceConnectedRef.off('value',presenceConnectedCallback);
   if(allPresenceRef)allPresenceRef.off();
-  if(presenceRef)presenceRef.update({online:false,currentGame:'offline',updatedAt:firebase.database.ServerValue.TIMESTAMP}).catch(()=>{});
+  if(presenceRef)presenceRef.update({online:false,updatedAt:firebase.database.ServerValue.TIMESTAMP}).catch(()=>{});
   presenceRef=null;
   presenceConnectedRef=null;
   presenceConnectedCallback=null;
@@ -2391,6 +2483,12 @@ function listenGameInvites(user){
         if(change.type!=='added')return;
         pendingGameInvite={id:change.doc.id,_ref:change.doc.ref,...change.doc.data()};
         showGameInvitePopup(pendingGameInvite);
+        const label=GAME_LABELS[pendingGameInvite.game]||pendingGameInvite.game||'un gioco';
+        showBrowserInviteNotification({
+          title:'Invito a giocare',
+          body:`${pendingGameInvite.fromName||'Un giocatore'} ti ha invitato a giocare ${label}.`,
+          inviteId:pendingGameInvite.id
+        });
       });
     },err=>console.error('Errore inviti gioco:',err));
 }
@@ -6277,7 +6375,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if(presenceRef){
       presenceRef.update({
         online:false,
-        currentGame:'offline',
         updatedAt:firebase.database.ServerValue.TIMESTAMP
       }).catch(()=>{});
     }
@@ -6308,6 +6405,7 @@ document.addEventListener("DOMContentLoaded", () => {
       listenCurrentUserProfile(user);
       listenGameInvites(user);
       setupPresence(user);
+      initInviteMessaging(user).catch(err=>console.warn('Notifiche inviti non inizializzate:',err));
     } else {
       teardownPresence();
       stopAnonymousLifecycle();
@@ -6322,8 +6420,11 @@ document.addEventListener("DOMContentLoaded", () => {
       currentUserProfile=null;
       currentUserLeaderboard=null;
       pendingGameInvite=null;
+      inviteMessaging=null;
+      inviteMessagingBound=false;
       renderRegisteredUserSelect();
       renderHomeLeaderboard();
+      updateNotificationButton();
       closeProfilePopup();
       closeGameInvitePopup();
       onboardingStarted=false;
