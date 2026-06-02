@@ -41,21 +41,18 @@ exports.notifyGameInvite = functions.firestore
     const body = `${invite.fromName || 'Un giocatore'} ti ha invitato a giocare ${gameLabel}.`;
     const message = {
       tokens: tokenDocs.map(item => item.token),
-      notification: { title, body },
       data: {
         type: 'gameInvite',
+        title,
+        body,
         inviteId,
         game: String(invite.game || ''),
         fromUid: String(invite.fromUid || ''),
-        url: '/'
+        url: `/?inviteId=${inviteId}`
       },
       webpush: {
         fcmOptions: {
-          link: '/'
-        },
-        notification: {
-          icon: '/Icone/icon-192.png',
-          badge: '/Icone/favicon.svg'
+          link: `/?inviteId=${inviteId}`
         }
       }
     };

@@ -35,6 +35,7 @@ let userPresenceMap={};
 let currentUserProfile=null;
 let currentUserLeaderboard=null;
 let pendingGameInvite=null;
+let pendingNotificationInviteId=new URLSearchParams(location.search).get('inviteId')||'';
 let inviteMessaging=null,inviteMessagingBound=false;
 let pendingPlayModeGame=null,selectedPlayMode='local';
 let activeGameSessionId=null,activeGameSessionGame=null,unsubscribeGameSession=null,applyingRemoteWheelState=false,applyingRemoteSessionState=false;
@@ -1513,8 +1514,13 @@ function addRegisteredPlayer(){
   const select=document.getElementById('registered-player-select');
   const uid=select?.value;
   if(!uid)return;
+  addRegisteredPlayerByUid(uid);
+  if(select)select.value='';
+}
+
+function addRegisteredPlayerByUid(uid){
   const user=registeredUsers.find(u=>u.uid===uid||u.id===uid);
-  if(!user||players.some(p=>p.uid===uid))return;
+  if(!user||players.some(p=>p.uid===uid))return false;
   players.push({
     id:nPid++,
     name:user.name||`Anonimo ${uid.slice(0,4).toUpperCase()}`,
@@ -1525,10 +1531,11 @@ function addRegisteredPlayer(){
     isAnonymous:!!user.isAnonymous,
     photoURL:user.photoURL||null
   });
-  select.value='';
   renderPlayers();
   renderTeamSection();
   renderRegisteredUserSelect();
+  renderFriendsList();
+  return true;
 }
 function removePlayer(id){
   players=players.filter(p=>p.id!==id);
@@ -2107,33 +2114,21 @@ function renderFriendsList(){
     const presence=userPresenceMap[u.uid]||{};
     const online=!!presence.online;
     const name=getProfileDisplayName(u,{uid:u.uid,displayName:u.name});
+    const alreadyAdded=players.some(p=>p.uid===u.uid);
     return `<div class="friend-row">
       ${renderProfileAvatar(u,name,'friend-avatar')}
       <div>
         <div class="friend-name">${escapeHtml(name)}</div>
         <div class="friend-status"><span class="status-dot${online?' on':''}"></span>${online?'Online':'Offline'}</div>
       </div>
-      <button class="btn-ghost" style="padding:.55rem .8rem" onclick="inviteFriendToLobby('${escapeHtml(u.uid)}')">Invita</button>
+      <button class="btn-ghost" style="padding:.55rem .8rem" ${alreadyAdded?'disabled':''} onclick="addFriendToGameSetup('${escapeHtml(u.uid)}')">${alreadyAdded?'Aggiunto':'Aggiungi'}</button>
     </div>`;
   }).join('');
 }
 
-function inviteFriendToLobby(uid){
-  const lobby=currentUserProfile?.currentLobby||userPresenceMap[currentUser?.uid]?.currentLobby||'';
-  if(!lobby){
-    alert('Non hai una lobby attiva da condividere.');
-    return;
-  }
-  if(!uid||!window.db||!currentUser)return;
-  db.collection('users').doc(uid).collection('gameInvites').add({
-    type:'lobby',
-    lobbyCode:lobby,
-    status:'pending',
-    fromUid:currentUser.uid,
-    fromName:getProfileDisplayName(currentUserProfile||{},currentUser),
-    createdAt:firebase.firestore.FieldValue.serverTimestamp(),
-    updatedAt:firebase.firestore.FieldValue.serverTimestamp()
-  }).catch(err=>console.error('Errore invito lobby:',err));
+function addFriendToGameSetup(uid){
+  const added=addRegisteredPlayerByUid(uid);
+  if(added)goTo('s-setup');
 }
 
 function hydrateProfilePopup(){
@@ -2296,15 +2291,19 @@ function enableInviteNotifications(){
 }
 
 function showBrowserInviteNotification({title='Nuovo invito',body='Qualcuno ti ha invitato a giocare.',inviteId=''}={}){
-  if(!('Notification' in window)||Notification.permission!=='granted'||document.visibilityState==='visible')return;
-  navigator.serviceWorker?.ready?.then(registration=>{
+  if(!('Notification' in window)||Notification.permission!=='granted'||!navigator.serviceWorker?.ready)return false;
+  navigator.serviceWorker.ready.then(registration=>{
+    const inviteUrl=inviteId?`./?inviteId=${encodeURIComponent(inviteId)}`:'./';
     registration.showNotification(title,{
       body,
       icon:'./Icone/icon-192.png',
       badge:'./Icone/favicon.svg',
-      data:{url:'./',inviteId}
+      tag:inviteId?`game-invite-${inviteId}`:'game-invite',
+      renotify:true,
+      data:{url:inviteUrl,inviteId}
     });
   }).catch(()=>{});
+  return true;
 }
 
 function updatePresenceState(patch={}){
@@ -2482,13 +2481,13 @@ function listenGameInvites(user){
       snapshot.docChanges().forEach(change=>{
         if(change.type!=='added')return;
         pendingGameInvite={id:change.doc.id,_ref:change.doc.ref,...change.doc.data()};
-        showGameInvitePopup(pendingGameInvite);
         const label=GAME_LABELS[pendingGameInvite.game]||pendingGameInvite.game||'un gioco';
-        showBrowserInviteNotification({
+        const notified=showBrowserInviteNotification({
           title:'Invito a giocare',
           body:`${pendingGameInvite.fromName||'Un giocatore'} ti ha invitato a giocare ${label}.`,
           inviteId:pendingGameInvite.id
         });
+        if(!notified)showGameInvitePopup(pendingGameInvite);
       });
     },err=>console.error('Errore inviti gioco:',err));
 }
@@ -2505,6 +2504,31 @@ function showGameInvitePopup(invite){
 
 function closeGameInvitePopup(){
   document.getElementById('gameInviteOverlay')?.classList.add('hidden');
+}
+
+async function openInviteFromNotification(inviteId=pendingNotificationInviteId){
+  if(inviteId)pendingNotificationInviteId=inviteId;
+  if(!pendingNotificationInviteId||!currentUser||!window.db)return;
+  inviteId=pendingNotificationInviteId;
+  pendingNotificationInviteId='';
+  if(location.search.includes('inviteId=')){
+    history.replaceState({screen:SCREEN_BY_ROUTE[location.pathname]||'s-hero'},'',location.pathname||'/');
+  }
+  if(pendingGameInvite?.id===inviteId){
+    showGameInvitePopup(pendingGameInvite);
+    return;
+  }
+  try{
+    const ref=db.collection('users').doc(currentUser.uid).collection('gameInvites').doc(inviteId);
+    const doc=await ref.get();
+    if(!doc.exists)return;
+    const invite={id:doc.id,_ref:ref,...doc.data()};
+    if(invite.status&&invite.status!=='pending')return;
+    pendingGameInvite=invite;
+    showGameInvitePopup(invite);
+  }catch(err){
+    console.error('Errore apertura invito da notifica:',err);
+  }
 }
 
 function declineGameInvite(){
@@ -6370,6 +6394,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const overlay = document.getElementById("authOverlay");
   normalizeStaticAssetSources();
   initAppRouting();
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.addEventListener('message',event=>{
+      if(event.data?.type==='gameInviteClick'){
+        openInviteFromNotification(event.data.inviteId);
+      }
+    });
+  }
   window.addEventListener('beforeunload',stopSarabandaAudio);
   window.addEventListener('beforeunload',()=>{
     if(presenceRef){
@@ -6406,6 +6437,7 @@ document.addEventListener("DOMContentLoaded", () => {
       listenGameInvites(user);
       setupPresence(user);
       initInviteMessaging(user).catch(err=>console.warn('Notifiche inviti non inizializzate:',err));
+      openInviteFromNotification();
     } else {
       teardownPresence();
       stopAnonymousLifecycle();

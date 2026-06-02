@@ -22,8 +22,10 @@ try{
       body,
       icon:'./Icone/icon-192.png',
       badge:'./Icone/favicon.svg',
+      tag:payload.data?.inviteId?`game-invite-${payload.data.inviteId}`:'game-invite',
+      renotify:true,
       data:{
-        url:payload.data?.url||'./',
+        url:payload.data?.inviteId?`./?inviteId=${encodeURIComponent(payload.data.inviteId)}`:(payload.data?.url||'./'),
         inviteId:payload.data?.inviteId||''
       }
     });
@@ -75,10 +77,12 @@ self.addEventListener('activate', event => {
 self.addEventListener('notificationclick', event => {
   event.notification.close();
   const url=event.notification.data?.url||'./';
+  const inviteId=event.notification.data?.inviteId||'';
   event.waitUntil(
     clients.matchAll({type:'window',includeUncontrolled:true}).then(clientList=>{
       const target=clientList.find(client=>client.url.includes(self.location.origin));
       if(target){
+        target.postMessage({type:'gameInviteClick',inviteId});
         target.focus();
         return target.navigate?target.navigate(url):undefined;
       }
