@@ -37,8 +37,8 @@ exports.notifyGameInvite = functions.firestore
     if (!tokenDocs.length) return null;
 
     const gameLabel = GAME_LABELS[invite.game] || invite.game || 'un gioco';
-    const title = 'Invito a giocare';
-    const body = `${invite.fromName || 'Un giocatore'} ti ha invitato a giocare ${gameLabel}.`;
+    const title = 'Nuovo invito';
+    const body = `Da ${invite.fromName || 'un giocatore'} - ${gameLabel}`;
     const message = {
       tokens: tokenDocs.map(item => item.token),
       data: {

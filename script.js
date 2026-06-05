@@ -2263,7 +2263,7 @@ async function initInviteMessaging(user=currentUser,{prompt=false}={}){
   if(!inviteMessagingBound&&typeof inviteMessaging.onMessage==='function'){
     inviteMessaging.onMessage(payload=>{
       const title=payload.notification?.title||payload.data?.title||'Nuovo invito';
-      const body=payload.notification?.body||payload.data?.body||'Qualcuno ti ha invitato a giocare.';
+      const body=payload.notification?.body||payload.data?.body||'Apri per partecipare.';
       showBrowserInviteNotification({title,body,inviteId:payload.data?.inviteId});
     });
     inviteMessagingBound=true;
@@ -2290,7 +2290,7 @@ function enableInviteNotifications(){
   });
 }
 
-function showBrowserInviteNotification({title='Nuovo invito',body='Qualcuno ti ha invitato a giocare.',inviteId=''}={}){
+function showBrowserInviteNotification({title='Nuovo invito',body='Apri per partecipare.',inviteId=''}={}){
   if(!('Notification' in window)||Notification.permission!=='granted'||!navigator.serviceWorker?.ready)return false;
   navigator.serviceWorker.ready.then(registration=>{
     const inviteUrl=inviteId?`./?inviteId=${encodeURIComponent(inviteId)}`:'./';
@@ -2483,8 +2483,8 @@ function listenGameInvites(user){
         pendingGameInvite={id:change.doc.id,_ref:change.doc.ref,...change.doc.data()};
         const label=GAME_LABELS[pendingGameInvite.game]||pendingGameInvite.game||'un gioco';
         const notified=showBrowserInviteNotification({
-          title:'Invito a giocare',
-          body:`${pendingGameInvite.fromName||'Un giocatore'} ti ha invitato a giocare ${label}.`,
+          title:'Nuovo invito',
+          body:`Da ${pendingGameInvite.fromName||'un giocatore'} - ${label}`,
           inviteId:pendingGameInvite.id
         });
         if(!notified)showGameInvitePopup(pendingGameInvite);

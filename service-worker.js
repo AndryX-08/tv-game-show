@@ -16,8 +16,8 @@ try{
   firebase.initializeApp(firebaseConfig);
   const messaging=firebase.messaging();
   messaging.onBackgroundMessage(payload=>{
-    const title=payload.notification?.title||payload.data?.title||'Invito a giocare';
-    const body=payload.notification?.body||payload.data?.body||'Qualcuno ti ha invitato a giocare.';
+    const title=payload.notification?.title||payload.data?.title||'Nuovo invito';
+    const body=payload.notification?.body||payload.data?.body||'Apri per partecipare.';
     self.registration.showNotification(title,{
       body,
       icon:'./Icone/icon-192.png',
