@@ -55,6 +55,18 @@ Collezioni usate:
 - `users/{uid}/gameInvites/{inviteId}`
 - `users/{uid}/fcmTokens/{tokenId}`
 
+Le regole di sicurezza sono in `firestore.rules` e vengono collegate dal file
+`firebase.json`. Per pubblicarle:
+
+```sh
+firebase deploy --only firestore:rules
+```
+
+Ogni utente puo modificare solo il proprio profilo, la propria classifica e i
+propri token. Le sessioni online sono accessibili solo agli UID inclusi in
+`participantUids`; gli inviti verificano mittente e destinatario. Le banche
+domande non sono scrivibili dal browser.
+
 ## Notifiche inviti
 
 Le notifiche PWA usano Firebase Cloud Messaging:
@@ -69,11 +81,9 @@ La funzione `notifyGameInvite` invia una notifica quando viene creato un documen
 
 La parte piu costosa era `updatePresenceState()`: prima veniva chiamata a ogni `goTo(...)`, scriveva `currentGame/currentScreen` in Realtime Database e anche nel documento Firestore `users/{uid}`. Ora la presenza resta limitata a online/offline e lobby, senza tracciare il gioco corrente.
 
-Per caricare le domande su Firestore una volta sola, apri l'app nel browser, fai login, apri la console e lancia:
-
-```js
-seedQuestionBanksToFirestore()
-```
+Per caricare o aggiornare le domande usa Firebase Admin SDK, la console
+Firestore oppure uno script amministrativo autenticato. Le regole pubbliche
+bloccano intenzionalmente `seedQuestionBanksToFirestore()` dal browser.
 
 Questo crea:
 

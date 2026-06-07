@@ -38,7 +38,7 @@ let pendingGameInvite=null;
 let pendingNotificationInviteId=new URLSearchParams(location.search).get('inviteId')||'';
 let inviteMessaging=null,inviteMessagingBound=false;
 let pendingPlayModeGame=null,selectedPlayMode='local';
-let activeGameSessionId=null,activeGameSessionGame=null,unsubscribeGameSession=null,applyingRemoteWheelState=false,applyingRemoteSessionState=false;
+let activeGameSessionId=null,activeGameSessionGame=null,activeGameSessionCreatorUid=null,unsubscribeGameSession=null,applyingRemoteWheelState=false,applyingRemoteSessionState=false;
 let unsubscribeLeaderboard=null,unsubscribeRegisteredUsers=null,unsubscribeCurrentUserProfile=null,unsubscribeCurrentUserLeaderboard=null,unsubscribeGameInvites=null;
 let presenceRef=null,presenceConnectedRef=null,presenceConnectedCallback=null,allPresenceRef=null;
 let tabooScoreEventsRef=null,tabooScoreEventsStartedAt=Date.now(),processedTabooScoreEvents=new Set();
@@ -1761,6 +1761,7 @@ function addCurrentUserAsPlayer(user=currentUser){
 
 function savePlayerScoreOnline(player,points,source='game'){
   if(!player?.uid||!currentUser||!window.db)return;
+  if(player.uid!==currentUser.uid)return;
   const value=Number(points)||0;
   if(!value)return;
   const now=firebase.firestore.FieldValue.serverTimestamp();
@@ -1795,7 +1796,9 @@ function savePlayerScoreOnline(player,points,source='game'){
 
 function recordGameStats(game,winnerUids=[]){
   if(!game||!window.db)return;
-  const participantUids=[...new Set(players.map(p=>p.uid).filter(Boolean))];
+  const participantUids=[...new Set(players
+    .map(p=>p.uid)
+    .filter(uid=>uid&&uid===currentUser?.uid))];
   if(!participantUids.length)return;
   const winners=new Set([].concat(winnerUids||[]).filter(Boolean));
   const now=firebase.firestore.FieldValue.serverTimestamp();
@@ -2583,14 +2586,22 @@ function stopGameSessionListener(){
   unsubscribeGameSession=null;
   activeGameSessionId=null;
   activeGameSessionGame=null;
+  activeGameSessionCreatorUid=null;
 }
 
 async function createGameSession(game,state={}){
   if(selectedPlayMode!=='online'||!currentUser||!window.db)return null;
   try{
+    const participantUids=[
+      ...new Set([
+        currentUser.uid,
+        ...getOnlineParticipants().map(participant=>participant.uid)
+      ].filter(Boolean))
+    ];
     const ref=await db.collection('gameSessions').add({
       game,
       state,
+      participantUids,
       createdBy:currentUser.uid,
       updatedBy:currentUser.uid,
       createdAt:firebase.firestore.FieldValue.serverTimestamp(),
@@ -2598,6 +2609,7 @@ async function createGameSession(game,state={}){
     });
     activeGameSessionId=ref.id;
     activeGameSessionGame=game;
+    activeGameSessionCreatorUid=currentUser.uid;
     return ref.id;
   }catch(err){
     console.error('Errore creazione sessione online:',err);
@@ -2621,6 +2633,7 @@ function listenGameSession(sessionId){
   unsubscribeGameSession=db.collection('gameSessions').doc(sessionId).onSnapshot(doc=>{
     if(!doc.exists)return;
     const data=doc.data();
+    activeGameSessionCreatorUid=data.createdBy||activeGameSessionCreatorUid;
     if(data.updatedBy&&data.updatedBy===currentUser?.uid)return;
     activeGameSessionGame=data.game||activeGameSessionGame;
     if(data.game==='ruota'&&data.state)applyRemoteWheelState(data.state);
@@ -2634,19 +2647,18 @@ function listenGameSession(sessionId){
 async function cleanupOnlineGameArtifacts(){
   if(!activeGameSessionId||!window.db)return;
   const sessionId=activeGameSessionId;
-  const participantUids=[
-    ...new Set([
-      ...getOnlineParticipants().map(p=>p.uid),
-      currentUser?.uid
-    ].filter(Boolean))
-  ];
+  const participantUids=[...new Set(getOnlineParticipants().map(p=>p.uid).filter(Boolean))];
   try{
     const batch=db.batch();
     batch.delete(db.collection('gameSessions').doc(sessionId));
-    for(const uid of participantUids){
-      const snap=await db.collection('users').doc(uid).collection('gameInvites')
-        .where('payload.sessionId','==',sessionId)
-        .get();
+    const inviteOwnerUids=activeGameSessionCreatorUid===currentUser?.uid
+      ? participantUids
+      : [currentUser?.uid].filter(Boolean);
+    for(const uid of inviteOwnerUids){
+      let query=db.collection('users').doc(uid).collection('gameInvites')
+        .where('payload.sessionId','==',sessionId);
+      if(uid!==currentUser.uid)query=query.where('fromUid','==',currentUser.uid);
+      const snap=await query.get();
       snap.docs.forEach(doc=>batch.delete(doc.ref));
     }
     await batch.commit();

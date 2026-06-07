@@ -1,0 +1,82 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function isSessionParticipant(data) {
+      return signedIn()
+        && data.participantUids is list
+        && request.auth.uid in data.participantUids;
+    }
+
+    match /questionBanks/{bankId} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    match /gameSessions/{sessionId} {
+      allow create: if signedIn()
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.updatedBy == request.auth.uid
+        && isSessionParticipant(request.resource.data);
+
+      allow read: if isSessionParticipant(resource.data);
+
+      allow update: if isSessionParticipant(resource.data)
+        && isSessionParticipant(request.resource.data)
+        && request.resource.data.createdBy == resource.data.createdBy
+        && request.resource.data.participantUids == resource.data.participantUids
+        && request.resource.data.updatedBy == request.auth.uid;
+
+      allow delete: if isSessionParticipant(resource.data);
+    }
+
+    match /users/{uid} {
+      allow read: if signedIn();
+      allow create, update, delete: if isOwner(uid);
+
+      match /gameInvites/{inviteId} {
+        allow read: if signedIn()
+          && (request.auth.uid == uid || request.auth.uid == resource.data.fromUid);
+
+        allow create: if signedIn()
+          && request.auth.uid != uid
+          && request.resource.data.fromUid == request.auth.uid
+          && request.resource.data.toUid == uid
+          && request.resource.data.status == 'pending';
+
+        allow update: if isOwner(uid)
+          && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['status', 'updatedAt'])
+          && request.resource.data.status in ['accepted', 'declined'];
+
+        allow delete: if signedIn()
+          && (request.auth.uid == uid || request.auth.uid == resource.data.fromUid);
+      }
+
+      match /fcmTokens/{tokenId} {
+        allow read, create, update, delete: if isOwner(uid);
+      }
+    }
+
+    match /leaderboard/{uid} {
+      allow read: if signedIn();
+      allow create, update, delete: if isOwner(uid);
+    }
+
+    match /scoreEvents/{eventId} {
+      allow read: if isOwner(resource.data.uid);
+      allow create: if signedIn()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.createdBy == request.auth.uid;
+      allow update, delete: if false;
+    }
+  }
+}
