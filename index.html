@@ -169,6 +169,7 @@ select.tf option{background:#1C1C3A}
 .home-actions{display:flex;justify-content:center;gap:.75rem;flex-wrap:wrap;margin-top:.3rem}
 .btn-finale{background:linear-gradient(135deg,#F5C518,#2ECC71);color:#070714;border:none;border-radius:12px;padding:.85rem 1.8rem;font-family:'Nunito',sans-serif;font-size:.9rem;font-weight:1000;letter-spacing:.5px;cursor:pointer;box-shadow:0 12px 30px rgba(46,204,113,.18),0 0 0 1px rgba(255,255,255,.14) inset}
 .btn-finale:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
+#finish-night-btn{display:none!important}
 
 .recap-screen{max-width:none;width:100%;min-height:100vh;padding:0;overflow:hidden;background:#05050d}
 .recap-stage{position:relative;min-height:100vh;padding:clamp(1rem,3vw,2.2rem);display:grid;grid-template-rows:auto 1fr auto;gap:1rem;background:radial-gradient(circle at 18% 18%,rgba(245,197,24,.2),transparent 28%),radial-gradient(circle at 84% 22%,rgba(46,204,113,.15),transparent 26%),linear-gradient(135deg,#05050d,#14142e 54%,#070714)}
@@ -760,6 +761,327 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
   .intro-skip:hover{background:rgba(245,197,24,.18);border-color:rgba(245,197,24,.48);color:var(--gold)}
 }
 @media(prefers-reduced-motion:reduce){.opening-intro{display:none}}
+
+/* GLASS TV STUDIO RESTYLE */
+:root{
+  --bg:#050713;
+  --surf:rgba(18,22,44,.54);
+  --surf2:rgba(255,255,255,.075);
+  --bord:rgba(255,255,255,.12);
+  --txt:#F7F4EA;
+  --mut:#A7A9C4;
+  --glass:rgba(16,20,39,.48);
+  --glass-strong:rgba(20,25,49,.68);
+  --glass-soft:rgba(255,255,255,.07);
+  --edge:rgba(255,255,255,.14);
+  --edge-soft:rgba(255,255,255,.075);
+  --gold-glow:rgba(245,197,24,.28);
+  --blue-glow:rgba(83,184,255,.18);
+  --green-glow:rgba(46,204,113,.18);
+}
+body{
+  position:relative;
+  background:
+    linear-gradient(135deg,rgba(245,197,24,.08),transparent 28%),
+    linear-gradient(215deg,rgba(52,152,219,.12),transparent 34%),
+    linear-gradient(180deg,#050713 0%,#0a0d1d 48%,#060712 100%);
+  background-attachment:fixed;
+}
+body::before{
+  content:'';
+  position:fixed;
+  inset:0;
+  z-index:-2;
+  pointer-events:none;
+  background:
+    linear-gradient(115deg,transparent 0 30%,rgba(255,255,255,.055) 42%,transparent 55% 100%),
+    linear-gradient(90deg,rgba(255,255,255,.028) 1px,transparent 1px),
+    linear-gradient(180deg,rgba(255,255,255,.02) 1px,transparent 1px);
+  background-size:100% 100%,72px 72px,72px 72px;
+  mask-image:linear-gradient(180deg,rgba(0,0,0,.9),rgba(0,0,0,.32) 72%,transparent);
+}
+.screen{position:relative}
+.auth-overlay{
+  background:rgba(3,5,14,.72);
+  backdrop-filter:blur(24px) saturate(1.2);
+}
+.user-box,
+.auth-box,
+.pwa-install-tip,
+.step-block,
+.q-card,
+.word-card,
+.phrase-card,
+.chain-stage,
+.sara-stage,
+.gw-stage,
+.hol-setup,
+.hol-stage,
+.movie-api-box,
+.movie-stage,
+.ghig-stage,
+.scores-panel,
+.profile-hero,
+.profile-score,
+.tutorial-visual,
+.tutorial-card-mini,
+.progress-track,
+.wheel-stat,
+.wheel-bank,
+.wheel-letter-panel,
+.chain-player,
+.sara-player,
+.gw-player,
+.gw-meta-card,
+.movie-clue,
+.ghig-meta-box,
+.ghig-clue,
+.recap-empty,
+.affari-panel{
+  background:linear-gradient(145deg,rgba(255,255,255,.105),rgba(255,255,255,.045));
+  border:1px solid var(--edge-soft);
+  box-shadow:0 18px 54px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.1);
+  backdrop-filter:blur(18px) saturate(1.18);
+  -webkit-backdrop-filter:blur(18px) saturate(1.18);
+}
+.auth-box,
+.step-block,
+.q-card,
+.word-card,
+.phrase-card,
+.chain-stage,
+.sara-stage,
+.gw-stage,
+.hol-stage,
+.movie-stage,
+.ghig-stage,
+.scores-panel{
+  border-radius:18px;
+}
+.game-card,
+.player-pick,
+.hol-cat,
+.chip,
+.friend-row,
+.profile-stat,
+.profile-tab-btn,
+.profile-legal a,
+.ans-btn,
+.movie-poster-wrap,
+.hol-card,
+.ere-panel,
+.wheel-turn-box,
+.recap-viewport{
+  background:linear-gradient(145deg,rgba(255,255,255,.1),rgba(255,255,255,.045));
+  border:1px solid var(--edge-soft);
+  box-shadow:0 16px 42px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.09);
+  backdrop-filter:blur(16px) saturate(1.16);
+  -webkit-backdrop-filter:blur(16px) saturate(1.16);
+}
+.logo{
+  filter:drop-shadow(0 0 22px rgba(245,197,24,.2));
+  text-shadow:none;
+}
+.logo-sub,
+.step-label,
+.q-num,
+.sara-kicker,
+.gw-kicker,
+.movie-clue-label,
+.ghig-meta-box span,
+.wheel-stat-label,
+.profile-stat-label{
+  color:rgba(226,229,255,.64);
+}
+.profile-title,
+.gc-name,
+.q-hint,
+.chain-start-word,
+.chain-title,
+.wheel-title,
+.sara-title,
+.gw-name,
+.hol-title,
+.movie-title,
+.ghig-title,
+.wheel-stat-val,
+.wheel-bank-score,
+.sc-pts,
+.profile-score-value{
+  text-shadow:0 0 18px rgba(245,197,24,.18);
+}
+.btn-gold,
+.auth-btn.google{
+  background:linear-gradient(135deg,#FFE27A 0%,#F5C518 48%,#C99A08 100%);
+  color:#090b14;
+  border:0;
+  box-shadow:0 14px 34px rgba(245,197,24,.2),0 0 0 1px rgba(255,255,255,.2) inset;
+}
+.btn-ghost,
+.btn-back,
+.pwa-install-secondary,
+.intro-skip,
+.wheel-video-skip{
+  background:rgba(255,255,255,.075);
+  border:1px solid rgba(255,255,255,.13);
+  color:rgba(247,244,234,.9);
+  box-shadow:0 12px 30px rgba(0,0,0,.2),inset 0 1px 0 rgba(255,255,255,.075);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+}
+.btn-add,
+.profile-tab-btn.active,
+.player-pick.selected,
+.hol-cat.selected,
+.wheel-bank.active,
+.sara-player.active,
+.gw-player.active,
+.ere-panel.active-turn{
+  background:linear-gradient(145deg,rgba(245,197,24,.18),rgba(255,255,255,.065));
+  border-color:rgba(245,197,24,.34);
+  box-shadow:0 0 30px rgba(245,197,24,.12),inset 0 1px 0 rgba(255,255,255,.12);
+}
+.btn-success{
+  background:linear-gradient(145deg,rgba(46,204,113,.24),rgba(255,255,255,.06));
+  border:1px solid rgba(46,204,113,.34);
+  box-shadow:0 0 28px rgba(46,204,113,.13);
+}
+.btn-danger,
+.user-box button:not(.user-name-btn){
+  background:linear-gradient(145deg,rgba(231,76,60,.2),rgba(255,255,255,.055));
+  border:1px solid rgba(231,76,60,.34);
+  box-shadow:0 0 24px rgba(231,76,60,.12);
+}
+input.tf,
+select.tf,
+.profile-grid input,
+.chain-input{
+  background:rgba(255,255,255,.075);
+  border:1px solid rgba(255,255,255,.13);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+}
+input.tf:focus,
+select.tf:focus,
+.profile-grid input:focus,
+.chain-input.active{
+  border-color:rgba(245,197,24,.48);
+  box-shadow:0 0 0 3px rgba(245,197,24,.1),0 0 28px rgba(245,197,24,.1);
+}
+.game-card{
+  position:relative;
+  overflow:hidden;
+  border-radius:16px;
+}
+.game-card::before,
+.player-pick::before,
+.hol-cat::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  background:linear-gradient(125deg,rgba(255,255,255,.12),transparent 42%);
+  opacity:.36;
+  pointer-events:none;
+}
+.game-card.disabled{filter:saturate(.55);opacity:.38}
+.gc-tag{
+  border-color:rgba(255,255,255,.1);
+  backdrop-filter:blur(10px);
+}
+.gc-tag.solo{background:rgba(83,184,255,.13);border-color:rgba(83,184,255,.25)}
+.gc-tag.multi{background:rgba(245,197,24,.13);border-color:rgba(245,197,24,.28)}
+.chip,
+.friend-row,
+.profile-stat,
+.gw-clue,
+.movie-clue,
+.ghig-clue,
+.affari-prize,
+.sara-player,
+.gw-player,
+.chain-player{
+  border-radius:12px;
+}
+.timer-bar-wrap,
+.ep-bar-wrap{
+  background:rgba(255,255,255,.085);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08);
+}
+.prog-dot,
+.phrase-tile,
+.lbox{
+  background:rgba(255,255,255,.075);
+  border-color:rgba(255,255,255,.11);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08);
+}
+.prog-dot.cur,
+.phrase-tile.revealed,
+.lbox.rev{
+  box-shadow:0 0 20px rgba(245,197,24,.14),inset 0 1px 0 rgba(255,255,255,.14);
+}
+.wheel-disc{
+  border-color:rgba(255,255,255,.18);
+  box-shadow:0 24px 60px rgba(0,0,0,.36),0 0 42px rgba(245,197,24,.12),inset 0 0 0 6px rgba(0,0,0,.16);
+}
+.wheel-disc::after{background:rgba(8,10,22,.72);backdrop-filter:blur(8px)}
+.wheel-pointer{filter:drop-shadow(0 0 12px rgba(245,197,24,.45))}
+.hol-img::after{
+  background:linear-gradient(180deg,rgba(5,7,19,.08),rgba(5,7,19,.86));
+}
+.movie-poster-wrap,
+.hol-card{border-radius:16px}
+.affari-stage{
+  background:
+    linear-gradient(135deg,rgba(245,197,24,.12),transparent 26%),
+    linear-gradient(220deg,rgba(83,184,255,.13),transparent 32%),
+    linear-gradient(180deg,#050713 0%,#0b1022 48%,#050713 100%);
+}
+.affari-footer{background:rgba(5,7,19,.74);backdrop-filter:blur(16px)}
+.recap-stage{
+  background:
+    linear-gradient(125deg,rgba(245,197,24,.12),transparent 32%),
+    linear-gradient(225deg,rgba(46,204,113,.1),transparent 30%),
+    linear-gradient(180deg,#050713,#0a1021 54%,#050713);
+}
+.opening-intro{
+  background:
+    linear-gradient(125deg,rgba(245,197,24,.11),transparent 34%),
+    linear-gradient(225deg,rgba(83,184,255,.12),transparent 36%),
+    linear-gradient(145deg,#050713 0%,#080b19 48%,#111733 100%);
+}
+.intro-token,
+.intro-wheel-3d::after{
+  background:rgba(16,20,39,.64);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+}
+@media(hover:hover) and (pointer:fine){
+  .game-card:hover,
+  .player-pick:hover,
+  .hol-cat:hover,
+  .hol-card:hover{
+    transform:translateY(-4px);
+    border-color:rgba(245,197,24,.34);
+    box-shadow:0 22px 58px rgba(0,0,0,.3),0 0 32px rgba(245,197,24,.12),inset 0 1px 0 rgba(255,255,255,.13);
+  }
+  .btn-gold:hover,
+  .auth-btn.google:hover{
+    background:linear-gradient(135deg,#FFF0A6 0%,#FFD83D 52%,#D8A90C 100%);
+    box-shadow:0 18px 40px rgba(245,197,24,.28),0 0 0 1px rgba(255,255,255,.28) inset;
+  }
+  .btn-ghost:hover,
+  .btn-back:hover{
+    background:rgba(255,255,255,.13);
+    border-color:rgba(255,255,255,.22);
+    box-shadow:0 16px 38px rgba(0,0,0,.24),0 0 24px rgba(83,184,255,.08);
+  }
+}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  .user-box,.auth-box,.pwa-install-tip,.step-block,.q-card,.word-card,.phrase-card,.chain-stage,.sara-stage,.gw-stage,.hol-stage,.movie-stage,.ghig-stage,.scores-panel,.game-card,.player-pick,.hol-cat,.chip,.friend-row,.profile-stat,.ans-btn{
+    background:rgba(18,22,44,.92);
+  }
+}
 
 </style>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
