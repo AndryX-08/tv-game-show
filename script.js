@@ -25,7 +25,7 @@ const TC=[
 ];
 
 let players=[],teams=[],nPid=1,nTid=1;
-let selPid=null,selP1=null,selP2=null,selWheelPid=null,selChainP1=null,selChainP2=null,selTabooPid=null,selHigherPid=null,selAffariPid=null,selMoviePid=null,selGhigliottinaPid=null,selectedHolCategory='videogiochi';
+let selPid=null,selP1=null,selP2=null,selWheelPid=null,selChainP1=null,selChainP2=null,selTabooPid=null,selHigherPid=null,selAffariPid=null,selMoviePid=null,selGhigliottinaPid=null,selFightListPid=null,selectedHolCategory='videogiochi';
 let intesaWinner=null;
 let intesaPlayers={p1:null,p2:null};
 let activeStatsGame=null;
@@ -63,6 +63,8 @@ const APP_ROUTES={
   's-movieguess':'/indovina-film/gioca',
   's-pick-ghigliottina':'/ghigliottina',
   's-ghigliottina':'/ghigliottina/finale',
+  's-pick-fightlist':'/fight-list',
+  's-fightlist':'/fight-list/gioca',
   's-recap':'/recap-serata'
 };
 const SCREEN_BY_ROUTE=Object.entries(APP_ROUTES).reduce((acc,[screen,path])=>{
@@ -587,6 +589,65 @@ const WHEEL_SEGMENTS=[
   {label:"JOLLY",points:1200}
 ];
 
+const FIGHT_LIST_CATEGORIES=[
+  {
+    title:'Marche di scarpe',
+    sub:'Sneaker, sport e brand di calzature famosi.',
+    items:[
+      ['Nike'],['Adidas'],['Puma'],['Converse'],['Vans'],['New Balance'],['Reebok'],['Asics'],['Fila'],['Skechers'],['Timberland'],['Dr Martens','Dr. Martens','Doctor Martens'],['Jordan','Air Jordan'],['Saucony'],['Diadora'],['Lacoste'],['Under Armour'],['Salomon'],['Birkenstock'],['Crocs'],['Geox'],['Superga'],['Hogan'],['Clarks'],['Balenciaga'],['Gucci'],['Prada'],['Valentino'],['On','On Running'],['Hoka','Hoka One One']
+    ]
+  },
+  {
+    title:'Social network e app',
+    sub:'Piattaforme social, chat e app molto conosciute.',
+    items:[
+      ['Instagram'],['TikTok'],['Facebook'],['YouTube'],['X','Twitter'],['Snapchat'],['WhatsApp'],['Telegram'],['Discord'],['Twitch'],['Reddit'],['LinkedIn'],['Pinterest'],['Threads'],['BeReal'],['Messenger'],['WeChat'],['Signal'],['Skype'],['Viber'],['Tumblr'],['Kick'],['Clubhouse'],['Mastodon']
+    ]
+  },
+  {
+    title:'Citta italiane',
+    sub:'Capoluoghi e citta note in Italia.',
+    items:[
+      ['Roma'],['Milano'],['Napoli'],['Torino'],['Palermo'],['Genova'],['Bologna'],['Firenze'],['Venezia'],['Verona'],['Bari'],['Catania'],['Padova'],['Trieste'],['Brescia'],['Parma'],['Modena'],['Reggio Calabria'],['Perugia'],['Livorno'],['Cagliari'],['Rimini'],['Lecce'],['Pisa'],['Siena'],['Salerno'],['Taranto'],['Ferrara'],['Bolzano'],['Trento']
+    ]
+  },
+  {
+    title:'Film Disney e Pixar',
+    sub:'Classici animati, Pixar e titoli Disney popolari.',
+    items:[
+      ['Toy Story'],['Frozen'],['Il Re Leone','Re Leone'],['Aladdin'],['La Sirenetta','Sirenetta'],['Cenerentola'],['Biancaneve'],['Pinocchio'],['Dumbo'],['Bambi'],['Mulan'],['Pocahontas'],['Hercules'],['Ratatouille'],['Cars'],['Alla ricerca di Nemo','Nemo'],['Gli Incredibili','Incredibili'],['Inside Out'],['Coco'],['Up'],['Monsters & Co','Monsters e Co','Monsters Inc'],['WALL-E','Wall E'],['Oceania','Moana'],['Encanto'],['Zootropolis','Zootopia'],['Lilo e Stitch'],['Tarzan'],['La Bella e la Bestia','Bella e la Bestia']
+    ]
+  },
+  {
+    title:'Calciatori famosi',
+    sub:'Campioni storici e contemporanei.',
+    items:[
+      ['Cristiano Ronaldo','Ronaldo CR7','CR7'],['Lionel Messi','Messi'],['Neymar'],['Kylian Mbappe','Mbappe','Kylian Mbappé'],['Erling Haaland','Haaland'],['Zlatan Ibrahimovic','Ibrahimovic','Ibrahimović'],['Francesco Totti','Totti'],['Alessandro Del Piero','Del Piero'],['Roberto Baggio','Baggio'],['Gianluigi Buffon','Buffon'],['Paolo Maldini','Maldini'],['Diego Maradona','Maradona'],['Pele','Pelé'],['Ronaldo Nazario','Ronaldo il fenomeno'],['Ronaldinho'],['Zinedine Zidane','Zidane'],['Andrea Pirlo','Pirlo'],['Luka Modric','Modric'],['Karim Benzema','Benzema'],['Mohamed Salah','Salah'],['Harry Kane','Kane'],['Kevin De Bruyne','De Bruyne'],['Vinicius Junior','Vinicius'],['Jude Bellingham','Bellingham']
+    ]
+  },
+  {
+    title:'Cantanti italiani',
+    sub:'Artisti pop, rap e cantautori italiani.',
+    items:[
+      ['Laura Pausini'],['Eros Ramazzotti'],['Tiziano Ferro'],['Marco Mengoni'],['Ultimo'],['Madame'],['Annalisa'],['Elisa'],['Giorgia'],['Mina'],['Vasco Rossi','Vasco'],['Ligabue'],['Jovanotti'],['Cesare Cremonini'],['Sfera Ebbasta','Sfera'],['Marracash','Marra'],['Salmo'],['Fabri Fibra'],['Ghali'],['Mahmood'],['Blanco'],['Elodie'],['Emma'],['Alessandra Amoroso'],['Francesco Gabbani'],['Lazza'],['Geolier'],['Achille Lauro']
+    ]
+  },
+  {
+    title:'Videogiochi famosi',
+    sub:'Serie e titoli conosciuti da console, PC e mobile.',
+    items:[
+      ['Minecraft'],['Fortnite'],['GTA','Grand Theft Auto'],['FIFA','EA Sports FC'],['Call of Duty'],['Super Mario','Mario'],['The Legend of Zelda','Zelda'],['Pokemon','Pokémon'],['Animal Crossing'],['The Sims','Sims'],['Roblox'],['League of Legends','LoL'],['Valorant'],['Counter Strike','CSGO','CS2'],['Overwatch'],['Rocket League'],['Among Us'],['Fall Guys'],['Apex Legends'],['PUBG'],['Elden Ring'],['Dark Souls'],['God of War'],['Uncharted'],['The Last of Us'],['Assassin\'s Creed','Assassins Creed'],['Need for Speed'],['Clash Royale']
+    ]
+  },
+  {
+    title:'Marchi di auto',
+    sub:'Case automobilistiche internazionali.',
+    items:[
+      ['Ferrari'],['Lamborghini'],['Fiat'],['Alfa Romeo'],['Maserati'],['Lancia'],['Volkswagen'],['Audi'],['BMW'],['Mercedes'],['Porsche'],['Toyota'],['Honda'],['Nissan'],['Mazda'],['Hyundai'],['Kia'],['Ford'],['Chevrolet'],['Tesla'],['Jeep'],['Renault'],['Peugeot'],['Citroen','Citroën'],['Opel'],['Volvo'],['Mini'],['Bentley'],['Rolls Royce'],['Bugatti']
+    ]
+  }
+];
+
 
 function shuffleArray(array) {
   for (let i = array.length - 1; i > 0; i--) {
@@ -687,6 +748,7 @@ function goTo(id,options={}){
     clearTimeout(higherLowerTimer);
     higherLowerTimer=null;
   }
+  if(id!=='s-fightlist')clearFightListTimer();
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   if(id==='s-win'){
@@ -1726,6 +1788,8 @@ function getGameStatsLabel(game){
     'affari-tuoi':'Affari Tuoi',
     movieguess:'Indovina il Film',
     ghigliottina:'La Ghigliottina',
+    fightlist:'Fight List',
+    'fight-list':'Fight List',
     manche:'Manche'
   };
   return labels[game]||game||'—';
@@ -2829,6 +2893,27 @@ function startGame(game,options={}){
     startGhigliottinaIntro();
     return;
   }
+  if(game==='fightlist'){
+    stopAuaAudio();
+    stopRdfAudio();
+    selFightListPid=null;
+    if(players.length===1){
+      selFightListPid=players[0].id;
+      beginFightList();
+      return;
+    }
+    document.getElementById('pick-grid-fightlist').innerHTML=players.map(p=>{
+      const c=TC[p.ci%TC.length];const t=teams.find(t=>t.mids.includes(p.id));
+      return `<div class="player-pick" id="pp-fightlist-${p.id}" onclick="selPickFightList(${p.id})">
+        <div class="pp-avatar" style="background:${c.light};color:${c.hex}">${initials(p.name)}</div>
+        <div class="pp-name">${escapeHtml(p.name)}</div>
+        <div class="pp-info">${t?escapeHtml(t.name):'Libero'} · ${p.score}pt</div></div>`;
+    }).join('');
+    document.getElementById('btn-pick-fightlist-go').disabled=true;
+    document.getElementById('btn-pick-fightlist-go').onclick=()=>beginFightList();
+    goTo('s-pick-fightlist');
+    return;
+  }
   if(game==='catena'){
     if(players.length<2){goTo('s-setup');return;}
     stopAuaAudio();
@@ -2987,6 +3072,13 @@ function selPickGhigliottina(id){
   const btn=document.getElementById('btn-pick-ghigliottina-go');
   if(btn)btn.disabled=false;
 }
+function selPickFightList(id){
+  selFightListPid=id;
+  document.querySelectorAll('#pick-grid-fightlist .player-pick').forEach(e=>e.classList.remove('selected'));
+  document.getElementById('pp-fightlist-'+id)?.classList.add('selected');
+  const btn=document.getElementById('btn-pick-fightlist-go');
+  if(btn)btn.disabled=false;
+}
 function selectHigherLowerCategory(key){
   if(!HIGHER_LOWER_BANKS[key])return;
   selectedHolCategory=key;
@@ -3009,6 +3101,192 @@ function selPickChain(slot,id){
   document.querySelectorAll(`#pick-grid-chain-${slot} .player-pick`).forEach(e=>e.classList.remove('selected'));
   document.getElementById(`pp-chain-${slot}-${id}`)?.classList.add('selected');
   document.getElementById('btn-pick-chain-go').disabled=!(selChainP1&&selChainP2&&selChainP1!==selChainP2);
+}
+
+/* ══════════════════════════════
+   FIGHT LIST
+══════════════════════════════ */
+let fightListState={};
+let fightListTimer=null;
+
+function normalizeFightListAnswer(value){
+  return String(value||'')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g,'')
+    .toLowerCase()
+    .replace(/&/g,' e ')
+    .replace(/['’.]/g,'')
+    .replace(/[^a-z0-9]+/g,' ')
+    .trim()
+    .replace(/\s+/g,' ');
+}
+
+function buildFightListAnswers(category){
+  const answers=new Map();
+  (category.items||[]).forEach(entry=>{
+    const aliases=Array.isArray(entry)?entry:[entry];
+    const canonical=String(aliases[0]||'').trim();
+    aliases.forEach(alias=>{
+      const key=normalizeFightListAnswer(alias);
+      if(key&&!answers.has(key))answers.set(key,canonical);
+    });
+  });
+  return answers;
+}
+
+function clearFightListTimer(){
+  clearInterval(fightListTimer);
+  fightListTimer=null;
+}
+
+function beginFightList(){
+  activeStatsGame='fightlist';
+  const player=players.find(p=>p.id===selFightListPid)||players[0];
+  if(!player){goTo('s-setup');return;}
+  const category=shuffleArray([...FIGHT_LIST_CATEGORIES])[0];
+  const answers=buildFightListAnswers(category);
+  fightListState={
+    pid:player.id,
+    category,
+    answers,
+    found:[],
+    foundKeys:new Set(),
+    left:60,
+    max:60,
+    completed:false,
+    message:'Via! Scrivi una risposta e premi invio.'
+  };
+  renderFightList();
+  goTo('s-fightlist');
+  const input=document.getElementById('fl-answer');
+  if(input)input.focus();
+  startFightListTimer();
+}
+
+function startFightListTimer(){
+  clearFightListTimer();
+  updateFightListTimer();
+  fightListTimer=setInterval(()=>{
+    if(fightListState.completed)return;
+    fightListState.left--;
+    updateFightListTimer();
+    if(fightListState.left<=0)endFightList(true);
+  },1000);
+}
+
+function updateFightListTimer(){
+  const max=fightListState.max||60;
+  const left=Math.max(0,fightListState.left||0);
+  const pct=Math.max(0,Math.round(left/max*100));
+  const color=left<=10?'#E74C3C':left<=20?'#F5C518':'#2ECC71';
+  const bar=document.getElementById('fl-tbar');
+  const time=document.getElementById('fl-time');
+  if(bar){
+    bar.style.width=pct+'%';
+    bar.style.background=color;
+  }
+  if(time){
+    time.textContent=left;
+    time.style.color=left<=10?'#E74C3C':left<=20?'var(--gold)':'var(--txt)';
+  }
+}
+
+function renderFightList(){
+  const player=players.find(p=>p.id===fightListState.pid);
+  const category=fightListState.category||{};
+  const found=fightListState.found||[];
+  const playerEl=document.getElementById('fl-player');
+  const scoreEl=document.getElementById('fl-score');
+  const catEl=document.getElementById('fl-category');
+  const subEl=document.getElementById('fl-category-sub');
+  const countEl=document.getElementById('fl-found-count');
+  const foundEl=document.getElementById('fl-found');
+  const messageEl=document.getElementById('fl-message');
+  if(playerEl)playerEl.textContent=player?.name||'Giocatore';
+  if(scoreEl)scoreEl.textContent=found.length;
+  if(catEl)catEl.textContent=category.title||'Categoria';
+  if(subEl)subEl.textContent=category.sub||'Scrivi una risposta alla volta.';
+  if(countEl)countEl.textContent=found.length;
+  if(foundEl){
+    foundEl.innerHTML=found.length
+      ? found.map(answer=>`<span class="fl-chip">${escapeHtml(answer)}</span>`).join('')
+      : '<div class="fl-empty">Nessuna risposta valida ancora</div>';
+  }
+  if(messageEl)messageEl.textContent=fightListState.message||'';
+  updateFightListTimer();
+}
+
+function setFightListMessage(text){
+  fightListState.message=text;
+  const el=document.getElementById('fl-message');
+  if(el)el.textContent=text;
+}
+
+function submitFightListAnswer(){
+  if(fightListState.completed)return;
+  const input=document.getElementById('fl-answer');
+  const raw=input?.value||'';
+  const key=normalizeFightListAnswer(raw);
+  if(input)input.value='';
+  if(!key){
+    setFightListMessage('Scrivi una risposta prima di confermare.');
+    return;
+  }
+  const canonical=fightListState.answers?.get(key);
+  if(!canonical){
+    setFightListMessage('Non valida: questa risposta non e nella lista.');
+    return;
+  }
+  const canonicalKey=normalizeFightListAnswer(canonical);
+  if(fightListState.foundKeys.has(canonicalKey)){
+    setFightListMessage(`${canonical} era gia stata inserita.`);
+    return;
+  }
+  fightListState.foundKeys.add(canonicalKey);
+  fightListState.found.push(canonical);
+  fightListState.message=`Valida: ${canonical}!`;
+  renderFightList();
+  if(fightListState.found.length>=(fightListState.category?.items?.length||0)){
+    endFightList(true);
+  }
+}
+
+function endFightList(auto=false){
+  if(fightListState.completed)return;
+  fightListState.completed=true;
+  clearFightListTimer();
+  const score=fightListState.found?.length||0;
+  const player=players.find(p=>p.id===fightListState.pid);
+  if(player&&score>0)awardPlayerPoints(player.id,score,'fight-list');
+  if(score>=10){
+    recordNightEvent('fightlist_streak',{
+      game:'fightlist',
+      player:player?.name||'Giocatore',
+      category:fightListState.category?.title||'Fight List',
+      score,
+      weight:Math.min(18,score)
+    });
+  }
+  const allCanonical=[...new Set((fightListState.category?.items||[]).map(entry=>Array.isArray(entry)?entry[0]:entry))];
+  const foundSet=new Set((fightListState.found||[]).map(normalizeFightListAnswer));
+  const missed=allCanonical.filter(answer=>!foundSet.has(normalizeFightListAnswer(answer))).slice(0,12);
+  document.getElementById('win-name').textContent=player?.name||'Giocatore';
+  document.getElementById('win-sub').textContent=auto?'Tempo finito: Fight List completata.':'Fight List terminata.';
+  document.getElementById('win-scores').innerHTML=`
+    <div style="font-size:.68rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--mut);margin-bottom:.6rem">${escapeHtml(fightListState.category?.title||'Fight List')}</div>
+    <div class="sc-row">
+      <div class="sc-rank">✓</div>
+      <div class="sc-name">${escapeHtml(player?.name||'Giocatore')}</div>
+      <div class="sc-pts">${score}</div>
+    </div>
+    <div style="height:.55rem"></div>
+    <div style="font-size:.72rem;color:var(--mut);line-height:1.45">Trovate: ${escapeHtml((fightListState.found||[]).join(', ')||'nessuna')}</div>
+    ${missed.length?`<div style="font-size:.72rem;color:var(--mut);line-height:1.45;margin-top:.45rem">Alcune mancanti: ${escapeHtml(missed.join(', '))}</div>`:''}
+  `;
+  recordCompletedGame('fightlist',player?.uid&&score>0?[player.uid]:[]);
+  renderHomeLeaderboard();
+  goTo('s-win');
+  cleanupOnlineGameArtifacts();
 }
 
 /* ══════════════════════════════
@@ -4689,7 +4967,12 @@ function listenTabooScoreEvents(){
     renderTeamSection();
     renderHomeLeaderboard();
     snap.ref.remove().catch(err=>console.error('Errore pulizia evento Taboo:',err));
-  });
+  },err=>console.error('Errore ascolto eventi Taboo:',err));
+}
+
+function stopTabooScoreEvents(){
+  if(tabooScoreEventsRef)tabooScoreEventsRef.off();
+  tabooScoreEventsRef=null;
 }
 
 function getChainTeamIds(){
@@ -6400,7 +6683,6 @@ const db = firebase.firestore();
 window.db = db;
 window.seedQuestionBanksToFirestore = seedQuestionBanksToFirestore;
 let currentUser = null;
-listenTabooScoreEvents();
 
 document.addEventListener("DOMContentLoaded", () => {
   const overlay = document.getElementById("authOverlay");
@@ -6447,6 +6729,7 @@ document.addEventListener("DOMContentLoaded", () => {
       loadRegisteredUsers();
       listenCurrentUserProfile(user);
       listenGameInvites(user);
+      listenTabooScoreEvents();
       setupPresence(user);
       initInviteMessaging(user).catch(err=>console.warn('Notifiche inviti non inizializzate:',err));
       openInviteFromNotification();
@@ -6459,6 +6742,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if(unsubscribeCurrentUserLeaderboard)unsubscribeCurrentUserLeaderboard();
       if(unsubscribeGameInvites)unsubscribeGameInvites();
       stopGameSessionListener();
+      stopTabooScoreEvents();
       globalLeaderboard=[];
       registeredUsers=[];
       currentUserProfile=null;

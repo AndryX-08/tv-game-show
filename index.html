@@ -490,6 +490,25 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
 .ghig-final .field-row{margin:0}
 .ghig-message{min-height:36px;font-weight:900;line-height:1.35;color:var(--txt)}
 
+/* FIGHT LIST */
+.fl-head{display:flex;align-items:flex-start;justify-content:space-between;gap:.8rem;margin-bottom:1rem}
+.fl-title{font-family:'Bebas Neue',sans-serif;font-size:1.7rem;letter-spacing:3px;color:var(--gold)}
+.fl-scorebox{text-align:right;min-width:92px}
+.fl-scorebox span{display:block;font-size:.62rem;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;color:var(--mut)}
+.fl-scorebox strong{display:block;font-family:'Bebas Neue',sans-serif;font-size:2.35rem;letter-spacing:2px;color:var(--gold);line-height:1}
+.fl-stage{background:var(--surf);border:1px solid var(--bord);border-radius:16px;padding:1rem;margin-bottom:1rem}
+.fl-category{border-radius:14px;background:linear-gradient(145deg,rgba(245,197,24,.14),rgba(255,255,255,.055));padding:1rem;margin-bottom:1rem;text-align:center}
+.fl-kicker{font-size:.64rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--mut);margin-bottom:.35rem}
+.fl-category-name{font-family:'Bebas Neue',sans-serif;font-size:2.25rem;letter-spacing:2px;color:#fff;line-height:1.05;text-shadow:0 0 22px rgba(245,197,24,.16)}
+.fl-category-sub{font-size:.82rem;color:var(--mut);margin-top:.35rem}
+.fl-timer-row{display:grid;grid-template-columns:1fr 58px;gap:.75rem;align-items:center;margin-bottom:1rem}
+.fl-time{font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--gold);text-align:right;line-height:1}
+.fl-message{min-height:30px;font-weight:900;color:var(--txt);font-size:.9rem;margin:.55rem 0 .75rem;text-align:center}
+.fl-found-head{display:flex;align-items:center;justify-content:space-between;gap:.75rem;font-size:.66rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--mut);margin-bottom:.55rem}
+.fl-found{display:flex;flex-wrap:wrap;gap:.45rem;min-height:52px;padding:.75rem;border-radius:12px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.09)}
+.fl-chip{display:inline-flex;align-items:center;min-height:30px;border-radius:999px;padding:.28rem .7rem;background:rgba(245,197,24,.13);border:1px solid rgba(245,197,24,.26);color:var(--gold);font-size:.78rem;font-weight:900}
+.fl-empty{width:100%;display:grid;place-items:center;color:var(--mut);font-size:.82rem}
+
 #s-affari{max-width:none;width:100%;min-height:100vh;padding:0;margin:0;overflow-x:hidden;overflow-y:auto}
 #s-affari.active{display:flex;flex-direction:column}
 .affari-stage{position:relative;overflow:hidden;flex:1;display:grid;grid-template-rows:auto minmax(0,1fr) auto;background:radial-gradient(circle at 50% -10%,rgba(245,197,24,.22),transparent 30%),radial-gradient(circle at 10% 35%,rgba(52,152,219,.16),transparent 28%),radial-gradient(circle at 92% 40%,rgba(231,76,60,.13),transparent 30%),linear-gradient(180deg,#070714 0%,#11112a 42%,#05050d 100%);border:none;border-radius:0;margin-bottom:0;box-shadow:none}
@@ -820,6 +839,7 @@ body::before{
 .movie-api-box,
 .movie-stage,
 .ghig-stage,
+.fl-stage,
 .scores-panel,
 .profile-hero,
 .profile-score,
@@ -836,6 +856,8 @@ body::before{
 .movie-clue,
 .ghig-meta-box,
 .ghig-clue,
+.fl-category,
+.fl-found,
 .recap-empty,
 .affari-panel{
   background:linear-gradient(145deg,rgba(255,255,255,.105),rgba(255,255,255,.045));
@@ -1478,6 +1500,12 @@ select.tf:focus,
         <div class="gc-sub">5 indizi e una parola finale</div>
         <div class="gc-tags"><span class="gc-tag solo">1+ giocatore</span></div>
       </div>
+      <div class="game-card" onclick="startGame('fightlist')">
+        <div class="gc-emoji">📝</div>
+        <div class="gc-name">Fight List</div>
+        <div class="gc-sub">Elenca più risposte possibili</div>
+        <div class="gc-tags"><span class="gc-tag solo">1+ giocatore</span></div>
+      </div>
     </div>
     <div class="home-actions">
       <button class="btn-ghost" onclick="goTo('s-setup')">⚙ Configura giocatori &amp; timer</button>
@@ -1675,6 +1703,15 @@ select.tf:focus,
   <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:3px;color:var(--gold);margin-bottom:.25rem">La Ghigliottina</div>
   <div style="font-size:.82rem;color:var(--mut);margin-bottom:1rem">Scegli il concorrente durante la sigla. Dopo 15 secondi la finale parte automaticamente.</div>
   <div class="player-pick-grid" id="pick-grid-ghigliottina"></div>
+</div>
+
+<!-- PICK FIGHT LIST -->
+<div class="screen" id="s-pick-fightlist">
+  <button class="btn-back" onclick="goTo('s-hero')"><img src="Icone_syst/home.png" alt="" aria-hidden="true">Menu</button>
+  <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:3px;color:var(--gold);margin-bottom:.25rem">Fight List</div>
+  <div style="font-size:.82rem;color:var(--mut);margin-bottom:1.2rem">Scegli chi gioca: la categoria verra scelta casualmente appena parte il timer.</div>
+  <div class="player-pick-grid" id="pick-grid-fightlist"></div>
+  <button class="btn-gold" id="btn-pick-fightlist-go" style="width:100%" disabled>INIZIA FIGHT LIST ›</button>
 </div>
 
 <!-- PICK 2 (EREDITA) -->
@@ -2067,6 +2104,45 @@ select.tf:focus,
   <div class="affari-footer">
     <button class="btn-ghost" style="flex:1" onclick="goTo('s-hero')"><img src="Icone_syst/home.png" alt="" aria-hidden="true">Menu</button>
     <button class="btn-ghost" style="flex:1" onclick="beginAffariTuoi()"><img src="Icone_syst/replay.png" alt="" aria-hidden="true">Nuova partita</button>
+  </div>
+</div>
+
+<!-- FIGHT LIST GAME -->
+<div class="screen" id="s-fightlist">
+  <div class="fl-head">
+    <div>
+      <div class="fl-title">📝 Fight List</div>
+      <div style="font-size:.78rem;color:var(--mut)">Gioca: <span id="fl-player" style="color:var(--txt);font-weight:900"></span></div>
+    </div>
+    <div class="fl-scorebox">
+      <span>Valide</span>
+      <strong id="fl-score">0</strong>
+    </div>
+  </div>
+  <div class="fl-stage">
+    <div class="fl-category">
+      <div class="fl-kicker">Categoria casuale</div>
+      <div class="fl-category-name" id="fl-category">—</div>
+      <div class="fl-category-sub" id="fl-category-sub">Scrivi una risposta alla volta.</div>
+    </div>
+    <div class="fl-timer-row">
+      <div class="timer-bar-wrap" style="margin:0"><div class="timer-bar" id="fl-tbar" style="width:100%"></div></div>
+      <div class="fl-time" id="fl-time">60</div>
+    </div>
+    <div class="field-row">
+      <input class="tf" id="fl-answer" placeholder="Scrivi una risposta..." autocomplete="off" onkeydown="if(event.key==='Enter')submitFightListAnswer()">
+      <button class="btn-gold" id="fl-submit" onclick="submitFightListAnswer()">CONFERMA</button>
+    </div>
+    <div class="fl-message" id="fl-message"></div>
+    <div class="fl-found-head">
+      <span>Risposte trovate</span>
+      <span id="fl-found-count">0</span>
+    </div>
+    <div class="fl-found" id="fl-found"></div>
+  </div>
+  <div style="display:flex;gap:.75rem">
+    <button class="btn-ghost" style="flex:1" onclick="endFightList(false)">Termina</button>
+    <button class="btn-ghost" style="flex:1" onclick="goTo('s-hero')"><img src="Icone_syst/home.png" alt="" aria-hidden="true">Menu</button>
   </div>
 </div>
 
