@@ -718,7 +718,117 @@ function stopQuestionSpeech(){
   if(!('speechSynthesis' in window))return;
   window.speechSynthesis.cancel();
 }
-function speakQuestion(text){
+async function requestEreditaMicAccess(){
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia) {
+    updateEreditaMicStatus('Riconoscimento vocale non supportato');
+    return false;
+  }
+  try{
+    const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+    stream.getTracks().forEach(track=>track.stop());
+    ereMicAccessGranted=true;
+    updateEreditaMicStatus('Microfono pronto');
+    return true;
+  }catch(err){
+    console.warn('Permesso microfono negato:',err);
+    ereMicAccessGranted=false;
+    updateEreditaMicStatus('Permesso microfono negato');
+    return false;
+  }
+}
+
+async function startEreditaWithMic(){
+  updateEreditaMicStatus('Richiedo permesso microfono...');
+  const granted = await requestEreditaMicAccess();
+  if(granted){
+    beginEredita();
+  } else {
+    updateEreditaMicStatus('Devi consentire il microfono per usare il riconoscimento vocale');
+  }
+}
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+let ereSpeechRecognition=null;
+let ereSpeechRecActive=false;
+let ereSpeechRecExpected='';
+let ereMicAccessGranted=false;
+
+function normalizeSpeechAnswer(text){
+  if(!text) return '';
+  return text
+    .normalize('NFD').replace(/[ -\u036f]/g,'')
+    .replace(/[^0-9A-Z]/gi,'')
+    .toUpperCase();
+}
+function areEreditaAnswersEqual(actual, expected){
+  const a = normalizeSpeechAnswer(actual);
+  const e = normalizeSpeechAnswer(expected);
+  return a === e || a.includes(e) || e.includes(a);
+}
+function updateEreditaMicStatus(message){
+  const el=document.getElementById('ere-mic-status');
+  if(!el)return;
+  el.textContent=message||'';
+  el.style.opacity=message?1:0;
+}
+function initEreditaSpeechRecognition(){
+  if(!SpeechRecognition||ereSpeechRecognition)return;
+  ereSpeechRecognition=new SpeechRecognition();
+  ereSpeechRecognition.lang='it-IT';
+  ereSpeechRecognition.interimResults=false;
+  ereSpeechRecognition.maxAlternatives=1;
+  ereSpeechRecognition.continuous=true;
+  ereSpeechRecognition.onstart=()=>{
+    updateEreditaMicStatus('Ascolto la risposta...');
+  };
+  ereSpeechRecognition.onresult=event=>{
+    if(!ereState||ereState.blocked) return;
+    const transcript=(event.results[0][0].transcript||'').trim();
+    const expected=ereSpeechRecExpected||ereState.words?.[ereState.wIdx]?.word||'';
+    if(areEreditaAnswersEqual(transcript, expected)){
+      stopEreditaRecognition();
+      onSpacePress();
+    } else {
+      console.debug('Eredità speech:', transcript, 'vs', expected);
+    }
+  };
+  ereSpeechRecognition.onend=()=>{
+    if(ereSpeechRecActive&&document.getElementById('s-eredita')?.classList.contains('active')&&!ereState.blocked){
+      setTimeout(()=>startEreditaRecognition(),500);
+    }
+  };
+  ereSpeechRecognition.onerror=event=>{
+    console.warn('Eredità recognition error', event.error);
+    if(event.error==='not-allowed' || event.error==='service-not-allowed'){
+      updateEreditaMicStatus('Accesso al microfono negato');
+      ereSpeechRecActive=false;
+    }
+  };
+}
+function startEreditaRecognition(){
+  if(!SpeechRecognition||!ereState||ereState.blocked) return;
+  initEreditaSpeechRecognition();
+  ereSpeechRecExpected = ereState.words?.[ereState.wIdx]?.word||'';
+  if(!ereSpeechRecognition) {
+    updateEreditaMicStatus('Riconoscimento vocale non disponibile');
+    return;
+  }
+  try {
+    ereSpeechRecActive=true;
+    ereSpeechRecognition.start();
+  } catch(err){
+    console.warn('Eredità recognition start failed', err);
+    updateEreditaMicStatus('Errore microfono');
+    ereSpeechRecActive=false;
+  }
+}
+function stopEreditaRecognition(){
+  if(ereSpeechRecognition){
+    ereSpeechRecActive=false;
+    try{ ereSpeechRecognition.abort(); }catch(e){}
+  }
+  updateEreditaMicStatus('');
+}
+function speakQuestion(text,onEnd){
   if(!('speechSynthesis' in window)||!text)return;
   stopQuestionSpeech();
   const msg=new SpeechSynthesisUtterance(text);
@@ -728,12 +838,16 @@ function speakQuestion(text){
   msg.volume=1;
   const voice=getItalianVoice();
   if(voice)msg.voice=voice;
+  if(typeof onEnd==='function'){
+    msg.onend=()=>setTimeout(()=>onEnd(),300);
+  }
   window.speechSynthesis.speak(msg);
 }
 
 function goTo(id,options={}){
   const pushRoute=options.pushRoute!==false;
   if(id!=='s-aua'&&id!=='s-eredita')stopQuestionSpeech();
+  if(id!=='s-eredita')stopEreditaRecognition();
   if(id!=='s-aua'&&id!=='s-pick')stopAuaAudio();
   if(id!=='s-pick-wheel'&&id!=='s-wheel')stopRdfAudio();
   if(id!=='s-chain')clearChainTimer();
@@ -3028,7 +3142,7 @@ function startGame(game,options={}){
     });
     document.getElementById('btn-pick2-go').disabled=true;
     document.getElementById('btn-pick2-go').textContent='INIZIA LA SFIDA ›';
-    document.getElementById('btn-pick2-go').onclick=()=>beginEredita();
+    document.getElementById('btn-pick2-go').onclick=()=>startEreditaWithMic();
     goTo('s-pick2');
     return;
   }
@@ -5863,6 +5977,10 @@ async function beginEredita(options={}){
   clearInterval(ereInt);
   if(options.sessionId)listenGameSession(options.sessionId);
   if(spaceKH){document.removeEventListener('keydown',spaceKH);spaceKH=null;}
+  if(SpeechRecognition){
+    updateEreditaMicStatus('Richiedo permesso microfono...');
+    await requestEreditaMicAccess();
+  }
 
   const p1=players.find(p=>p.id===selP1);
   const p2=players.find(p=>p.id===selP2);
@@ -6037,7 +6155,8 @@ function renderWordCard(shouldSpeak=true){
     <div class="word-clue">${w.clue}</div>
     <div class="letter-row">${boxes}</div>
     <div class="rev-count" id="ere-rev-count">${es.revealed.length} / ${totalLetters} lettere rivelate</div>`;
-  if(shouldSpeak)speakQuestion(w.clue);
+  stopEreditaRecognition();
+  if(shouldSpeak) speakQuestion(w.clue, ()=>startEreditaRecognition());
 }
 
 function startEreditaTimer(){
@@ -6096,6 +6215,7 @@ function onSpacePress(){
   if(!canControlEreditaOnline())return;
   if(es.blocked)return;
   stopQuestionSpeech();
+  stopEreditaRecognition();
   // current active player guessed correctly
   clearInterval(ereInt);
   es.blocked=true;
@@ -6142,6 +6262,7 @@ function onSpacePress(){
 
 function handleEreditaTimeout(){
   stopQuestionSpeech();
+  stopEreditaRecognition();
   const es=ereState;
   if(!canControlEreditaOnline())return;
   const loserIdx=es.active;
