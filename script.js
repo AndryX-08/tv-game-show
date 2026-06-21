@@ -6816,12 +6816,75 @@ function renderStore() {
     card.className = "store-card";
 
     card.innerHTML = `
-      <div class="store-title">${item.name}</div>
-      <div class="store-tag">${item.type}</div>
-      <div class="store-price">💰 ${item.price}</div>
+      <div class="store-emoji">🎁</div>
+      <div class="store-name">${item.name}</div>
+      <div class="store-sub">${item.type}</div>
+      <div class="store-tags"><span class="store-tag price">💰 ${item.price}</span></div>
     `;
 
-    card.onclick = () => buyItem(item.id);
+    card.onclick = () => openPay(item);
+    
+    let selectedItemId = null;
+
+const swipeBtn = document.getElementById("swipeBtn");
+const swipeContainer = document.getElementById("swipeContainer");
+
+let isDragging = false;
+let startX = 0;
+let currentX = 0;
+
+const maxX = 260; // larghezza slider - bottone
+
+function openPay(item) {
+  selectedItemId = item.id;
+
+  document.getElementById("payItemName").innerText = item.name;
+
+  document.getElementById("payOverlay").classList.remove("hidden");
+
+  resetSwipe();
+}
+
+function resetSwipe() {
+  swipeBtn.style.left = "0px";
+}
+
+swipeBtn.addEventListener("mousedown", (e) => {
+  isDragging = true;
+  startX = e.clientX;
+});
+
+document.addEventListener("mousemove", (e) => {
+  if (!isDragging) return;
+
+  let dx = e.clientX - startX;
+  if (dx < 0) dx = 0;
+  if (dx > maxX) dx = maxX;
+
+  currentX = dx;
+  swipeBtn.style.left = dx + "px";
+});
+
+document.addEventListener("mouseup", () => {
+  if (!isDragging) return;
+
+  isDragging = false;
+
+  if (currentX > maxX * 0.85) {
+    swipeSuccess();
+    resetSwipe();
+  } else {
+    resetSwipe();
+  }
+});
+
+function swipeSuccess() {
+  swipeBtn.style.left = maxX + "px";
+  resetSwipe();
+  document.getElementById("payOverlay").classList.add("hidden");
+  navigator.vibrate?.(100);
+  buyItem(selectedItemId);
+}
 
     container.appendChild(card);
   });

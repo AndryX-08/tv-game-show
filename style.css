@@ -24,6 +24,78 @@ button,input,select{max-width:100%}
 .store-box {border: 1px solid var(--edge-soft); position: fixed;top: 15px;left: 20px;background: linear-gradient(145deg,rgba(255,255,255,.105),rgba(255,255,255,.045));padding: 10px 15px; border-radius: 12px;display: flex;align-items: center;gap: 10px;z-index: 999;backdrop-filter: blur(8px);}
 .store-box .store-btn{background:none;border:none; color:var(--txt); padding:.25rem .35rem; font-family:'Nunito',sans-serif;font-size:.95rem;font-weight:900;cursor:pointer;}
 .store-box .store-btn:hover{background:rgba(245,197,24,.12);border:none;color:var(--gold)}
+.store-items{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:.75rem;margin-bottom:2rem}
+.store-card{background:var(--surf);border:2px solid rgba(255,255,255,.15);border-radius:14px;padding:1.1rem .75rem;text-align:center;cursor:pointer;transition:transform .18s,border-color .18s}
+.store-card.disabled{opacity:.35;cursor:default;pointer-events:none}
+.store-emoji{font-size:2rem;margin-bottom:.4rem}
+.store-name{font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:2px;color:var(--gold)}
+.store-sub{font-size:.68rem;color:var(--mut);margin-top:.2rem}
+.store-tags{display:flex;justify-content:center;flex-wrap:wrap;gap:.35rem;margin-top:.55rem}
+.store-tag{font-size:25px;font-weight:900;letter-spacing:.6px;text-transform:uppercase;padding:.18rem .48rem;border-radius:20px;border:1px solid transparent;line-height:1.2}
+.store-tag.price{background:rgba(245,197,24,.13);border-color:rgba(245,197,24,.35);color:var(--gold)}
+.pay-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.pay-box {
+  width: 320px;
+  padding: 20px;
+  border-radius: 16px;
+  background: #1e1e2e;
+  color: white;
+  text-align: center;
+}
+
+.swipe-container {
+  margin-top: 20px;
+  position: relative;
+  width: 100%;
+  height: 50px;
+  border-radius: 999px;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* background */
+.swipe-bg {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: #2ecc71;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 14px;
+  border: 2px solid rgba(0, 115, 21, 0.12);
+}
+
+/* button */
+.swipe-btn {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  background: white;
+  color: #000;
+  border-radius: 50%; 
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: grab;
+  margin-left: 2.5%;
+  top: 10%;
+  transition: 0.2s;
+  font-weight: bold;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
 
 .user-box {position: fixed;top: 15px;right: 20px;background: rgba(20,20,30,0.9);padding: 10px 15px;border-radius: 12px;display: flex;align-items: center;gap: 10px;z-index: 999;backdrop-filter: blur(8px);}
 .user-name-btn{background:none;border:none;color:var(--txt);font-family:'Nunito',sans-serif;font-size:.95rem;font-weight:900;cursor:pointer;padding:.25rem .35rem;border-radius:8px}
@@ -719,7 +791,7 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
   .btn-rm:hover{color:#ff6b6b}
   .btn-success:hover{background:rgba(46,204,113,.38)}
   .btn-danger:hover{background:rgba(231,76,60,.38)}
-  .game-card:hover{transform:translateY(-3px);border-color:var(--gold)}
+  .game-card:hover,.store-card:hover{transform:translateY(-3px);border-color:var(--gold)}
   .btn-back:hover{color:#fff;border-color:rgba(255,255,255,.5)}
   .player-pick:hover{border-color:rgba(245,197,24,.55)}
   .ans-btn:hover{border-color:var(--gold);background:rgba(245,197,24,.14);color:#fff}
