@@ -6920,3 +6920,12 @@ function logout(){
   }
   auth.signOut();
 }
+
+function openStorePopup(){
+  const overlayStore=document.getElementById('storeOverlay');
+  if(overlayStore)overlayStore.classList.remove('hidden');
+}
+
+function closeStorePopup(){
+  document.getElementById('storeOverlay')?.classList.add('hidden');
+}
