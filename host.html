@@ -134,6 +134,7 @@
     };
 
     firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
     const database = firebase.database();
     const gameStateRef = database.ref('currentGameState');
     const connectedRef = database.ref('.info/connected');
@@ -205,7 +206,11 @@
       gameStateRef.update({status:'ended', mode:'taboo', endsAt:Date.now(), updatedAt:Date.now()}).catch(err => console.error('Errore fermando gioco:', err));
     }
 
+    let initialized=false;
+
     function init(){
+      if(initialized)return;
+      initialized=true;
       controls.btnStop.addEventListener('click', handleStop);
       timerInterval=setInterval(renderTimer, 500);
 
@@ -218,7 +223,15 @@
       });
     }
 
-    window.addEventListener('load', init);
+    window.addEventListener('load', () => {
+      auth.onAuthStateChanged(user => {
+        if(user){
+          init();
+          return;
+        }
+        auth.signInAnonymously().catch(err => console.error('Errore accesso anonimo:', err));
+      });
+    });
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function(){

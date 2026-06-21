@@ -1652,10 +1652,6 @@ async function beginIntesa(options={}){
   }
   document.getElementById('intesa-p1-input').innerHTML=`<span style="flex:1;font-weight:800">${p1.name}</span><input class="tf" id="intesa-p1-score" type="number" min="0" value="0" style="width:80px">`;
   document.getElementById('intesa-p2-input').innerHTML=`<span style="flex:1;font-weight:800">${p2.name}</span><input class="tf" id="intesa-p2-score" type="number" min="0" value="0" style="width:80px">`;
-  const intesaIframe=document.getElementById('intesa-iframe');
-  if(intesaIframe){
-    intesaIframe.src='https://www.ed0.it/games/intesavincente/';
-  }
   goTo('s-intesa-score');
 }
 

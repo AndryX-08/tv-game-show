@@ -116,9 +116,20 @@ Sarabanda/brano5.mp3
 
 Realtime Database viene usato soprattutto per Taboo.
 
+Le regole sono in `database.rules.json` e negano ogni accesso non autenticato.
+La presenza puo essere modificata solo dall'UID proprietario; le pagine Taboo
+effettuano automaticamente un accesso anonimo Firebase prima di collegarsi.
+
+Per pubblicare le regole:
+
+```sh
+firebase deploy --only database
+```
+
 Percorsi usati:
 
 ```txt
+status/{uid}
 currentGameState
 tabooScoreEvents
 ```

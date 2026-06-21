@@ -135,6 +135,7 @@
     };
 
     firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
     const database = firebase.database();
     const gameStateRef = database.ref('currentGameState');
     const scoreEventsRef = database.ref('tabooScoreEvents');
@@ -352,7 +353,11 @@
       }
     }
 
+    let initialized=false;
+
     function init(){
+      if(initialized)return;
+      initialized=true;
       btnStartRound.addEventListener('click', startRound);
       btnCorrect.addEventListener('click', () => applyResult(1));
       btnPass.addEventListener('click', nextWord);
@@ -366,7 +371,15 @@
       });
     }
 
-    window.addEventListener('load', init);
+    window.addEventListener('load', () => {
+      auth.onAuthStateChanged(user => {
+        if(user){
+          init();
+          return;
+        }
+        auth.signInAnonymously().catch(err => console.error('Errore accesso anonimo:', err));
+      });
+    });
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function(){

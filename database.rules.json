@@ -1,0 +1,25 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "status": {
+      ".read": "auth != null",
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid",
+        ".validate": "!newData.exists() || (newData.hasChildren(['uid', 'name', 'online', 'updatedAt']) && newData.child('uid').val() === $uid && newData.child('name').isString() && newData.child('name').val().length <= 80 && newData.child('online').isBoolean() && newData.child('updatedAt').isNumber() && (!newData.child('currentLobby').exists() || (newData.child('currentLobby').isString() && newData.child('currentLobby').val().length <= 120)))"
+      }
+    },
+    "currentGameState": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      ".validate": "!newData.exists() || (newData.hasChildren(['mode', 'status', 'updatedAt']) && newData.child('mode').val() === 'taboo' && (newData.child('status').val() === 'ready' || newData.child('status').val() === 'playing' || newData.child('status').val() === 'ended') && newData.child('updatedAt').isNumber())"
+    },
+    "tabooScoreEvents": {
+      ".read": "auth != null",
+      "$eventId": {
+        ".write": "auth != null",
+        ".validate": "!newData.exists() || (newData.hasChildren(['playerId', 'playerName', 'points', 'createdAt']) && newData.child('playerId').isNumber() && newData.child('playerName').isString() && newData.child('playerName').val().length <= 80 && (newData.child('points').val() === 1 || newData.child('points').val() === -1) && newData.child('createdAt').isNumber() && (!newData.child('playerUid').exists() || newData.child('playerUid').isString()))"
+      }
+    }
+  }
+}
