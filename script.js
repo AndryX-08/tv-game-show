@@ -6777,6 +6777,68 @@ function awardAndWin(pid,points=1,subText=null){
   cleanupOnlineGameArtifacts();
 }
 
+function openStorePopup(){
+  const overlayStore=document.getElementById('storeOverlay');
+  if(overlayStore)overlayStore.classList.remove('hidden');
+}
+
+function closeStorePopup(){
+  document.getElementById('storeOverlay')?.classList.add('hidden');
+}
+
+const storeItemsData = [
+  {
+    id: "poster_neon",
+    name: "Poster Neon",
+    type: "poster",
+    price: 500
+  },
+  {
+    id: "double_points",
+    name: "Double Points (1 turno)",
+    type: "boost",
+    price: 300
+  },
+  {
+    id: "lucky_chest",
+    name: "Cassa Fortunata",
+    type: "chest",
+    price: 200
+  }
+];
+
+function renderStore() {
+  const container = document.getElementById("storeItems");
+  container.innerHTML = "";
+
+  storeItemsData.forEach(item => {
+    const card = document.createElement("div");
+    card.className = "store-card";
+
+    card.innerHTML = `
+      <div class="store-title">${item.name}</div>
+      <div class="store-tag">${item.type}</div>
+      <div class="store-price">💰 ${item.price}</div>
+    `;
+
+    card.onclick = () => buyItem(item.id);
+
+    container.appendChild(card);
+  });
+}
+
+// esempio hook con la tua funzione Firestore
+async function buyItem(itemId) {
+  console.log("Acquisto:", itemId);
+
+  // qui richiami la tua funzione già fatta:
+  // await buyItem(userId, itemId);
+
+  alert("Acquistato: " + itemId);
+}
+
+renderStore();
+
 // LOGIN
 const firebaseConfig = {
         apiKey: "AIzaSyAs9kwrZnnBTOaBzkLn6ZhLN5mfWWmXcl4",
@@ -6919,13 +6981,4 @@ function logout(){
     return;
   }
   auth.signOut();
-}
-
-function openStorePopup(){
-  const overlayStore=document.getElementById('storeOverlay');
-  if(overlayStore)overlayStore.classList.remove('hidden');
-}
-
-function closeStorePopup(){
-  document.getElementById('storeOverlay')?.classList.add('hidden');
 }
