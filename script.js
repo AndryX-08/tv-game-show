@@ -6823,81 +6823,95 @@ function renderStore() {
     `;
 
     card.onclick = () => openPay(item);
-    
-    let selectedItemId = null;
+    container.appendChild(card);
+  });
+}
 
 const swipeBtn = document.getElementById("swipeBtn");
 const swipeContainer = document.getElementById("swipeContainer");
-
+let selectedItemId = null;
 let isDragging = false;
 let startX = 0;
 let currentX = 0;
-
 const maxX = 260; // larghezza slider - bottone
+
+function getSwipeClientX(event) {
+  if (event.type.startsWith('touch')) {
+    return event.touches[0]?.clientX ?? event.changedTouches[0]?.clientX;
+  }
+  return event.clientX;
+}
 
 function openPay(item) {
   selectedItemId = item.id;
-
   document.getElementById("payItemName").innerText = item.name;
-
   document.getElementById("payOverlay").classList.remove("hidden");
-
   resetSwipe();
 }
 
 function resetSwipe() {
+  if (!swipeBtn) return;
   swipeBtn.style.left = "0px";
+  currentX = 0;
+  isDragging = false;
 }
 
-swipeBtn.addEventListener("mousedown", (e) => {
-  isDragging = true;
-  startX = e.clientX;
-});
+if (swipeBtn) {
+  swipeBtn.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
+    isDragging = true;
+    startX = getSwipeClientX(e);
+    currentX = 0;
+    swipeBtn.setPointerCapture(e.pointerId);
+  });
+}
 
-document.addEventListener("mousemove", (e) => {
-  if (!isDragging) return;
+const inputMoveHandler = (e) => {
+  if (!isDragging || !swipeBtn) return;
 
-  let dx = e.clientX - startX;
+  const clientX = getSwipeClientX(e);
+  let dx = clientX - startX;
   if (dx < 0) dx = 0;
   if (dx > maxX) dx = maxX;
 
   currentX = dx;
   swipeBtn.style.left = dx + "px";
-});
+};
 
-document.addEventListener("mouseup", () => {
-  if (!isDragging) return;
+const inputEndHandler = () => {
+  if (!isDragging || !swipeBtn) return;
 
   isDragging = false;
-
   if (currentX > maxX * 0.85) {
     swipeSuccess();
-    resetSwipe();
   } else {
     resetSwipe();
   }
-});
+};
+
+if (document) {
+  document.addEventListener("pointermove", inputMoveHandler);
+  document.addEventListener("pointerup", inputEndHandler);
+  document.addEventListener("pointercancel", inputEndHandler);
+}
 
 function swipeSuccess() {
+  if (!swipeBtn) return;
   swipeBtn.style.left = maxX + "px";
   resetSwipe();
   document.getElementById("payOverlay").classList.add("hidden");
   navigator.vibrate?.(100);
-  buyItem(selectedItemId);
+  subtractScore(db, currentUser.uid, storeItemsData.find(item => item.id === selectedItemId));
 }
 
-    container.appendChild(card);
-  });
-}
-
+import { doc, updateDoc, increment } from "firebase/firestore";
 // esempio hook con la tua funzione Firestore
-async function buyItem(itemId) {
-  console.log("Acquisto:", itemId);
+async function subtractScore(db, userId, item) {
+  const userRef = doc(db, "users", userId);
 
-  // qui richiami la tua funzione già fatta:
-  // await buyItem(userId, itemId);
-
-  alert("Acquistato: " + itemId);
+  await updateDoc(userRef, {
+    totalScore: increment(-item.price)
+  });
 }
 
 renderStore();
