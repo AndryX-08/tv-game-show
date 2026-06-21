@@ -1236,6 +1236,7 @@ select.tf:focus,
   window.skipOpeningIntro = function(){
     if(introClosed) return;
     introClosed = true;
+    localStorage.setItem('tvgn-intro-shown','1');
     if(introAutoCloseTimer){
       clearTimeout(introAutoCloseTimer);
       introAutoCloseTimer = null;
@@ -1263,6 +1264,18 @@ select.tf:focus,
 
   document.addEventListener('DOMContentLoaded', function(){
     const intro = document.getElementById('openingIntro');
+    const introShown = localStorage.getItem('tvgn-intro-shown') === '1';
+    if(introShown){
+      if(intro){
+        intro.style.setProperty('display','none','important');
+        intro.style.setProperty('visibility','hidden','important');
+        intro.style.pointerEvents = 'none';
+        if(intro.parentNode) intro.parentNode.removeChild(intro);
+      }
+      revealHome();
+      return;
+    }
+
     if(!intro){
       revealHome();
       return;
@@ -1277,6 +1290,7 @@ select.tf:focus,
       const stillThere = document.getElementById('openingIntro');
       if(stillThere){
         introClosed = true;
+        localStorage.setItem('tvgn-intro-shown','1');
         if(introAutoCloseTimer){
           clearTimeout(introAutoCloseTimer);
           introAutoCloseTimer = null;
@@ -1984,7 +1998,12 @@ select.tf:focus,
 <div class="screen" id="s-intesa-score">
   <button class="btn-back" onclick="goTo('s-hero')"><img src="Icone_syst/home.png" alt="" aria-hidden="true">Menu</button>
   <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:3px;color:var(--gold);margin-bottom:.25rem">Punteggi L'Intesa</div>
-  <div style="font-size:.82rem;color:var(--mut);margin-bottom:1.2rem">Inserisci i punti ottenuti per ogni giocatore</div>
+  <div style="font-size:.82rem;color:var(--mut);margin-bottom:1.2rem">Gioca L'Intesa Vincente direttamente qui sotto, poi inserisci il risultato finale e premi Finisci gioco.</div>
+  <div class="intesa-iframe-wrap">
+    <div class="intesa-iframe-title">L'Intesa Vincente</div>
+    <iframe id="intesa-iframe" title="L'Intesa Vincente" sandbox="allow-scripts allow-forms allow-same-origin allow-popups" loading="lazy" src="https://www.ed0.it/games/intesavincente/" frameborder="0" style="width:100%;min-height:420px;height:42vh;max-height:740px;border:0;border-radius:18px;overflow:hidden"></iframe>
+    <div class="intesa-iframe-fallback">Se l'iframe non viene visualizzato, <a href="https://www.ed0.it/games/intesavincente/" target="_blank" rel="noopener">aprilo in una nuova scheda</a>.</div>
+  </div>
   <div style="background:rgba(52,152,219,.08);border:1px solid rgba(52,152,219,.2);border-radius:12px;padding:1rem;margin-bottom:1.4rem">
     <div style="font-size:.7rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:#3498DB;margin-bottom:.8rem">Giocatore 1</div>
     <div id="intesa-p1-input" style="display:flex;gap:.6rem;align-items:center"></div>
@@ -1995,7 +2014,7 @@ select.tf:focus,
   </div>
   <div style="display:flex;gap:.75rem">
     <button class="btn-ghost" style="flex:1" onclick="goTo('s-hero')">← Annulla</button>
-    <button class="btn-gold" style="flex:2" onclick="saveIntesaScores()">Salva punteggi ›</button>
+    <button class="btn-gold" style="flex:2" onclick="saveIntesaScores()">Finisci gioco ›</button>
   </div>
 </div>
 
