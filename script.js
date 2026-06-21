@@ -6907,11 +6907,19 @@ function swipeSuccess() {
 // import { doc, updateDoc, increment } from "firebase/firestore";
 // esempio hook con la tua funzione Firestore
 async function subtractScore(db, userId, item) {
-  const userRef = doc(db, "users", userId);
+  if (!userId || !item || typeof item.price !== 'number') return;
 
-  await updateDoc(userRef, {
-    totalScore: increment(-item.price)
-  });
+  const delta = -Math.abs(item.price);
+  const inc = firebase.firestore.FieldValue.increment(delta);
+
+  try {
+    await Promise.all([
+      db.collection('users').doc(userId).set({ totalScore: inc }, { merge: true }),
+      db.collection('leaderboard').doc(userId).set({ totalScore: inc }, { merge: true })
+    ]);
+  } catch (err) {
+    console.error('Errore subtractScore Firestore:', err);
+  }
 }
 
 renderStore();
