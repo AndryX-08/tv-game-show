@@ -6904,7 +6904,7 @@ function swipeSuccess() {
   subtractScore(db, currentUser.uid, storeItemsData.find(item => item.id === selectedItemId));
 }
 
-import { doc, updateDoc, increment } from "firebase/firestore";
+// import { doc, updateDoc, increment } from "firebase/firestore";
 // esempio hook con la tua funzione Firestore
 async function subtractScore(db, userId, item) {
   const userRef = doc(db, "users", userId);
