@@ -700,6 +700,7 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
   .user-box button:not(.user-name-btn){flex-shrink:0;padding:.5rem .65rem}
   .auth-overlay{align-items:flex-start;padding:1rem;overflow:auto}
   .auth-box{width:min(100%,420px);padding:1.25rem;border-radius:16px;margin:auto 0}
+  .store-items{grid-template-columns:1fr}
   .profile-actions{flex-direction:column}
   .profile-legal{grid-template-columns:1fr}
   .profile-hero{grid-template-columns:1fr;text-align:center;justify-items:center}
