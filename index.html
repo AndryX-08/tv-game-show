@@ -379,29 +379,35 @@
     <h1>Store</h1>
     <p>Personalizza il tuo profilo e ottieni bonus!</p>
     <div id="storeItems" class="store-items"></div>
-      <div class="profile-legal" aria-label="Documenti legali">
-        <a href="termini-condizioni.html" target="_blank" rel="noopener">Termini e condizioni</a>
-        <a href="privacy-policy.html" target="_blank" rel="noopener">Privacy policy</a>
-      </div>
-      <div class="profile-actions">
-        <button class="auth-btn anon" style="flex:1" onclick="closeStorePopup()">Annulla</button>
-      </div>
+    <div class="profile-legal" aria-label="Documenti legali">
+      <a href="termini-condizioni.html" target="_blank" rel="noopener">Termini e condizioni</a>
+      <a href="privacy-policy.html" target="_blank" rel="noopener">Privacy policy</a>
+    </div>
+    <div class="profile-actions">
+      <button class="auth-btn anon" style="flex:1" onclick="closeStorePopup()">Annulla</button>
+    </div>
 
     <div id="payOverlay" class="pay-overlay hidden">
       <div class="pay-box">
-      <div class="pay-title">Conferma acquisto</div>
-      <div id="payItemName">Item</div>
-      <div class="swipe-container" id="swipeContainer">
-      <div class="swipe-bg">
-        <span>Swipe per confermare</span>
+        <div class="pay-title">Conferma acquisto</div>
+        <div id="payItemName">Item</div>
+        <div class="swipe-container" id="swipeContainer">
+          <div class="swipe-bg">
+            <span>Swipe per confermare</span>
+          </div>
+          <div class="swipe-btn" id="swipeBtn"> ➜ </div>
+        </div>
       </div>
-      <div class="swipe-btn" id="swipeBtn"> ➜ </div>
     </div>
-
   </div>
 </div>
 
-</div>
+<div id="chestOverlay" class="auth-overlay hidden">
+  <div class="auth-box chest-box">
+    <div class="chest-title">Cassa Fortunata</div>
+    <div class="chest-animation" id="chestAnimation" aria-hidden="true">📦</div>
+    <div class="chest-message" id="chestMessage">Apri la cassa per scoprire i punti!</div>
+    <button class="btn-finale chest-button" id="openChestButton" type="button">Apri cassa</button>
   </div>
 </div>
 
