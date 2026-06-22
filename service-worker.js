@@ -34,7 +34,7 @@ try{
   console.warn('Firebase Messaging non inizializzato nel service worker:',err);
 }
 
-const CACHE_NAME = 'tv-game-night-v35';
+const CACHE_NAME = 'tv-game-night-v36';
 const APP_SHELL = [
   './',
   './index.html',
