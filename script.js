@@ -2264,12 +2264,15 @@ function openProfilePopup(){
   if(!currentUser)return;
   hydrateProfilePopup();
   switchProfileTab('profile');
+  document.getElementById('storeOverlay')?.classList.add('hidden');
+  const wrapper=document.getElementById('profileStoreOverlay');
   const overlay=document.getElementById('profileOverlay');
+  if(wrapper)wrapper.classList.remove('hidden');
   if(overlay)overlay.classList.remove('hidden');
 }
 
 function closeProfilePopup(){
-  document.getElementById('profileOverlay')?.classList.add('hidden');
+  document.getElementById('profileStoreOverlay')?.classList.add('hidden');
 }
 
 function switchProfileTab(tab='profile'){
@@ -6792,12 +6795,15 @@ function awardAndWin(pid,points=1,subText=null){
 }
 
 function openStorePopup(){
+  document.getElementById('profileOverlay')?.classList.add('hidden');
+  const wrapper=document.getElementById('profileStoreOverlay');
   const overlayStore=document.getElementById('storeOverlay');
+  if(wrapper)wrapper.classList.remove('hidden');
   if(overlayStore)overlayStore.classList.remove('hidden');
 }
 
 function closeStorePopup(){
-  document.getElementById('storeOverlay')?.classList.add('hidden');
+  document.getElementById('profileStoreOverlay')?.classList.add('hidden');
 }
 
 const storeItemsData = [
@@ -6827,7 +6833,7 @@ const storeItemsData = [
     name: "Cassa Fortunata",
     type: "chest",
     description: "Apri la cassa e ottieni un bonus punti casuale",
-    price: 200
+    price: 80
   }
 ];
 
