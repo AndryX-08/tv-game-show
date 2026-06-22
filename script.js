@@ -1828,13 +1828,18 @@ function renderHomeLeaderboard(){
 }
 
 function awardPlayerPoints(pid,points=1,source='game',scoreTeam=true){
-  const value=Number(points)||0;
+  let value = Number(points) || 0;
   if(!pid||!value)return;
   const p=players.find(pl=>pl.id===pid);
   if(!p)return;
-  p.score+=value;
+
+  if (boostPending && activeBoostMultiplier > 1 && currentUser?.uid && pid === currentUser.uid) {
+    value = value * activeBoostMultiplier;
+  }
+
+  p.score += value;
   const t=scoreTeam?teams.find(tm=>tm.mids.includes(pid)):null;
-  if(t)t.score+=value;
+  if(t)t.score += value;
   if(value>=8){
     recordNightEvent('points_awarded',{
       player:p.name,
@@ -1993,6 +1998,11 @@ function recordGameStats(game,winnerUids=[]){
 
 function recordCompletedGame(game=activeStatsGame,winnerUids=[]){
   recordGameStats(game,winnerUids);
+  if (boostPending && currentUser?.uid) {
+    clearUserBoost(currentUser.uid).catch(err=>console.error('Errore clearUserBoost:', err));
+    activeBoostMultiplier = 1;
+    boostPending = false;
+  }
   if(game&&activeStatsGame===game)activeStatsGame=null;
 }
 
@@ -2906,6 +2916,10 @@ function startGame(game,options={}){
     return;
   }
   activeStatsGame=game;
+  if (currentUserProfile?.pendingBoostMultiplier && !boostPending) {
+    activeBoostMultiplier = Number(currentUserProfile.pendingBoostMultiplier) || 1;
+    boostPending = activeBoostMultiplier > 1;
+  }
   if(['eredita','intesa','ruota','catena'].includes(game)&&players.length<2){
     stopAuaAudio();
     stopRdfAudio();
@@ -6791,21 +6805,34 @@ const storeItemsData = [
     id: "poster_neon",
     name: "Poster Neon",
     type: "poster",
+    description: "Poster decorativo per il tuo profilo",
     price: 500
   },
   {
     id: "double_points",
     name: "Double Points (1 turno)",
-    type: "boost",
+    type: "boost2x",
+    description: "Raddoppia i punti del tuo prossimo gioco",
     price: 300
+  },
+  {
+    id: "triple_points",
+    name: "Triple Points (1 turno)",
+    type: "boost3x",
+    description: "Triplica i punti del tuo prossimo gioco",
+    price: 450
   },
   {
     id: "lucky_chest",
     name: "Cassa Fortunata",
     type: "chest",
+    description: "Apri la cassa e ottieni un bonus punti casuale",
     price: 200
   }
 ];
+
+let activeBoostMultiplier = 1;
+let boostPending = false;
 
 function renderStore() {
   const container = document.getElementById("storeItems");
@@ -6818,13 +6845,127 @@ function renderStore() {
     card.innerHTML = `
       <div class="store-emoji">🎁</div>
       <div class="store-name">${item.name}</div>
-      <div class="store-sub">${item.type}</div>
+      <div class="store-sub">${item.description || item.type}</div>
       <div class="store-tags"><span class="store-tag price">💰 ${item.price}</span></div>
     `;
 
     card.onclick = () => openPay(item);
     container.appendChild(card);
   });
+}
+
+async function processStorePurchase(item) {
+  if (!currentUser || !item) return;
+  const userId = currentUser.uid;
+  const targetItem = storeItemsData.find(storeItem => storeItem.id === item.id);
+  if (!targetItem) return;
+
+  await subtractScore(db, userId, targetItem);
+  closeStorePopup();
+
+  if (targetItem.type === 'boost2x' || targetItem.type === 'boost3x') {
+    const multiplier = targetItem.type === 'boost3x' ? 3 : 2;
+    await applyUserBoost(userId, multiplier);
+    activeBoostMultiplier = multiplier;
+    boostPending = true;
+    alert(`Acquisto completato! Il tuo prossimo gioco avrà un bonus x${multiplier}.`);
+  }
+
+  if (targetItem.type === 'chest') {
+    openChestReveal();
+  }
+}
+
+async function applyUserBoost(userId, multiplier) {
+  const now = firebase.firestore.FieldValue.serverTimestamp();
+  const payload = {
+    pendingBoostMultiplier: multiplier,
+    pendingBoostCreatedAt: now
+  };
+  const batch = db.batch();
+  batch.set(db.collection('users').doc(userId), payload, { merge: true });
+  batch.set(db.collection('leaderboard').doc(userId), payload, { merge: true });
+  return batch.commit();
+}
+
+async function clearUserBoost(userId) {
+  const batch = db.batch();
+  batch.set(db.collection('users').doc(userId), {
+    pendingBoostMultiplier: firebase.firestore.FieldValue.delete(),
+    pendingBoostCreatedAt: firebase.firestore.FieldValue.delete()
+  }, { merge: true });
+  batch.set(db.collection('leaderboard').doc(userId), {
+    pendingBoostMultiplier: firebase.firestore.FieldValue.delete(),
+    pendingBoostCreatedAt: firebase.firestore.FieldValue.delete()
+  }, { merge: true });
+  await batch.commit();
+}
+
+async function rewardChestPoints(userId, points) {
+  const now = firebase.firestore.FieldValue.serverTimestamp();
+  const inc = firebase.firestore.FieldValue.increment(points);
+  const userData = {
+    name: getUserDisplayName(currentUser),
+    isAnonymous: !!currentUser?.isAnonymous,
+    photoURL: currentUser?.photoURL || null,
+    updatedAt: now
+  };
+  try {
+    await Promise.all([
+      db.collection('users').doc(userId).set({ ...userData, totalScore: inc }, { merge: true }),
+      db.collection('leaderboard').doc(userId).set({ ...userData, totalScore: inc }, { merge: true }),
+      db.collection('scoreEvents').add({
+        uid: userId,
+        playerName: getUserDisplayName(currentUser),
+        points,
+        source: 'chest',
+        createdBy: currentUser.uid,
+        createdAt: now
+      })
+    ]);
+  } catch (err) {
+    console.error('Errore chest reward Firestore:', err);
+  }
+}
+
+function openChestReveal() {
+  closePayOverlay();
+  closeStorePopup();
+  const overlay = document.getElementById('chestOverlay');
+  const message = document.getElementById('chestMessage');
+  const chestAnim = document.getElementById('chestAnimation');
+  const openBtn = document.getElementById('openChestButton');
+
+  if (!overlay || !message || !chestAnim || !openBtn) return;
+  overlay.classList.remove('hidden');
+  message.textContent = 'Apri la cassa per scoprire i punti!';
+  chestAnim.classList.remove('opened', 'revealing');
+  openBtn.disabled = false;
+  openBtn.textContent = 'Apri cassa';
+
+  openBtn.onclick = async () => {
+    openBtn.disabled = true;
+    chestAnim.classList.add('revealing');
+    message.textContent = 'Suspance...';
+    setTimeout(async () => {
+      const points = Math.floor(Math.random() * 100) + 1;
+      chestAnim.classList.remove('revealing');
+      chestAnim.classList.add('opened');
+      message.textContent = `Hai ottenuto ${points} punti!`;
+      await rewardChestPoints(currentUser.uid, points);
+      openBtn.textContent = 'Chiudi';
+      openBtn.disabled = false;
+      openBtn.onclick = closeChestOverlay;
+    }, 1500);
+  };
+}
+
+function closeChestOverlay() {
+  document.getElementById('chestOverlay')?.classList.add('hidden');
+}
+
+function closePayOverlay() {
+  document.getElementById('payOverlay')?.classList.add('hidden');
 }
 
 const swipeBtn = document.getElementById("swipeBtn");
@@ -6901,7 +7042,10 @@ function swipeSuccess() {
   resetSwipe();
   document.getElementById("payOverlay").classList.add("hidden");
   navigator.vibrate?.(100);
-  subtractScore(db, currentUser.uid, storeItemsData.find(item => item.id === selectedItemId));
+  const item = storeItemsData.find(item => item.id === selectedItemId);
+  if (item) {
+    processStorePurchase(item);
+  }
 }
 
 // import { doc, updateDoc, increment } from "firebase/firestore";
