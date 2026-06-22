@@ -307,95 +307,95 @@
   </div>
 </div>
 
-
-<!-- PROFILE + STORE OVERLAY -->
-<div id="profileStoreOverlay" class="auth-overlay hidden" style="border: 1px solid red">
-  <div class="overlay-panel-group">
-    <div id="profileOverlay" class="auth-box profile-box overlay-panel hidden">
-      <h1>Profilo</h1>
-      <p>Identita pubblica e statistiche online.</p>
-      <div class="profile-tabs" role="tablist" aria-label="Profilo e amici">
-        <button class="profile-tab-btn active" id="profileTabBtnProfile" type="button" onclick="switchProfileTab('profile')">Profilo</button>
-        <button class="profile-tab-btn" id="profileTabBtnFriends" type="button" onclick="switchProfileTab('friends')">Amici</button>
-      </div>
-      <div id="profileTabProfile">
-        <div class="profile-hero">
-          <div class="profile-avatar" id="profileAvatar">TV</div>
-          <div>
-            <div class="profile-title" id="profileHeroNickname">@utente</div>
-            <div class="profile-name" id="profileHeroName">Nome completo</div>
-          </div>
-        </div>
-        <div class="profile-mini-stats">
-          <div class="profile-stat">
-            <div class="profile-stat-label">Partite giocate</div>
-            <div class="profile-stat-value" id="profileGamesPlayed">0</div>
-          </div>
-          <div class="profile-stat">
-            <div class="profile-stat-label">Vittorie totali</div>
-            <div class="profile-stat-value" id="profileWins">0</div>
-          </div>
-          <div class="profile-stat">
-            <div class="profile-stat-label">Punteggio totale</div>
-            <div class="profile-stat-value" id="profileTotalScore">0</div>
-          </div>
-          <div class="profile-stat">
-            <div class="profile-stat-label">Ultima partita</div>
-            <div class="profile-stat-value" id="profileLastGame">—</div>
-          </div>
-        </div>
-        <div class="profile-grid">
-          <label>Nome
-            <input id="profileFirstName" type="text" maxlength="30" placeholder="Nome">
-          </label>
-          <label>Cognome
-            <input id="profileLastName" type="text" maxlength="30" placeholder="Cognome">
-          </label>
-          <label>Nickname
-            <input id="profileNickname" type="text" maxlength="24" placeholder="@nickname">
-          </label>
-        </div>
-        <div class="profile-legal" aria-label="Documenti legali">
-          <a href="termini-condizioni.html" target="_blank" rel="noopener">Termini e condizioni</a>
-          <a href="privacy-policy.html" target="_blank" rel="noopener">Privacy policy</a>
-        </div>
-        <div class="profile-actions">
-          <button class="auth-btn anon" style="flex:1" onclick="closeProfilePopup()">Annulla</button>
-          <button class="auth-btn google" style="flex:1" onclick="saveProfilePopup()">Salva</button>
-        </div>
-        <button class="btn-ghost" id="notificationToggleBtn" type="button" style="width:100%;margin-top:.75rem" onclick="enableInviteNotifications()">Attiva notifiche inviti</button>
-      </div>
-      <div id="profileTabFriends" class="hidden">
-        <input class="tf friends-search" id="friendsSearch" type="search" placeholder="Cerca per nickname..." oninput="renderFriendsList()">
-        <div id="friendsList"></div>
-        <div class="profile-actions" style="margin-top:1rem">
-          <button class="auth-btn google" onclick="closeProfilePopup()">Chiudi</button>
-        </div>
-      </div>
+<!-- PROFILO -->
+<div id="profileOverlay" class="auth-overlay hidden">
+  <div class="auth-box profile-box">
+    <h1>Profilo</h1>
+    <p>Identita pubblica e statistiche online.</p>
+    <div class="profile-tabs" role="tablist" aria-label="Profilo e amici">
+      <button class="profile-tab-btn active" id="profileTabBtnProfile" type="button" onclick="switchProfileTab('profile')">Profilo</button>
+      <button class="profile-tab-btn" id="profileTabBtnFriends" type="button" onclick="switchProfileTab('friends')">Amici</button>
     </div>
-
-    <div id="storeOverlay" class="auth-box profile-box overlay-panel hidden">
-      <h1>Store</h1>
-      <p>Personalizza il tuo profilo e ottieni bonus!</p>
-      <div id="storeItems" class="store-items"></div>
+    <div id="profileTabProfile">
+      <div class="profile-hero">
+        <div class="profile-avatar" id="profileAvatar">TV</div>
+        <div>
+          <div class="profile-title" id="profileHeroNickname">@utente</div>
+          <div class="profile-name" id="profileHeroName">Nome completo</div>
+        </div>
+      </div>
+      <div class="profile-mini-stats">
+        <div class="profile-stat">
+          <div class="profile-stat-label">Partite giocate</div>
+          <div class="profile-stat-value" id="profileGamesPlayed">0</div>
+        </div>
+        <div class="profile-stat">
+          <div class="profile-stat-label">Vittorie totali</div>
+          <div class="profile-stat-value" id="profileWins">0</div>
+        </div>
+        <div class="profile-stat">
+          <div class="profile-stat-label">Punteggio totale</div>
+          <div class="profile-stat-value" id="profileTotalScore">0</div>
+        </div>
+        <div class="profile-stat">
+          <div class="profile-stat-label">Ultima partita</div>
+          <div class="profile-stat-value" id="profileLastGame">—</div>
+        </div>
+      </div>
+      <div class="profile-grid">
+        <label>Nome
+          <input id="profileFirstName" type="text" maxlength="30" placeholder="Nome">
+        </label>
+        <label>Cognome
+          <input id="profileLastName" type="text" maxlength="30" placeholder="Cognome">
+        </label>
+        <label>Nickname
+          <input id="profileNickname" type="text" maxlength="24" placeholder="@nickname">
+        </label>
+      </div>
       <div class="profile-legal" aria-label="Documenti legali">
         <a href="termini-condizioni.html" target="_blank" rel="noopener">Termini e condizioni</a>
         <a href="privacy-policy.html" target="_blank" rel="noopener">Privacy policy</a>
       </div>
       <div class="profile-actions">
-        <button class="auth-btn anon" style="flex:1" onclick="closeStorePopup()">Annulla</button>
+        <button class="auth-btn anon" style="flex:1" onclick="closeProfilePopup()">Annulla</button>
+        <button class="auth-btn google" style="flex:1" onclick="saveProfilePopup()">Salva</button>
       </div>
+      <button class="btn-ghost" id="notificationToggleBtn" type="button" style="width:100%;margin-top:.75rem" onclick="enableInviteNotifications()">Attiva notifiche inviti</button>
+    </div>
+    <div id="profileTabFriends" class="hidden">
+      <input class="tf friends-search" id="friendsSearch" type="search" placeholder="Cerca per nickname..." oninput="renderFriendsList()">
+      <div id="friendsList"></div>
+      <div class="profile-actions" style="margin-top:1rem">
+        <button class="auth-btn google" onclick="closeProfilePopup()">Chiudi</button>
+      </div>
+    </div>
+  </div>
+</div>
 
-      <div id="payOverlay" class="pay-overlay hidden">
-        <div class="pay-box">
-          <div class="pay-title">Conferma acquisto</div>
-          <div id="payItemName">Item</div>
-          <div class="swipe-container" id="swipeContainer">
-            <div class="swipe-bg">
-              <span>Swipe per confermare</span>
-            </div>
-            <div class="swipe-btn" id="swipeBtn"> ➜ </div>
+<!-- STORE -->
+<div id="storeOverlay" class="auth-overlay hidden">
+  <div class="auth-box profile-box">
+    <h1>Store</h1>
+    <p>Personalizza il tuo profilo e ottieni bonus!</p>
+    <div id="storeItems" class="store-items"></div>
+    <div class="profile-legal" aria-label="Documenti legali">
+      <a href="termini-condizioni.html" target="_blank" rel="noopener">Termini e condizioni</a>
+      <a href="privacy-policy.html" target="_blank" rel="noopener">Privacy policy</a>
+    </div>
+    <div class="profile-actions">
+      <button class="auth-btn anon" style="flex:1" onclick="closeStorePopup()">Annulla</button>
+    </div>
+
+    <div id="payOverlay" class="pay-overlay hidden">
+      <div class="pay-box">
+        <div class="pay-title">Conferma acquisto</div>
+        <div id="payItemName">Item</div>
+        <div class="swipe-container" id="swipeContainer">
+          <div class="swipe-bg">
+            <span>Swipe per confermare</span>
           </div>
+          <div class="swipe-btn" id="swipeBtn"> ➜ </div>
         </div>
       </div>
     </div>

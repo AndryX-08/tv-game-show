@@ -1,3 +1,61 @@
+<!DOCTYPE html>
+<html lang="it"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>TV Game Night | Giochi TV da fare con gli amici</title>
+<meta name="description" content="Gioca gratis ai grandi giochi della TV italiana con amici, in locale o online: quiz, musica, parole, classifiche e sfide multiplayer.">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<link rel="canonical" href="https://tvgamenight.dpdns.org/">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="it_IT">
+<meta property="og:site_name" content="TV Game Night">
+<meta property="og:title" content="TV Game Night | Giochi TV da fare con gli amici">
+<meta property="og:description" content="Quiz e giochi ispirati ai grandi game show italiani, da giocare gratis in locale o online.">
+<meta property="og:url" content="https://tvgamenight.dpdns.org/">
+<meta property="og:image" content="https://tvgamenight.dpdns.org/Icone/logo.png">
+<meta property="og:image:alt" content="Logo di TV Game Night">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="TV Game Night | Giochi TV da fare con gli amici">
+<meta name="twitter:description" content="Quiz e giochi ispirati ai grandi game show italiani, da giocare gratis in locale o online.">
+<meta name="twitter:image" content="https://tvgamenight.dpdns.org/Icone/logo.png">
+<link rel="icon" href="Icone/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="Icone/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#08081A">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="TV Game Night">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="google-site-verification" content="EDQehZrVf_RM7yRgTsABSED3sfPZ8tM5RFziHaBg9b4" />
+<meta name="google-adsense-account" content="ca-pub-5825437395557584">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "TV Game Night",
+  "url": "https://tvgamenight.dpdns.org/",
+  "description": "Raccolta gratuita di giochi ispirati ai grandi game show italiani, da giocare con amici in locale o online.",
+  "applicationCategory": "GameApplication",
+  "operatingSystem": "Qualsiasi sistema con browser web",
+  "inLanguage": "it-IT",
+  "isAccessibleForFree": true,
+  "image": "https://tvgamenight.dpdns.org/Icone/logo.png",
+  "browserRequirements": "Richiede JavaScript",
+  "featureList": [
+    "Giochi di quiz, parole e musica",
+    "Modalita locale e multiplayer online",
+    "Classifiche e profili giocatore",
+    "Installazione come Progressive Web App"
+  ],
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "EUR"
+  }
+}
+</script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5825437395557584" crossorigin="anonymous"></script>
+<style>
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800;900&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--gold:#F5C518;--bg:#08081A;--surf:#12122A;--surf2:#1C1C3A;--bord:rgba(245,197,24,0.22);--txt:#F0EEE4;--mut:#7A7A9A}
@@ -20,144 +78,6 @@ button,input,select{max-width:100%}
 .pwa-install-primary.show{display:block}
 .pwa-install-secondary{background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.22);color:var(--txt)}
 @media(min-width:721px){.pwa-install-tip{display:none!important}}
-
-.store-box {border: 1px solid var(--edge-soft); position: fixed;top: 15px;left: 20px;background: linear-gradient(145deg,rgba(255,255,255,.105),rgba(255,255,255,.045));padding: 10px 15px; border-radius: 12px;display: flex;align-items: center;gap: 10px;z-index: 999;backdrop-filter: blur(8px);}
-.store-box .store-btn{background:none;border:none; color:var(--txt); padding:.25rem .35rem; font-family:'Nunito',sans-serif;font-size:.95rem;font-weight:900;cursor:pointer;}
-.store-box .store-btn:hover{background:rgba(245,197,24,.12);border:none;color:var(--gold)}
-.store-items{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:.75rem;margin-bottom:2rem}
-.store-card{background:var(--surf);border:2px solid rgba(255,255,255,.15);border-radius:14px;padding:1.1rem .75rem;text-align:center;cursor:pointer;transition:transform .18s,border-color .18s}
-.store-card.disabled{opacity:.35;cursor:default;pointer-events:none}
-.store-emoji{font-size:2rem;margin-bottom:.4rem}
-.store-name{font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:2px;color:var(--gold)}
-.store-sub{font-size:.68rem;color:var(--mut);margin-top:.2rem}
-.store-tags{display:flex;justify-content:center;flex-wrap:wrap;gap:.35rem;margin-top:.55rem}
-.store-tag{font-size:25px;font-weight:900;letter-spacing:.6px;text-transform:uppercase;padding:.18rem .48rem;border-radius:20px;border:1px solid transparent;line-height:1.2}
-.store-tag.price{background:rgba(245,197,24,.13);border-color:rgba(245,197,24,.35);color:var(--gold)}
-.pay-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.6);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.pay-box {
-  width: 320px;
-  padding: 20px;
-  border-radius: 16px;
-  background: #1e1e2e;
-  color: white;
-  text-align: center;
-}
-
-.chest-box {
-  width: 320px;
-  padding: 24px 20px;
-  border-radius: 20px;
-  background: #14141f;
-  border: 1px solid rgba(245,197,24,.32);
-  box-shadow: 0 18px 42px rgba(0,0,0,.45);
-  text-align: center;
-}
-
-.chest-title {
-  font-family:'Bebas Neue',sans-serif;
-  font-size:1.4rem;
-  letter-spacing:2px;
-  color:var(--gold);
-  margin-bottom:.9rem;
-}
-
-.chest-animation {
-  width: 100px;
-  height: 100px;
-  margin: 0 auto .9rem;
-  font-size: 3rem;
-  display: grid;
-  place-items: center;
-  background: rgba(255,255,255,.08);
-  border-radius: 24px;
-  transition: transform .35s ease, background .35s ease;
-}
-
-.chest-animation.revealing {
-  transform: scale(1.08);
-  background: rgba(245,197,24,.18);
-}
-
-.chest-animation.opened {
-  transform: scale(1.15);
-}
-
-.chest-message {
-  margin: 0 0 1rem;
-  color: var(--txt);
-  font-size: .95rem;
-  line-height: 1.45;
-}
-
-.chest-button {
-  background: linear-gradient(135deg,#F5C518,#2ECC71);
-  color: #070714;
-  border: none;
-  border-radius: 14px;
-  padding: .95rem 1.5rem;
-  font-weight: 900;
-  cursor: pointer;
-}
-
-.chest-button:disabled {
-  opacity: .5;
-  cursor: not-allowed;
-}
-
-.swipe-container {
-  margin-top: 20px;
-  position: relative;
-  width: 100%;
-  height: 50px;
-  border-radius: 999px;
-  overflow: hidden;
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
-  touch-action: none;
-}
-
-/* background */
-.swipe-bg {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  background: #2ecc71;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 14px;
-  border: 2px solid rgba(0, 115, 21, 0.12);
-}
-
-/* button */
-.swipe-btn {
-  position: absolute;
-  width: 40px;
-  height: 40px;
-  background: white;
-  color: #000;
-  border-radius: 50%; 
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: grab;
-  margin-left: 2.5%;
-  top: 10%;
-  transition: 0.2s;
-  font-weight: bold;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
 
 .user-box {position: fixed;top: 15px;right: 20px;background: rgba(20,20,30,0.9);padding: 10px 15px;border-radius: 12px;display: flex;align-items: center;gap: 10px;z-index: 999;backdrop-filter: blur(8px);}
 .user-name-btn{background:none;border:none;color:var(--txt);font-family:'Nunito',sans-serif;font-size:.95rem;font-weight:900;cursor:pointer;padding:.25rem .35rem;border-radius:8px}
@@ -378,7 +298,6 @@ select.tf option{background:#1C1C3A}
 kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radius:5px;font-family:monospace;font-size:.85rem;border:1px solid rgba(255,255,255,.3)}
 
 .active-indicator{font-size:.72rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;text-align:center;padding:.4rem;border-radius:8px;margin-bottom:.8rem}
-.ere-mic-status{font-size:.78rem;font-weight:700;letter-spacing:.5px;text-align:center;padding:.45rem .75rem;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(245,197,24,.22);color:var(--gold);margin-bottom:.8rem;opacity:0;transition:opacity .25s ease}
 
 /* RUOTA */
 .wheel-game{min-height:calc(100vh - 2.8rem);display:flex;flex-direction:column;gap:1rem}
@@ -570,25 +489,6 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
 .ghig-final{display:none;gap:.75rem;margin-bottom:1rem}
 .ghig-final .field-row{margin:0}
 .ghig-message{min-height:36px;font-weight:900;line-height:1.35;color:var(--txt)}
-
-/* FIGHT LIST */
-.fl-head{display:flex;align-items:flex-start;justify-content:space-between;gap:.8rem;margin-bottom:1rem}
-.fl-title{font-family:'Bebas Neue',sans-serif;font-size:1.7rem;letter-spacing:3px;color:var(--gold)}
-.fl-scorebox{text-align:right;min-width:92px}
-.fl-scorebox span{display:block;font-size:.62rem;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;color:var(--mut)}
-.fl-scorebox strong{display:block;font-family:'Bebas Neue',sans-serif;font-size:2.35rem;letter-spacing:2px;color:var(--gold);line-height:1}
-.fl-stage{background:var(--surf);border:1px solid var(--bord);border-radius:16px;padding:1rem;margin-bottom:1rem}
-.fl-category{border-radius:14px;background:linear-gradient(145deg,rgba(245,197,24,.14),rgba(255,255,255,.055));padding:1rem;margin-bottom:1rem;text-align:center}
-.fl-kicker{font-size:.64rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--mut);margin-bottom:.35rem}
-.fl-category-name{font-family:'Bebas Neue',sans-serif;font-size:2.25rem;letter-spacing:2px;color:#fff;line-height:1.05;text-shadow:0 0 22px rgba(245,197,24,.16)}
-.fl-category-sub{font-size:.82rem;color:var(--mut);margin-top:.35rem}
-.fl-timer-row{display:grid;grid-template-columns:1fr 58px;gap:.75rem;align-items:center;margin-bottom:1rem}
-.fl-time{font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--gold);text-align:right;line-height:1}
-.fl-message{min-height:30px;font-weight:900;color:var(--txt);font-size:.9rem;margin:.55rem 0 .75rem;text-align:center}
-.fl-found-head{display:flex;align-items:center;justify-content:space-between;gap:.75rem;font-size:.66rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--mut);margin-bottom:.55rem}
-.fl-found{display:flex;flex-wrap:wrap;gap:.45rem;min-height:52px;padding:.75rem;border-radius:12px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.09)}
-.fl-chip{display:inline-flex;align-items:center;min-height:30px;border-radius:999px;padding:.28rem .7rem;background:rgba(245,197,24,.13);border:1px solid rgba(245,197,24,.26);color:var(--gold);font-size:.78rem;font-weight:900}
-.fl-empty{width:100%;display:grid;place-items:center;color:var(--mut);font-size:.82rem}
 
 #s-affari{max-width:none;width:100%;min-height:100vh;padding:0;margin:0;overflow-x:hidden;overflow-y:auto}
 #s-affari.active{display:flex;flex-direction:column}
@@ -842,8 +742,6 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
   .user-name-btn:hover{background:rgba(245,197,24,.12);color:var(--gold)}
   .user-box button:hover{transition:all .18s;background:rgba(231,76,60,.2);border-color:#ef4444;color:#fff}
   .user-box .user-name-btn:hover{background:rgba(245,197,24,.12);border:none;color:var(--gold)}
-  .store-box .store-btn:hover {background: rgba(245,197,24,.12);border: none;color: var(--gold);border-radius: 12px;}
-  .store-box .store-btn:hover{background:rgba(245,197,24,.12);border:none;color:var(--gold)}
   .profile-legal a:hover{background:rgba(245,197,24,.16);border-color:rgba(245,197,24,.5)}
   .auth-btn.google:hover{transform:scale(1.03)}
   .tutorial-skip:hover{background:rgba(255,255,255,.08);color:#fff}
@@ -853,7 +751,7 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
   .btn-rm:hover{color:#ff6b6b}
   .btn-success:hover{background:rgba(46,204,113,.38)}
   .btn-danger:hover{background:rgba(231,76,60,.38)}
-  .game-card:hover,.store-card:hover{transform:translateY(-3px);border-color:var(--gold)}
+  .game-card:hover{transform:translateY(-3px);border-color:var(--gold)}
   .btn-back:hover{color:#fff;border-color:rgba(255,255,255,.5)}
   .player-pick:hover{border-color:rgba(245,197,24,.55)}
   .ans-btn:hover{border-color:var(--gold);background:rgba(245,197,24,.14);color:#fff}
@@ -864,326 +762,1098 @@ kbd{background:rgba(255,255,255,.15);color:#fff;padding:.1rem .45rem;border-radi
 }
 @media(prefers-reduced-motion:reduce){.opening-intro{display:none}}
 
-/* GLASS TV STUDIO RESTYLE */
-:root{
-  --bg:#050713;
-  --surf:rgba(18,22,44,.54);
-  --surf2:rgba(255,255,255,.075);
-  --bord:rgba(255,255,255,.12);
-  --txt:#F7F4EA;
-  --mut:#A7A9C4;
-  --glass:rgba(16,20,39,.48);
-  --glass-strong:rgba(20,25,49,.68);
-  --glass-soft:rgba(255,255,255,.07);
-  --edge:rgba(255,255,255,.14);
-  --edge-soft:rgba(255,255,255,.075);
-  --gold-glow:rgba(245,197,24,.28);
-  --blue-glow:rgba(83,184,255,.18);
-  --green-glow:rgba(46,204,113,.18);
-}
-body{
-  position:relative;
-  background:
-    linear-gradient(135deg,rgba(245,197,24,.13),transparent 31%),
-    linear-gradient(215deg,rgba(52,152,219,.18),transparent 38%),
-    linear-gradient(180deg,#070a18 0%,#10162b 48%,#070817 100%);
-  background-attachment:fixed;
-}
-body::before{
-  content:'';
-  position:fixed;
-  inset:0;
-  z-index:-2;
-  pointer-events:none;
-  background:
-    linear-gradient(115deg,transparent 0 30%,rgba(255,255,255,.055) 42%,transparent 55% 100%),
-    linear-gradient(90deg,rgba(255,255,255,.028) 1px,transparent 1px),
-    linear-gradient(180deg,rgba(255,255,255,.02) 1px,transparent 1px);
-  background-size:100% 100%,72px 72px,72px 72px;
-  mask-image:linear-gradient(180deg,rgba(0,0,0,.9),rgba(0,0,0,.32) 72%,transparent);
-}
-.screen{position:relative}
-.auth-overlay{
-  background:rgba(3,5,14,.72);
-  backdrop-filter:blur(24px) saturate(1.2);
-}
-.user-box,
-.auth-box,
-.pwa-install-tip,
-.step-block,
-.q-card,
-.word-card,
-.phrase-card,
-.chain-stage,
-.sara-stage,
-.gw-stage,
-.hol-setup,
-.hol-stage,
-.movie-api-box,
-.movie-stage,
-.ghig-stage,
-.fl-stage,
-.scores-panel,
-.profile-hero,
-.profile-score,
-.tutorial-visual,
-.tutorial-card-mini,
-.progress-track,
-.wheel-stat,
-.wheel-bank,
-.wheel-letter-panel,
-.chain-player,
-.sara-player,
-.gw-player,
-.gw-meta-card,
-.movie-clue,
-.ghig-meta-box,
-.ghig-clue,
-.fl-category,
-.fl-found,
-.recap-empty,
-.affari-panel{
-  background:linear-gradient(145deg,rgba(255,255,255,.105),rgba(255,255,255,.045));
-  border:1px solid var(--edge-soft);
-  box-shadow:0 18px 54px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.1);
-  backdrop-filter:blur(18px) saturate(1.18);
-  -webkit-backdrop-filter:blur(18px) saturate(1.18);
-}
-.auth-box,
-.step-block,
-.q-card,
-.word-card,
-.phrase-card,
-.chain-stage,
-.sara-stage,
-.gw-stage,
-.hol-stage,
-.movie-stage,
-.ghig-stage,
-.scores-panel{
-  border-radius:18px;
-}
-.game-card,
-.player-pick,
-.hol-cat,
-.chip,
-.friend-row,
-.profile-stat,
-.profile-tab-btn,
-.profile-legal a,
-.ans-btn,
-.movie-poster-wrap,
-.hol-card,
-.ere-panel,
-.wheel-turn-box,
-.recap-viewport{
-  background:linear-gradient(145deg,rgba(255,255,255,.1),rgba(255,255,255,.045));
-  border:1px solid var(--edge-soft);
-  box-shadow:0 16px 42px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.09);
-  backdrop-filter:blur(16px) saturate(1.16);
-  -webkit-backdrop-filter:blur(16px) saturate(1.16);
-}
-.logo{
-  filter:drop-shadow(0 0 22px rgba(245,197,24,.2));
-  text-shadow:none;
-}
-.logo-sub,
-.step-label,
-.q-num,
-.sara-kicker,
-.gw-kicker,
-.movie-clue-label,
-.ghig-meta-box span,
-.wheel-stat-label,
-.profile-stat-label{
-  color:rgba(226,229,255,.64);
-}
-.profile-title,
-.gc-name,
-.q-hint,
-.chain-start-word,
-.chain-title,
-.wheel-title,
-.sara-title,
-.gw-name,
-.hol-title,
-.movie-title,
-.ghig-title,
-.wheel-stat-val,
-.wheel-bank-score,
-.sc-pts,
-.profile-score-value{
-  text-shadow:0 0 18px rgba(245,197,24,.18);
-}
-.btn-gold,
-.auth-btn.google{
-  background:linear-gradient(135deg,#FFE27A 0%,#F5C518 48%,#C99A08 100%);
-  color:#090b14;
-  border:0;
-  box-shadow:0 14px 34px rgba(245,197,24,.2),0 0 0 1px rgba(255,255,255,.2) inset;
-}
-.btn-ghost,
-.btn-back,
-.pwa-install-secondary,
-.intro-skip,
-.wheel-video-skip{
-  background:rgba(255,255,255,.075);
-  border:1px solid rgba(255,255,255,.13);
-  color:rgba(247,244,234,.9);
-  box-shadow:0 12px 30px rgba(0,0,0,.2),inset 0 1px 0 rgba(255,255,255,.075);
-  backdrop-filter:blur(14px);
-  -webkit-backdrop-filter:blur(14px);
-}
-.btn-add,
-.profile-tab-btn.active,
-.player-pick.selected,
-.hol-cat.selected,
-.wheel-bank.active,
-.sara-player.active,
-.gw-player.active,
-.ere-panel.active-turn{
-  background:linear-gradient(145deg,rgba(245,197,24,.18),rgba(255,255,255,.065));
-  border-color:rgba(245,197,24,.34);
-  box-shadow:0 0 30px rgba(245,197,24,.12),inset 0 1px 0 rgba(255,255,255,.12);
-}
-.btn-success{
-  background:linear-gradient(145deg,rgba(46,204,113,.24),rgba(255,255,255,.06));
-  border:1px solid rgba(46,204,113,.34);
-  box-shadow:0 0 28px rgba(46,204,113,.13);
-}
-.btn-danger,
-.user-box button:not(.user-name-btn){
-  background:linear-gradient(145deg,rgba(231,76,60,.2),rgba(255,255,255,.055));
-  border:1px solid rgba(231,76,60,.34);
-  box-shadow:0 0 24px rgba(231,76,60,.12);
-}
-input.tf,
-select.tf,
-.profile-grid input,
-.chain-input{
-  background:rgba(255,255,255,.075);
-  border:1px solid rgba(255,255,255,.13);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.07);
-  backdrop-filter:blur(12px);
-  -webkit-backdrop-filter:blur(12px);
-}
-input.tf:focus,
-select.tf:focus,
-.profile-grid input:focus,
-.chain-input.active{
-  border-color:rgba(245,197,24,.48);
-  box-shadow:0 0 0 3px rgba(245,197,24,.1),0 0 28px rgba(245,197,24,.1);
-}
-.game-card{
-  position:relative;
-  overflow:hidden;
-  border-radius:16px;
-}
-.game-card::before,
-.player-pick::before,
-.hol-cat::before{
-  content:'';
-  position:absolute;
-  inset:0;
-  background:linear-gradient(125deg,rgba(255,255,255,.12),transparent 42%);
-  opacity:.36;
-  pointer-events:none;
-}
-.game-card.disabled{filter:saturate(.55);opacity:.38}
-.gc-tag{
-  border-color:rgba(255,255,255,.1);
-  backdrop-filter:blur(10px);
-}
-.gc-tag.solo{background:rgba(83,184,255,.13);border-color:rgba(83,184,255,.25)}
-.gc-tag.multi{background:rgba(245,197,24,.13);border-color:rgba(245,197,24,.28)}
-.chip,
-.friend-row,
-.profile-stat,
-.gw-clue,
-.movie-clue,
-.ghig-clue,
-.affari-prize,
-.sara-player,
-.gw-player,
-.chain-player{
-  border-radius:12px;
-}
-.timer-bar-wrap,
-.ep-bar-wrap{
-  background:rgba(255,255,255,.085);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.08);
-}
-.prog-dot,
-.phrase-tile,
-.lbox{
-  background:rgba(255,255,255,.075);
-  border-color:rgba(255,255,255,.11);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.08);
-}
-.prog-dot.cur,
-.phrase-tile.revealed,
-.lbox.rev{
-  box-shadow:0 0 20px rgba(245,197,24,.14),inset 0 1px 0 rgba(255,255,255,.14);
-}
-.wheel-disc{
-  border-color:rgba(255,255,255,.18);
-  box-shadow:0 24px 60px rgba(0,0,0,.36),0 0 42px rgba(245,197,24,.12),inset 0 0 0 6px rgba(0,0,0,.16);
-}
-.wheel-disc::after{background:rgba(8,10,22,.72);backdrop-filter:blur(8px)}
-.wheel-pointer{filter:drop-shadow(0 0 12px rgba(245,197,24,.45))}
-.hol-img::after{
-  background:linear-gradient(180deg,rgba(5,7,19,.08),rgba(5,7,19,.86));
-}
-.movie-poster-wrap,
-.hol-card{border-radius:16px}
-.affari-stage{
-  background:
-    linear-gradient(135deg,rgba(245,197,24,.12),transparent 26%),
-    linear-gradient(220deg,rgba(83,184,255,.13),transparent 32%),
-    linear-gradient(180deg,#050713 0%,#0b1022 48%,#050713 100%);
-}
-.affari-footer{background:rgba(5,7,19,.74);backdrop-filter:blur(16px)}
-.recap-stage{
-  background:
-    linear-gradient(125deg,rgba(245,197,24,.12),transparent 32%),
-    linear-gradient(225deg,rgba(46,204,113,.1),transparent 30%),
-    linear-gradient(180deg,#050713,#0a1021 54%,#050713);
-}
-.opening-intro{
-  background:
-    linear-gradient(125deg,rgba(245,197,24,.11),transparent 34%),
-    linear-gradient(225deg,rgba(83,184,255,.12),transparent 36%),
-    linear-gradient(145deg,#050713 0%,#080b19 48%,#111733 100%);
-}
-.intro-token,
-.intro-wheel-3d::after{
-  background:rgba(16,20,39,.64);
-  backdrop-filter:blur(14px);
-  -webkit-backdrop-filter:blur(14px);
-}
-@media(hover:hover) and (pointer:fine){
-  .game-card:hover,
-  .player-pick:hover,
-  .hol-cat:hover,
-  .hol-card:hover{
-    transform:translateY(-4px);
-    border-color:rgba(245,197,24,.34);
-    box-shadow:0 22px 58px rgba(0,0,0,.3),0 0 32px rgba(245,197,24,.12),inset 0 1px 0 rgba(255,255,255,.13);
+</style>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics-compat.js"></script>
+<script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+</head><body>
+<div class="pwa-install-tip" id="pwaInstallTip" role="dialog" aria-live="polite" aria-label="Installa TV Game Night">
+  <div class="pwa-install-head">
+    <div class="pwa-install-title">Installa TV Game Night</div>
+    <button class="pwa-install-close" id="pwaInstallClose" type="button" aria-label="Chiudi avviso">×</button>
+  </div>
+  <p>Aprila dalla schermata Home per giocare a schermo pieno e ritrovarla subito.</p>
+  <ol class="pwa-install-steps" id="pwaInstallSteps"></ol>
+  <div class="pwa-install-actions">
+    <button class="pwa-install-primary" id="pwaInstallButton" type="button">Installa ora</button>
+    <button class="pwa-install-secondary" id="pwaInstallLater" type="button">Più tardi</button>
+  </div>
+</div>
+<!-- OPENING 3D INTRO -->
+<div id="openingIntro" class="opening-intro" aria-label="Intro TV Game Night">
+  <audio id="openingIntroMusic" src="Music%20theme/intro_music_theme.mp3" preload="auto"></audio>
+  <button class="intro-skip" type="button" onclick="skipOpeningIntro()">Salta intro</button>
+  <div class="intro-light gold"></div>
+  <div class="intro-light blue"></div>
+  <div class="intro-light red"></div>
+  <div class="intro-stage">
+    <div class="intro-wheel-3d" aria-hidden="true"></div>
+    <div class="intro-orbit" aria-hidden="true">
+      <div class="intro-token wheel" data-label="Avanti">🎡</div>
+      <div class="intro-token letters" data-label="Eredità">🔠</div>
+      <div class="intro-token intesa" data-label="Intesa">🤝</div>
+      <div class="intro-token ruota" data-label="Ruota">🎯</div>
+      <div class="intro-token chain" data-label="Catena">⛓️</div>
+      <div class="intro-token music" data-label="Sarabanda">🎵</div>
+      <div class="intro-token who" data-label="Chi?">🕵️</div>
+      <div class="intro-token taboo" data-label="Taboo">🚫</div>
+    </div>
+    <div class="intro-letter-rain" aria-hidden="true">
+      <span>T</span><span>V</span><span>G</span><span>A</span><span>?</span>
+    </div>
+    <div class="intro-logo-3d">
+      <div class="intro-logo-main">TV Game Night</div>
+      <div class="intro-logo-sub">I grandi giochi della TV italiana</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Gestione sicura dell'intro iniziale: indipendente dal resto del gioco.
+(function(){
+  let introClosed = false;
+  let introAutoCloseTimer = null;
+  let introMusicStartHandler = null;
+  const introFadeMs = 850;
+  const introDurationMs = 6200;
+
+  function revealHome(){
+    const hero = document.getElementById('s-hero');
+    if(hero){
+      document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
+      hero.classList.add('active');
+    }
   }
-  .btn-gold:hover,
-  .auth-btn.google:hover{
-    background:linear-gradient(135deg,#FFF0A6 0%,#FFD83D 52%,#D8A90C 100%);
-    box-shadow:0 18px 40px rgba(245,197,24,.28),0 0 0 1px rgba(255,255,255,.28) inset;
+
+  function startOpeningIntroMusic(){
+    const music = document.getElementById('openingIntroMusic');
+    if(!music) return;
+
+    music.currentTime = 0;
+    music.volume = 1;
+
+    const playAttempt = music.play();
+    if(playAttempt && typeof playAttempt.catch === 'function'){
+      playAttempt.catch(function(){
+        if(introClosed) return;
+        introMusicStartHandler = function(){
+          if(introClosed) return;
+          music.play().catch(function(){});
+          introMusicStartHandler = null;
+        };
+        document.addEventListener('pointerdown', introMusicStartHandler, {once:true});
+      });
+    }
   }
-  .btn-ghost:hover,
-  .btn-back:hover{
-    background:rgba(255,255,255,.13);
-    border-color:rgba(255,255,255,.22);
-    box-shadow:0 16px 38px rgba(0,0,0,.24),0 0 24px rgba(83,184,255,.08);
+
+  function clearOpeningIntroMusicHandler(){
+    if(!introMusicStartHandler) return;
+    document.removeEventListener('pointerdown', introMusicStartHandler);
+    introMusicStartHandler = null;
   }
+
+  function stopOpeningIntroMusic(fadeOut){
+    const music = document.getElementById('openingIntroMusic');
+    if(!music) return;
+
+    if(!fadeOut){
+      clearOpeningIntroMusicHandler();
+      music.pause();
+      music.currentTime = 0;
+      return;
+    }
+
+    clearOpeningIntroMusicHandler();
+    const startVolume = music.volume;
+    const startedAt = performance.now();
+
+    function fadeStep(now){
+      const progress = Math.min((now - startedAt) / introFadeMs, 1);
+      music.volume = startVolume * (1 - progress);
+      if(progress < 1){
+        requestAnimationFrame(fadeStep);
+      }
+    }
+
+    requestAnimationFrame(fadeStep);
+
+    setTimeout(function(){
+      music.pause();
+      music.currentTime = 0;
+      music.volume = 1;
+    }, introFadeMs);
+  }
+
+  window.skipOpeningIntro = function(){
+    if(introClosed) return;
+    introClosed = true;
+    if(introAutoCloseTimer){
+      clearTimeout(introAutoCloseTimer);
+      introAutoCloseTimer = null;
+    }
+
+    const intro = document.getElementById('openingIntro');
+    if(!intro){
+      revealHome();
+      return;
+    }
+
+    intro.classList.add('hidden');
+    intro.style.pointerEvents = 'none';
+    stopOpeningIntroMusic(true);
+
+    setTimeout(function(){
+      if(intro && intro.parentNode){
+        intro.parentNode.removeChild(intro);
+      }
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+      revealHome();
+    }, introFadeMs);
+  };
+
+  document.addEventListener('DOMContentLoaded', function(){
+    const intro = document.getElementById('openingIntro');
+    if(!intro){
+      revealHome();
+      return;
+    }
+
+    // Chiude automaticamente l'intro anche se altre parti del sito danno errore.
+    startOpeningIntroMusic();
+    introAutoCloseTimer = setTimeout(window.skipOpeningIntro, introDurationMs);
+
+    // Fallback extra: dopo 8 secondi lo rimuove comunque, senza animazione.
+    setTimeout(function(){
+      const stillThere = document.getElementById('openingIntro');
+      if(stillThere){
+        introClosed = true;
+        if(introAutoCloseTimer){
+          clearTimeout(introAutoCloseTimer);
+          introAutoCloseTimer = null;
+        }
+        stopOpeningIntroMusic();
+        stillThere.remove();
+        revealHome();
+      }
+    }, 8000);
+  });
+})();
+</script>
+
+<!-- LOGIN PAGE -->
+<div id="authOverlay" class="auth-overlay hidden">
+  <div class="auth-box">
+    <h1>TV Game Night</h1>
+    <p>
+      Accedi per salvare punteggi, partite e giocare con i tuoi amici.
+    </p>
+
+    <button class="auth-btn google" onclick="loginWithGoogle()">
+      Continua con Google
+    </button>
+
+    <button class="auth-btn anon" onclick="loginAnonymously()">
+      Continua senza account
+    </button>
+  </div>
+</div>
+
+<div id="userBox" class="user-box hidden">
+  <button class="user-name-btn" id="userName" onclick="openProfilePopup()">Utente</button>
+  <button onclick="logout()">Logout</button>
+</div>
+
+<div id="tutorialOverlay" class="auth-overlay hidden" aria-live="polite">
+  <div class="auth-box tutorial-box">
+    <div class="tutorial-top">
+      <div class="tutorial-kicker">Primi passi</div>
+      <button class="tutorial-skip" type="button" onclick="skipOnboardingTutorial()">Salta</button>
+    </div>
+    <div class="tutorial-visual" aria-hidden="true">
+      <div class="tutorial-orbit"><div class="tutorial-dot"></div></div>
+      <div class="tutorial-card-mini">
+        <span id="tutorialIcon">🎮</span>
+        <strong id="tutorialMiniTitle">TV Game Night</strong>
+      </div>
+    </div>
+    <div class="tutorial-title" id="tutorialTitle">Scegli un gioco</div>
+    <div class="tutorial-text" id="tutorialText">Dalla home trovi tutti i giochi disponibili: scegli quello che vuoi e prepara i giocatori.</div>
+    <div class="tutorial-progress" id="tutorialProgress" aria-hidden="true"></div>
+    <div class="tutorial-actions">
+      <button class="btn-ghost" id="tutorialBack" type="button" onclick="prevOnboardingStep()">Indietro</button>
+      <button class="btn-gold" id="tutorialNext" type="button" onclick="nextOnboardingStep()">Avanti</button>
+    </div>
+  </div>
+</div>
+
+<!-- PROFILO -->
+<div id="profileOverlay" class="auth-overlay hidden">
+  <div class="auth-box profile-box">
+    <h1>Profilo</h1>
+    <p>Identita pubblica e statistiche online.</p>
+    <div class="profile-tabs" role="tablist" aria-label="Profilo e amici">
+      <button class="profile-tab-btn active" id="profileTabBtnProfile" type="button" onclick="switchProfileTab('profile')">Profilo</button>
+      <button class="profile-tab-btn" id="profileTabBtnFriends" type="button" onclick="switchProfileTab('friends')">Amici</button>
+    </div>
+    <div id="profileTabProfile">
+      <div class="profile-hero">
+        <div class="profile-avatar" id="profileAvatar">TV</div>
+        <div>
+          <div class="profile-title" id="profileHeroNickname">@utente</div>
+          <div class="profile-name" id="profileHeroName">Nome completo</div>
+        </div>
+      </div>
+      <div class="profile-mini-stats">
+        <div class="profile-stat">
+          <div class="profile-stat-label">Partite giocate</div>
+          <div class="profile-stat-value" id="profileGamesPlayed">0</div>
+        </div>
+        <div class="profile-stat">
+          <div class="profile-stat-label">Vittorie totali</div>
+          <div class="profile-stat-value" id="profileWins">0</div>
+        </div>
+        <div class="profile-stat">
+          <div class="profile-stat-label">Punteggio totale</div>
+          <div class="profile-stat-value" id="profileTotalScore">0</div>
+        </div>
+        <div class="profile-stat">
+          <div class="profile-stat-label">Ultima partita</div>
+          <div class="profile-stat-value" id="profileLastGame">—</div>
+        </div>
+      </div>
+      <div class="profile-grid">
+        <label>Nome
+          <input id="profileFirstName" type="text" maxlength="30" placeholder="Nome">
+        </label>
+        <label>Cognome
+          <input id="profileLastName" type="text" maxlength="30" placeholder="Cognome">
+        </label>
+        <label>Nickname
+          <input id="profileNickname" type="text" maxlength="24" placeholder="@nickname">
+        </label>
+      </div>
+      <div class="profile-legal" aria-label="Documenti legali">
+        <a href="termini-condizioni.html" target="_blank" rel="noopener">Termini e condizioni</a>
+        <a href="privacy-policy.html" target="_blank" rel="noopener">Privacy policy</a>
+      </div>
+      <div class="profile-actions">
+        <button class="auth-btn anon" style="flex:1" onclick="closeProfilePopup()">Annulla</button>
+        <button class="auth-btn google" style="flex:1" onclick="saveProfilePopup()">Salva</button>
+      </div>
+      <button class="btn-ghost" id="notificationToggleBtn" type="button" style="width:100%;margin-top:.75rem" onclick="enableInviteNotifications()">Attiva notifiche inviti</button>
+    </div>
+    <div id="profileTabFriends" class="hidden">
+      <input class="tf friends-search" id="friendsSearch" type="search" placeholder="Cerca per nickname..." oninput="renderFriendsList()">
+      <div id="friendsList"></div>
+      <div class="profile-actions" style="margin-top:1rem">
+        <button class="auth-btn google" onclick="closeProfilePopup()">Chiudi</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="gameInviteOverlay" class="auth-overlay hidden">
+  <div class="auth-box">
+    <h1>Invito</h1>
+    <p id="gameInviteText">Ti hanno invitato a giocare.</p>
+    <div class="profile-actions">
+      <button class="auth-btn anon" style="flex:1" onclick="declineGameInvite()">Rifiuta</button>
+      <button class="auth-btn google" style="flex:1" onclick="acceptGameInvite()">Partecipa</button>
+    </div>
+  </div>
+</div>
+
+<div id="playModeOverlay" class="auth-overlay hidden">
+  <div class="auth-box">
+    <h1>Modalità</h1>
+    <p id="playModeText">Vuoi giocare in locale o online?</p>
+    <div class="profile-actions">
+      <button class="auth-btn google" style="flex:1" onclick="choosePlayMode('local')"><img src="Icone_syst/terminal.png" alt="" aria-hidden="true">Locale</button>
+      <button class="auth-btn google" style="flex:1" onclick="choosePlayMode('online')"><img src="Icone_syst/wireless-symbol.png" alt="" aria-hidden="true">Online</button>
+    </div>
+  </div>
+</div>
+
+<!-- HERO -->
+<div class="screen active" id="s-hero">
+  <div style="text-align:center;padding:2.2rem 1rem 1.8rem">
+    <div class="logo">TV Game Night</div>
+    <div class="logo-sub">I grandi giochi della TV italiana</div>
+    <div class="game-cards">
+      <div class="game-card" onclick="startGame('aua')">
+        <div class="gc-emoji">🎡</div>
+        <div class="gc-name">Avanti un Altro</div>
+        <div class="gc-sub">Rispondi sbagliando!</div>
+        <div class="gc-tags"><span class="gc-tag solo">1+ giocatore</span></div>
+      </div>
+      <div class="game-card" onclick="startGame('eredita')">
+        <div class="gc-emoji">🔠</div>
+        <div class="gc-name">L'Eredità</div>
+        <div class="gc-sub">Indovina la parola!</div>
+        <div class="gc-tags"><span class="gc-tag multi">2+ giocatori</span></div>
+      </div>
+      <div class="game-card" onclick="startGame('intesa')">
+        <div class="gc-emoji">🤝</div>
+        <div class="gc-name">L'Intesa Vincente</div>
+        <div class="gc-sub">Rispondi in coppia!</div>
+        <div class="gc-tags"><span class="gc-tag multi">2+ giocatori</span></div>
+      </div>
+      <div class="game-card" onclick="startGame('ruota')">
+        <div class="gc-emoji">🎯</div>
+        <div class="gc-name">La Ruota</div>
+        <div class="gc-sub">Gira e completa!</div>
+        <div class="gc-tags"><span class="gc-tag multi">2+ giocatori</span></div>
+      </div>
+      <div class="game-card" onclick="startGame('catena')">
+        <div class="gc-emoji">⛓️</div>
+        <div class="gc-name">Reazione a Catena</div>
+        <div class="gc-sub">Collega le parole!</div>
+        <div class="gc-tags"><span class="gc-tag multi">2+ giocatori</span></div>
+      </div>
+      <div class="game-card" onclick="startGame('sarabanda')">
+        <div class="gc-emoji">🎵</div>
+        <div class="gc-name">Sarabanda</div>
+        <div class="gc-sub">Indovina la canzone</div>
+        <div class="gc-tags"><span class="gc-tag multi">2+ giocatori</span></div>
+      </div>
+      <div class="game-card" onclick="startGame('guesswho')">
+        <div class="gc-emoji">🕵️</div>
+        <div class="gc-name">Indovina Chi</div>
+        <div class="gc-sub">Personaggi e indizi</div>
+        <div class="gc-tags"><span class="gc-tag solo">1+ giocatore</span></div>
+      </div>
+      <div class="game-card" onclick="startGame('higherlower')">
+        <div class="gc-emoji">📈</div>
+        <div class="gc-name">Higher or Lower</div>
+        <div class="gc-sub">Scegli cosa vale di più</div>
+        <div class="gc-tags"><span class="gc-tag solo">1+ giocatore</span></div>
+      </div>
+      <div class="game-card" onclick="startGame('taboo')">
+        <div class="gc-emoji">🚫</div>
+        <div class="gc-name">Taboo</div>
+        <div class="gc-sub">Non dire le parole proibite</div>
+        <div class="gc-tags"><span class="gc-tag solo">1+ giocatore</span></div>
+      </div>
+      <div class="game-card" onclick="startGame('affarituoi')">
+        <div class="gc-emoji">📦</div>
+        <div class="gc-name">Affari Tuoi</div>
+        <div class="gc-sub">Pacchi, offerte e mistero</div>
+        <div class="gc-tags"><span class="gc-tag solo">1+ giocatore</span></div>
+      </div>
+      <div class="game-card" onclick="startGame('movieguess')">
+        <div class="gc-emoji">🎬</div>
+        <div class="gc-name">Indovina il Film</div>
+        <div class="gc-sub">Poster e indizi da TMDB</div>
+        <div class="gc-tags"><span class="gc-tag solo">1+ giocatore</span></div>
+      </div>
+      <div class="game-card" onclick="startGame('ghigliottina')">
+        <div class="gc-emoji">✂️</div>
+        <div class="gc-name">La Ghigliottina</div>
+        <div class="gc-sub">5 indizi e una parola finale</div>
+        <div class="gc-tags"><span class="gc-tag solo">1+ giocatore</span></div>
+      </div>
+    </div>
+    <div class="home-actions">
+      <button class="btn-ghost" onclick="goTo('s-setup')">⚙ Configura giocatori &amp; timer</button>
+      <button class="btn-finale" id="finish-night-btn" onclick="showNightRecap()">Finisci serata</button>
+    </div>
+  </div>
+  <div class="scores-panel" id="home-leaderboard"></div>
+</div>
+
+<div class="screen recap-screen" id="s-recap">
+  <div class="recap-stage">
+    <div class="recap-head">
+      <div>
+        <div class="recap-kicker">Recap generato dalla serata</div>
+        <div class="recap-title">Final Cut</div>
+        <div class="recap-sub" id="recap-subtitle">Momenti salienti, scelte discutibili e colpi di scena.</div>
+      </div>
+      <div class="recap-counter" id="recap-counter">00</div>
+    </div>
+    <div class="recap-body" id="recap-body"></div>
+    <div class="recap-controls">
+      <button class="btn-gold" onclick="playNightRecap()">Rivedi recap</button>
+      <button class="btn-ghost" onclick="goTo('s-hero')">Torna alla home</button>
+      <button class="btn-ghost" onclick="clearNightEvents();goTo('s-hero')">Nuova serata</button>
+    </div>
+  </div>
+</div>
+
+<audio id="aua-audio" preload="auto"></audio>
+<audio id="aua-error-audio" preload="auto"></audio>
+<audio id="ghig-intro-audio" preload="auto"></audio>
+<audio id="ghig-theme-audio" preload="auto" loop></audio>
+<div class="wheel-video-overlay" id="wheel-video-overlay">
+  <video id="wheel-intro-video" preload="metadata" playsinline></video>
+  <button class="wheel-video-skip" onclick="finishWheelIntroVideo()">Salta</button>
+</div>
+
+<!-- SETUP -->
+<div class="screen" id="s-setup">
+  <button class="btn-back" onclick="goTo('s-hero')"><img src="Icone_syst/home.png" alt="" aria-hidden="true">Menu</button>
+  <div style="font-family:'Bebas Neue',sans-serif;font-size:1.7rem;letter-spacing:3px;margin-bottom:.25rem">Configurazione</div>
+  <div style="font-size:.8rem;color:var(--mut);margin-bottom:1.2rem">Giocatori, squadre e timer</div>
+  <div class="step-block">
+    <div class="step-label">① Giocatori</div>
+    <div class="field-row">
+      <input class="tf" id="inp-player" placeholder="Nome giocatore..." maxlength="20" onkeydown="if(event.key==='Enter')addPlayer()">
+      <button class="btn-add" onclick="addPlayer()">＋</button>
+    </div>
+    <div class="field-row" style="margin-top:.55rem">
+      <select class="tf" id="registered-player-select">
+        <option value="">Carico profili registrati...</option>
+      </select>
+      <button class="btn-add" onclick="addRegisteredPlayer()">＋</button>
+    </div>
+    <div class="chip-list" id="list-players"><div class="empty">Nessun giocatore — scrivi un nome e premi ＋</div></div>
+  </div>
+  <div class="step-block">
+    <div class="step-label">② Squadre <span style="font-weight:400;color:var(--mut);font-size:.63rem">— opzionale</span></div>
+    <div id="team-section"><div class="empty">Aggiungi almeno 2 giocatori per creare squadre</div></div>
+  </div>
+  <div class="step-block">
+    <div class="step-label">③ Timer di gioco</div>
+    <div class="timer-row">
+      <div class="timer-lbl">Avanti un Altro</div>
+      <input type="range" min="10" max="120" step="5" value="120" id="timer-aua" oninput="document.getElementById('tv-aua').textContent=this.value+'s'" style="flex:1">
+      <div class="timer-val" id="tv-aua">120s</div>
+    </div>
+    <div class="timer-row">
+      <div class="timer-lbl">L'Eredità</div>
+      <input type="range" min="10" max="120" step="5" value="45" id="timer-ere" oninput="document.getElementById('tv-ere').textContent=this.value+'s'" style="flex:1">
+      <div class="timer-val" id="tv-ere">45s</div>
+    </div>
+    <div class="timer-row">
+      <div class="timer-lbl">Reazione a Catena</div>
+      <input type="range" min="10" max="60" step="5" value="20" id="timer-chain" oninput="document.getElementById('tv-chain').textContent=this.value+'s'" style="flex:1">
+      <div class="timer-val" id="tv-chain">20s</div>
+    </div>
+    <div class="timer-row">
+      <div class="timer-lbl">Taboo</div>
+      <input type="range" min="20" max="180" step="5" value="60" id="timer-taboo" oninput="document.getElementById('tv-taboo').textContent=this.value+'s'" style="flex:1">
+      <div class="timer-val" id="tv-taboo">60s</div>
+    </div>
+  </div>
+  <div class="step-block">
+    <div class="step-label">④ Voce domande</div>
+    <div class="timer-row">
+      <div class="timer-lbl">Voce</div>
+      <select class="tf" id="tts-voice" onchange="setTtsVoice(this.value)">
+        <option value="">Automatica</option>
+      </select>
+    </div>
+    <div class="timer-row">
+      <div class="timer-lbl">Velocità</div>
+      <input type="range" min="0.75" max="1.1" step="0.05" value="0.9" id="tts-rate" oninput="setTtsRate(this.value)" style="flex:1">
+      <div class="timer-val" id="tts-rate-val">0.90x</div>
+    </div>
+  </div>
+  <div style="display:flex;gap:.75rem;margin-top:.4rem">
+    <button class="btn-gold" style="flex:2" onclick="goTo('s-hero')">Salva ›</button>
+  </div>
+</div>
+
+<!-- PICK REAZIONE -->
+<div class="screen" id="s-pick-chain">
+  <button class="btn-back" onclick="goTo('s-hero')"><img src="Icone_syst/home.png" alt="" aria-hidden="true">Menu</button>
+  <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:3px;color:var(--gold);margin-bottom:.25rem">Chi fa la catena?</div>
+  <div style="font-size:.82rem;color:var(--mut);margin-bottom:1rem">Seleziona la coppia: giocheranno insieme parola dopo parola</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.2rem">
+    <div>
+      <div style="font-size:.7rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:#3498DB;margin-bottom:.6rem">Giocatore 1</div>
+      <div id="pick-grid-chain-p1"></div>
+    </div>
+    <div>
+      <div style="font-size:.7rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:#E74C3C;margin-bottom:.6rem">Giocatore 2</div>
+      <div id="pick-grid-chain-p2"></div>
+    </div>
+  </div>
+  <button class="btn-gold" id="btn-pick-chain-go" style="width:100%" disabled>INIZIA LA CATENA ›</button>
+</div>
+
+<!-- PICK 1 (AUA) -->
+<div class="screen" id="s-pick">
+  <button class="btn-back" onclick="goTo('s-hero')"><img src="Icone_syst/home.png" alt="" aria-hidden="true">Menu</button>
+  <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:3px;color:var(--gold);margin-bottom:.25rem">Chi gioca?</div>
+  <div style="font-size:.82rem;color:var(--mut);margin-bottom:1.2rem">Seleziona il giocatore che risponderà alle domande</div>
+  <div class="aua-intro-wrapper" id="aua-intro-effects">
+    <div class="intro-card">
+      <div class="intro-tag">Anteprima Avanti un Altro</div>
+      <div class="intro-title">Preparati a rispondere sbagliando!</div>
+      <div class="intro-sub">Il gioco parte tra pochi secondi: guarda gli effetti e concentrati sul ritmo.</div>
+    </div>
+    <div class="auu-effect aua-glow"></div>
+    <div class="auu-effect aua-ripple"></div>
+    <div class="auu-effect aua-spot a"></div>
+    <div class="auu-effect aua-spot b"></div>
+    <div class="auu-effect aua-spot c"></div>
+    <div class="auu-effect aua-spot d"></div>
+  </div>
+  <div class="player-pick-grid" id="pick-grid"></div>
+  <button class="btn-gold" id="btn-pick-go" style="width:100%;display:none" disabled>INIZIA ›</button>
+</div>
+
+<!-- PICK TABOO -->
+<div class="screen" id="s-pick-taboo">
+  <button class="btn-back" onclick="goTo('s-hero')"><img src="Icone_syst/home.png" alt="" aria-hidden="true">Menu</button>
+  <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:3px;color:var(--gold);margin-bottom:.25rem">Chi spiega?</div>
+  <div style="font-size:.82rem;color:var(--mut);margin-bottom:1.2rem">Seleziona il giocatore che descriverà la parola senza dire quelle proibite</div>
+  <div class="player-pick-grid" id="pick-grid-taboo"></div>
+  <button class="btn-gold" id="btn-pick-taboo-go" style="width:100%" disabled>APRI TABOO ›</button>
+</div>
+
+<!-- PICK HIGHER OR LOWER -->
+<div class="screen" id="s-pick-hol">
+  <button class="btn-back" onclick="goTo('s-hero')"><img src="Icone_syst/home.png" alt="" aria-hidden="true">Menu</button>
+  <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:3px;color:var(--gold);margin-bottom:.25rem">Higher or Lower</div>
+  <div style="font-size:.82rem;color:var(--mut);margin-bottom:1.2rem">Scegli il concorrente e una categoria. Alla prima risposta sbagliata il turno finisce.</div>
+  <div class="hol-setup">
+    <div>
+      <div style="font-size:.7rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:.6rem">Concorrente</div>
+      <div class="player-pick-grid" id="pick-grid-hol"></div>
+    </div>
+    <div>
+      <div style="font-size:.7rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:.6rem">Categoria</div>
+      <div class="hol-cats" id="hol-categories"></div>
+    </div>
+  </div>
+  <button class="btn-gold" id="btn-pick-hol-go" style="width:100%" disabled>INIZIA ›</button>
+</div>
+
+<!-- PICK AFFARI TUOI -->
+<div class="screen" id="s-pick-affari">
+  <button class="btn-back" onclick="goTo('s-hero')"><img src="Icone_syst/home.png" alt="" aria-hidden="true">Menu</button>
+  <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:3px;color:var(--gold);margin-bottom:.25rem">Affari Tuoi</div>
+  <div style="font-size:.82rem;color:var(--mut);margin-bottom:1.2rem">Scegli il concorrente, poi prendi il tuo pacco e ascolta le offerte dell'uomo misterioso.</div>
+  <div class="player-pick-grid" id="pick-grid-affari"></div>
+  <button class="btn-gold" id="btn-pick-affari-go" style="width:100%" disabled>ENTRA IN STUDIO ›</button>
+</div>
+
+<!-- PICK INDOVINA IL FILM -->
+<div class="screen" id="s-pick-movie">
+  <button class="btn-back" onclick="goTo('s-hero')"><img src="Icone_syst/home.png" alt="" aria-hidden="true">Menu</button>
+  <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:3px;color:var(--gold);margin-bottom:.25rem">Indovina il Film</div>
+  <div style="font-size:.82rem;color:var(--mut);margin-bottom:1rem">Film e cast arrivano dal proxy TMDB collegato a Cloudflare. Scegli il concorrente e indovina dai poster e dagli indizi.</div>
+  <div class="movie-api-box">
+    <div style="font-size:.7rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:.35rem">API collegata</div>
+    <div style="font-size:.78rem;color:var(--mut);line-height:1.35">Il token TMDB resta nel Worker Cloudflare, fuori dal repository e fuori dal browser.</div>
+  </div>
+  <div class="player-pick-grid" id="pick-grid-movie"></div>
+  <button class="btn-gold" id="btn-pick-movie-go" style="width:100%" disabled>APRI IL SET ›</button>
+</div>
+
+<!-- PICK GHIGLIOTTINA -->
+<div class="screen" id="s-pick-ghigliottina">
+  <button class="btn-back" onclick="goTo('s-hero')"><img src="Icone_syst/home.png" alt="" aria-hidden="true">Menu</button>
+  <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:3px;color:var(--gold);margin-bottom:.25rem">La Ghigliottina</div>
+  <div style="font-size:.82rem;color:var(--mut);margin-bottom:1rem">Scegli il concorrente durante la sigla. Dopo 15 secondi la finale parte automaticamente.</div>
+  <div class="player-pick-grid" id="pick-grid-ghigliottina"></div>
+</div>
+
+<!-- PICK 2 (EREDITA) -->
+<div class="screen" id="s-pick2">
+  <button class="btn-back" onclick="goTo('s-hero')"><img src="Icone_syst/home.png" alt="" aria-hidden="true">Menu</button>
+  <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:3px;color:var(--gold);margin-bottom:.25rem">Chi sfida chi?</div>
+  <div style="font-size:.82rem;color:var(--mut);margin-bottom:1rem">Seleziona i due sfidanti</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.2rem">
+    <div>
+      <div style="font-size:.7rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:#3498DB;margin-bottom:.6rem">Sfidante 1</div>
+      <div id="pick-grid-p1"></div>
+    </div>
+    <div>
+      <div style="font-size:.7rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:#E74C3C;margin-bottom:.6rem">Sfidante 2</div>
+      <div id="pick-grid-p2"></div>
+    </div>
+  </div>
+  <button class="btn-gold" id="btn-pick2-go" style="width:100%" disabled>INIZIA LA SFIDA ›</button>
+</div>
+
+<!-- PICK RUOTA -->
+<div class="screen" id="s-pick-wheel">
+  <button class="btn-back" onclick="goTo('s-hero')"><img src="Icone_syst/home.png" alt="" aria-hidden="true">Menu</button>
+  <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:3px;color:var(--gold);margin-bottom:.25rem">Chi inizia?</div>
+  <div style="font-size:.82rem;color:var(--mut);margin-bottom:1.2rem">Seleziona il primo concorrente: dopo il video introduttivo si entra in gioco.</div>
+  <div class="aua-intro-wrapper" id="wheel-intro-effects">
+    <div class="intro-card">
+      <div class="intro-tag">Anteprima La Ruota</div>
+      <div class="intro-title">La fortuna sta per girare!</div>
+      <div class="intro-sub">Scegli il primo concorrente: al momento giusto si entra in gioco.</div>
+    </div>
+    <div class="auu-effect aua-glow"></div>
+    <div class="auu-effect aua-ripple"></div>
+    <div class="auu-effect aua-spot a"></div>
+    <div class="auu-effect aua-spot b"></div>
+    <div class="auu-effect aua-spot c"></div>
+    <div class="auu-effect aua-spot d"></div>
+  </div>
+  <div class="player-pick-grid" id="pick-grid-wheel"></div>
+  <button class="btn-gold" id="btn-pick-wheel-go" style="width:100%" disabled>INIZIA GIOCO ›</button>
+</div>
+
+<!-- AUA GAME -->
+<div class="screen" id="s-aua">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:3px;color:var(--gold)">🎡 Avanti un Altro</div>
+    <div style="font-size:.8rem;color:var(--mut)">Gioca: <span id="aua-pname" style="color:var(--txt);font-weight:800"></span></div>
+  </div>
+  <div class="timer-bar-wrap"><div class="timer-bar" id="aua-tbar" style="width:100%"></div></div>
+  <div class="timer-display" id="aua-tdisp">30</div>
+  <div class="progress-track" id="aua-track"></div>
+  <div id="aua-content"></div>
+  <div style="display:flex;gap:.75rem">
+    <button class="btn-ghost" style="flex:1" onclick="goTo('s-hero')"><img src="Icone_syst/home.png" alt="" aria-hidden="true">Menu</button>
+  </div>
+</div>
+
+<!-- EREDITA GAME -->
+<div class="screen" id="s-eredita">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:3px;color:var(--gold)">🔠 L'Eredità</div>
+    <div style="font-size:.78rem;color:var(--mut)" id="ere-word-counter">Parola 1 / 10</div>
+  </div>
+  <div class="space-bar-hint" onclick="onSpacePress()" style="cursor:pointer;">
+    <kbd>SPAZIO</kbd> = il giocatore attivo ha indovinato!
+  </div>
+  <div class="active-indicator" id="ere-active-ind"></div>
+  <div class="ere-layout" id="ere-panels"></div>
+  <div class="word-card" id="ere-word-card"></div>
+  <div style="display:flex;gap:.75rem;justify-content:center" id="ere-controls"></div>
+  <div style="display:flex;gap:.75rem">
+    <button class="btn-ghost" style="flex:1" onclick="goTo('s-hero')"><img src="Icone_syst/home.png" alt="" aria-hidden="true">Menu</button>
+  </div>
+</div>
+
+<!-- RUOTA GAME -->
+<div class="screen" id="s-wheel">
+  <div class="wheel-game">
+    <div class="wheel-top">
+      <div class="wheel-head">
+        <div class="wheel-title">🎯 La Ruota della Fortuna</div>
+        <div class="wheel-player">Gioca: <span id="wheel-pname" style="color:var(--txt);font-weight:900"></span></div>
+      </div>
+      <div class="wheel-banks" id="wheel-banks"></div>
+      <div class="wheel-status">
+        <div class="wheel-stat">
+          <div class="wheel-stat-label">Premio</div>
+          <div class="wheel-stat-val" id="wheel-prize">—</div>
+        </div>
+        <div class="wheel-stat">
+          <div class="wheel-stat-label">Banca</div>
+          <div class="wheel-stat-val" id="wheel-round-score">0</div>
+        </div>
+        <div class="wheel-stat">
+          <div class="wheel-stat-label">Lettere</div>
+          <div class="wheel-stat-val" id="wheel-left-count">0</div>
+        </div>
+      </div>
+      <div class="phrase-card">
+        <div class="phrase-cat" id="wheel-category">Frase</div>
+        <div class="phrase-board" id="wheel-phrase"></div>
+        <div class="wheel-message" id="wheel-message"></div>
+        <div class="wheel-letter-panel" id="wheel-letter-panel">
+          <div class="wheel-mini-label" id="wheel-letter-label">Scegli una consonante</div>
+          <div class="wheel-letter-row">
+            <input class="tf" id="wheel-letter-input" maxlength="1" placeholder="?" onkeydown="if(event.key==='Enter')submitWheelLetter()">
+            <button class="btn-gold" id="wheel-letter-submit" onclick="submitWheelLetter()">CONFERMA</button>
+          </div>
+          <div class="vowel-row" id="wheel-vowels"></div>
+        </div>
+        <div class="wheel-solve-row">
+          <input class="tf" id="wheel-solution-input" placeholder="Scrivi la soluzione..." onkeydown="if(event.key==='Enter')submitWheelSolution()">
+          <button class="btn-success" onclick="submitWheelSolution()">PROVA</button>
+        </div>
+      </div>
+    </div>
+    <div class="wheel-bottom">
+      <div class="wheel-wrap">
+        <div class="wheel-pointer"></div>
+        <div class="wheel-disc" id="wheel-disc"><div id="wheel-labels"></div></div>
+      </div>
+      <div class="wheel-controls">
+        <button class="btn-ghost" onclick="goTo('s-hero')"><img src="Icone_syst/home.png" alt="" aria-hidden="true">Menu</button>
+        <div class="wheel-space-hint" onclick="spinWheel()" style="cursor:pointer;"><kbd>SPAZIO</kbd> Gira</div>
+      </div>
+    </div>
+  </div>
+  <div class="wheel-turn-alert" id="wheel-turn-alert">
+    <div class="wheel-turn-box">
+      <div class="wheel-turn-label">Tocca a</div>
+      <div class="wheel-turn-name" id="wheel-turn-name"></div>
+    </div>
+  </div>
+</div>
+
+<!-- REAZIONE GAME -->
+<div class="screen" id="s-chain">
+  <div class="chain-head">
+    <div class="chain-title">⛓️ Reazione a Catena</div>
+    <div class="chain-team">Coppia: <span id="chain-pair" style="color:var(--txt);font-weight:900"></span></div>
+  </div>
+  <div class="chain-penalty" id="chain-players"></div>
+  <div class="chain-stage">
+    <div class="chain-start">
+      <span class="chain-start-label">Partenza</span>
+      <span class="chain-start-word" id="chain-start-word">—</span>
+    </div>
+    <div class="chain-timer-line">
+      <div class="chain-step-label" id="chain-step-label">Parola 1</div>
+      <div class="timer-bar-wrap" style="margin:0"><div class="timer-bar" id="chain-tbar" style="width:100%"></div></div>
+      <div class="chain-time" id="chain-time">20</div>
+    </div>
+    <div class="chain-rows" id="chain-rows"></div>
+    <div class="chain-hint" id="chain-hint"></div>
+    <div class="chain-actions">
+      <button class="btn-danger" onclick="missChainWord()">SBAGLIATA / AIUTO</button>
+      <button class="btn-gold" onclick="submitChainWord()">CONFERMA</button>
+    </div>
+    <div class="chain-message" id="chain-message"></div>
+  </div>
+  <div style="display:flex;gap:.75rem">
+    <button class="btn-ghost" style="flex:1" onclick="goTo('s-hero')"><img src="Icone_syst/home.png" alt="" aria-hidden="true">Menu</button>
+    <button class="btn-ghost" style="flex:1" onclick="beginChain()"><img src="Icone_syst/replay.png" alt="" aria-hidden="true">Nuova catena</button>
+  </div>
+</div>
+
+<!-- SARABANDA GAME -->
+<div class="screen" id="s-sarabanda">
+  <div class="chain-head">
+    <div class="chain-title">🎵 Sarabanda</div>
+    <div class="chain-team">Brano <span id="sara-counter" style="color:var(--txt);font-weight:900">1 / 1</span></div>
+  </div>
+  <div class="sara-stage">
+    <div class="sara-now">
+      <div class="sara-kicker" id="sara-status">Ascolta e indovina</div>
+      <div class="sara-title" id="sara-hidden-title">???</div>
+      <div class="sara-sub" id="sara-hidden-artist">Premi play quando siete pronti</div>
+    </div>
+    <audio class="sara-audio" id="sara-audio" controls preload="metadata"></audio>
+    <div class="sara-players" id="sara-players"></div>
+    <div class="field-row">
+      <input class="tf" id="sara-answer" placeholder="Titolo o artista..." onkeydown="if(event.key==='Enter')submitSarabandaAnswer()">
+      <button class="btn-gold" onclick="submitSarabandaAnswer()">CONFERMA</button>
+    </div>
+    <div class="sara-actions">
+      <button class="btn-ghost" onclick="revealSarabandaTrack()">RIVELA</button>
+      <button class="btn-gold" onclick="nextSarabandaTrack()">PROSSIMA</button>
+    </div>
+    <div class="sara-message" id="sara-message"></div>
+  </div>
+  <div style="display:flex;gap:.75rem">
+    <button class="btn-ghost" style="flex:1" onclick="endSarabanda()">Termina</button>
+    <button class="btn-ghost" style="flex:1" onclick="goTo('s-hero')"><img src="Icone_syst/home.png" alt="" aria-hidden="true">Menu</button>
+  </div>
+</div>
+
+<!-- INDOVINA CHI GAME -->
+<div class="screen" id="s-guesswho">
+  <div class="chain-head">
+    <div class="chain-title">🕵️ Indovina Chi</div>
+    <div class="chain-team">Personaggio <span id="gw-counter" style="color:var(--txt);font-weight:900">1 / 5</span></div>
+  </div>
+  <div class="gw-stage">
+    <div class="gw-top">
+      <div class="gw-titlebox">
+        <div class="gw-kicker" id="gw-category">Personaggio famoso</div>
+        <div class="gw-name" id="gw-name">???</div>
+      </div>
+      <div class="gw-pill" id="gw-points">5 pt</div>
+    </div>
+    <div class="gw-meta">
+      <div class="gw-meta-card">
+        <div class="gw-meta-label">Turno</div>
+        <div class="gw-meta-val" id="gw-active">Giocatore</div>
+      </div>
+      <div class="gw-meta-card">
+        <div class="gw-meta-label">Regola</div>
+        <div class="gw-meta-val">Meno indizi, piu punti</div>
+      </div>
+    </div>
+    <div class="gw-clues" id="gw-clues"></div>
+    <div class="gw-players" id="gw-players"></div>
+    <div class="field-row">
+      <input class="tf" id="gw-answer" placeholder="Nome del personaggio..." onkeydown="if(event.key==='Enter')submitGuessWhoAnswer()">
+      <button class="btn-gold" onclick="submitGuessWhoAnswer()">CONFERMA</button>
+    </div>
+    <div class="gw-actions">
+      <button class="btn-ghost" onclick="nextGuessWhoClue()">ALTRO INDIZIO</button>
+      <button class="btn-ghost" onclick="revealGuessWhoCharacter()">RIVELA</button>
+      <button class="btn-gold" onclick="nextGuessWhoCharacter()">PROSSIMO</button>
+    </div>
+    <div class="gw-message" id="gw-message"></div>
+  </div>
+  <div style="display:flex;gap:.75rem">
+    <button class="btn-ghost" style="flex:1" onclick="endGuessWho()">Termina</button>
+    <button class="btn-ghost" style="flex:1" onclick="goTo('s-hero')"><img src="Icone_syst/home.png" alt="" aria-hidden="true">Menu</button>
+  </div>
+</div>
+
+<!-- HIGHER OR LOWER GAME -->
+<div class="screen" id="s-higherlower">
+  <div class="hol-head">
+    <div>
+      <div class="hol-title">📈 Higher or Lower</div>
+      <div style="font-size:.78rem;color:var(--mut)">Gioca: <span id="hol-player" style="color:var(--txt);font-weight:900"></span></div>
+    </div>
+    <div class="hol-meta">
+      <div>Risposte corrette</div>
+      <div class="hol-score" id="hol-score">0</div>
+    </div>
+  </div>
+  <div class="hol-stage">
+    <div class="hol-versus">
+      <button class="hol-card" id="hol-card-a" type="button" onclick="chooseHigherLower('a')"></button>
+      <div class="hol-vs">VS</div>
+      <button class="hol-card" id="hol-card-b" type="button" onclick="chooseHigherLower('b')"></button>
+    </div>
+    <div class="hol-message" id="hol-message"></div>
+    <div class="hol-actions">
+      <button class="btn-ghost" onclick="endHigherLower(true)">Termina</button>
+      <button class="btn-ghost" onclick="goTo('s-hero')"><img src="Icone_syst/home.png" alt="" aria-hidden="true">Menu</button>
+    </div>
+  </div>
+</div>
+
+<!-- INTESA SCORE -->
+<div class="screen" id="s-intesa-score">
+  <button class="btn-back" onclick="goTo('s-hero')"><img src="Icone_syst/home.png" alt="" aria-hidden="true">Menu</button>
+  <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:3px;color:var(--gold);margin-bottom:.25rem">Punteggi L'Intesa</div>
+  <div style="font-size:.82rem;color:var(--mut);margin-bottom:1.2rem">Inserisci i punti ottenuti per ogni giocatore</div>
+  <div style="background:rgba(52,152,219,.08);border:1px solid rgba(52,152,219,.2);border-radius:12px;padding:1rem;margin-bottom:1.4rem">
+    <div style="font-size:.7rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:#3498DB;margin-bottom:.8rem">Giocatore 1</div>
+    <div id="intesa-p1-input" style="display:flex;gap:.6rem;align-items:center"></div>
+  </div>
+  <div style="background:rgba(231,76,60,.08);border:1px solid rgba(231,76,60,.2);border-radius:12px;padding:1rem;margin-bottom:1.4rem">
+    <div style="font-size:.7rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:#E74C3C;margin-bottom:.8rem">Giocatore 2</div>
+    <div id="intesa-p2-input" style="display:flex;gap:.6rem;align-items:center"></div>
+  </div>
+  <div style="display:flex;gap:.75rem">
+    <button class="btn-ghost" style="flex:1" onclick="goTo('s-hero')">← Annulla</button>
+    <button class="btn-gold" style="flex:2" onclick="saveIntesaScores()">Salva punteggi ›</button>
+  </div>
+</div>
+
+<!-- INDOVINA IL FILM GAME -->
+<div class="screen" id="s-movieguess">
+  <div class="movie-head">
+    <div>
+      <div class="movie-title">🎬 Indovina il Film</div>
+      <div style="font-size:.78rem;color:var(--mut)">Gioca: <span id="movie-player" style="color:var(--txt);font-weight:900"></span></div>
+    </div>
+    <div class="movie-score">Punti<strong id="movie-score">0</strong></div>
+  </div>
+  <div class="movie-stage">
+    <div class="movie-layout">
+      <div class="movie-poster-wrap">
+        <div class="movie-poster" id="movie-poster"></div>
+        <div class="movie-poster-missing" id="movie-poster-missing">🎞️</div>
+      </div>
+      <div class="movie-panel">
+        <div class="movie-clues" id="movie-clues"></div>
+        <div class="field-row">
+          <input class="tf" id="movie-answer" placeholder="Titolo del film..." onkeydown="if(event.key==='Enter')submitMovieGuess()">
+          <button class="btn-gold" onclick="submitMovieGuess()">CONFERMA</button>
+        </div>
+        <div class="movie-actions">
+          <button class="btn-ghost" onclick="nextMovieClue()">ALTRO INDIZIO</button>
+          <button class="btn-ghost" onclick="revealMovieAnswer()">RIVELA</button>
+          <button class="btn-gold" onclick="nextMovieRound()">PROSSIMO</button>
+        </div>
+        <div class="movie-message" id="movie-message"></div>
+      </div>
+    </div>
+  </div>
+  <div style="display:flex;gap:.75rem">
+    <button class="btn-ghost" style="flex:1" onclick="endMovieGuess()">Termina</button>
+    <button class="btn-ghost" style="flex:1" onclick="goTo('s-hero')"><img src="Icone_syst/home.png" alt="" aria-hidden="true">Menu</button>
+  </div>
+</div>
+
+<!-- GHIGLIOTTINA GAME -->
+<div class="screen" id="s-ghigliottina">
+  <div class="ghig-head">
+    <div>
+      <div class="ghig-title">✂️ La Ghigliottina</div>
+      <div style="font-size:.78rem;color:var(--mut)">Gioca: <span id="ghig-player" style="color:var(--txt);font-weight:900"></span></div>
+    </div>
+    <div class="ghig-prize">
+      <span>Montepremi</span>
+      <strong id="ghig-prize">€0</strong>
+    </div>
+  </div>
+  <div class="ghig-stage">
+    <div class="ghig-meta">
+      <div class="ghig-meta-box"><span>Coppia</span><strong id="ghig-step">1 / 5</strong></div>
+      <div class="ghig-meta-box"><span>Tempo finale</span><strong id="ghig-time">--</strong></div>
+    </div>
+    <div class="ghig-clues" id="ghig-clues"></div>
+    <div class="ghig-pair" id="ghig-pair"></div>
+    <div class="ghig-final" id="ghig-final">
+      <div class="field-row">
+        <input class="tf" id="ghig-answer" placeholder="Parola finale..." onkeydown="if(event.key==='Enter')submitGhigliottinaAnswer()">
+        <button class="btn-gold" onclick="submitGhigliottinaAnswer()">CONFERMA</button>
+      </div>
+      <button class="btn-ghost" onclick="endGhigliottina(false)">RINUNCIA</button>
+    </div>
+    <div class="ghig-message" id="ghig-message"></div>
+  </div>
+  <div style="display:flex;gap:.75rem">
+    <button class="btn-ghost" style="flex:1" onclick="endGhigliottina(false)">Termina</button>
+    <button class="btn-ghost" style="flex:1" onclick="goTo('s-hero')"><img src="Icone_syst/home.png" alt="" aria-hidden="true">Menu</button>
+  </div>
+</div>
+
+<!-- AFFARI TUOI GAME -->
+<div class="screen" id="s-affari">
+  <div class="affari-stage">
+    <div class="affari-head">
+      <div>
+        <div class="affari-title">📦 Affari Tuoi</div>
+        <div class="affari-sub">Concorrente: <span id="affari-player" style="color:var(--txt);font-weight:900"></span></div>
+      </div>
+      <div class="affari-offer">
+        <div class="affari-offer-label" id="affari-offer-label">Offerta</div>
+        <div class="affari-offer-value" id="affari-offer">—</div>
+      </div>
+    </div>
+    <div class="affari-scene">
+      <canvas id="affari-canvas" aria-label="Scena 3D dei pacchi"></canvas>
+      <div class="affari-fallback" id="affari-fallback" aria-label="Pacchi"></div>
+      <audio id="affari-audio" preload="auto" playsinline></audio>
+    </div>
+    <div class="affari-info">
+      <div class="affari-panel">
+        <div class="affari-panel-title">Premi in gioco</div>
+        <div class="affari-prizes" id="affari-prizes"></div>
+      </div>
+      <div class="affari-panel">
+        <div class="affari-panel-title" id="affari-step">Ingresso in studio</div>
+        <div class="affari-message" id="affari-message">Scegli il tuo pacco.</div>
+        <div class="affari-actions">
+          <button class="btn-success" id="affari-accept" onclick="acceptAffariOffer()" disabled>Accetto</button>
+          <button class="btn-danger" id="affari-reject" onclick="rejectAffariOffer()" disabled>Rifiuto</button>
+          <button class="btn-ghost" id="affari-swap" onclick="swapAffariPackage()" disabled>Cambio pacco</button>
+          <button class="btn-gold" id="affari-reveal" onclick="revealAffariFinal()" disabled>Scopri pacco</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="affari-footer">
+    <button class="btn-ghost" style="flex:1" onclick="goTo('s-hero')"><img src="Icone_syst/home.png" alt="" aria-hidden="true">Menu</button>
+    <button class="btn-ghost" style="flex:1" onclick="beginAffariTuoi()"><img src="Icone_syst/replay.png" alt="" aria-hidden="true">Nuova partita</button>
+  </div>
+</div>
+
+<!-- WIN -->
+<div class="screen" id="s-win">
+  <div class="win-wrap">
+    <div class="win-stage">
+      <div class="win-trophy">🏆</div>
+      <div class="win-title" id="win-title">CHI HA VINTO?</div>
+      <div class="win-suspense" id="win-suspense">
+        <div class="win-countdown" aria-hidden="true"><span></span><span></span><span></span></div>
+        <div class="win-suspense-text" id="win-suspense-text">Prepariamo il podio</div>
+      </div>
+      <div class="win-name" id="win-name">—</div>
+      <div class="win-sub" id="win-sub"></div>
+      <div class="win-podium" id="win-podium" aria-live="polite"></div>
+      <div class="scores-panel" id="win-scores"></div>
+      <div class="win-actions">
+        <button class="btn-ghost" style="flex:1" onclick="goTo('s-hero')"><img src="Icone_syst/home.png" alt="" aria-hidden="true">Menu</button>
+        <button class="btn-gold" style="flex:2" onclick="goTo('s-hero')"><img src="Icone_syst/replay.png" alt="" aria-hidden="true">Gioca ancora ›</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="script.js"></script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('./service-worker.js').catch(function(error){
+      console.warn('Service worker non registrato:', error);
+    });
+  });
 }
-@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
-  .user-box,.auth-box,.pwa-install-tip,.step-block,.q-card,.word-card,.phrase-card,.chain-stage,.sara-stage,.gw-stage,.hol-stage,.movie-stage,.ghig-stage,.scores-panel,.game-card,.player-pick,.hol-cat,.chip,.friend-row,.profile-stat,.ans-btn{
-    background:rgba(18,22,44,.92);
+
+(function(){
+  var deferredInstallPrompt=null;
+  var tip=document.getElementById('pwaInstallTip');
+  var steps=document.getElementById('pwaInstallSteps');
+  var installButton=document.getElementById('pwaInstallButton');
+  var closeButton=document.getElementById('pwaInstallClose');
+  var laterButton=document.getElementById('pwaInstallLater');
+  var isMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  var isStandalone=window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  var isIos=/iPhone|iPad|iPod/i.test(navigator.userAgent);
+  var isAndroid=/Android/i.test(navigator.userAgent);
+
+  function setSteps(items){
+    steps.innerHTML='';
+    items.forEach(function(item){
+      var li=document.createElement('li');
+      li.textContent=item;
+      steps.appendChild(li);
+    });
   }
-}
+
+  function hideTip(){
+    if(tip) tip.classList.remove('show');
+    sessionStorage.setItem('tvgn-pwa-tip-closed','1');
+  }
+
+  function showTip(){
+    if(!tip || !isMobile || isStandalone || sessionStorage.getItem('tvgn-pwa-tip-closed')==='1') return;
+
+    if(isIos){
+      setSteps([
+        'Apri il sito con Safari.',
+        'Tocca il pulsante Condividi nella barra di Safari.',
+        'Scegli Aggiungi alla schermata Home e poi Aggiungi.'
+      ]);
+    } else if(isAndroid){
+      setSteps([
+        'Tocca Installa ora se il pulsante e disponibile.',
+        'In alternativa apri il menu del browser.',
+        'Scegli Installa app oppure Aggiungi a schermata Home.'
+      ]);
+    } else {
+      setSteps([
+        'Apri il menu del browser.',
+        'Scegli Installa app oppure Aggiungi a schermata Home.'
+      ]);
+    }
+
+    tip.classList.add('show');
+  }
+
+  window.addEventListener('beforeinstallprompt', function(event){
+    event.preventDefault();
+    deferredInstallPrompt=event;
+    if(installButton) installButton.classList.add('show');
+    showTip();
+  });
+
+  if(installButton){
+    installButton.addEventListener('click', function(){
+      if(!deferredInstallPrompt) return;
+      deferredInstallPrompt.prompt();
+      deferredInstallPrompt.userChoice.finally(function(){
+        deferredInstallPrompt=null;
+        installButton.classList.remove('show');
+        hideTip();
+      });
+    });
+  }
+
+  if(closeButton) closeButton.addEventListener('click', hideTip);
+  if(laterButton) laterButton.addEventListener('click', hideTip);
+  window.addEventListener('appinstalled', hideTip);
+  window.addEventListener('load', function(){ setTimeout(showTip, 900); });
+})();
+</script>
+</body></html>
