@@ -28,6 +28,7 @@ let players=[],teams=[],nPid=1,nTid=1;
 let selPid=null,selP1=null,selP2=null,selWheelPid=null,selChainP1=null,selChainP2=null,selTabooPid=null,selHigherPid=null,selAffariPid=null,selMoviePid=null,selGhigliottinaPid=null,selFightListPid=null,selectedHolCategory='videogiochi';
 let intesaWinner=null;
 let intesaPlayers={p1:null,p2:null};
+let guessMatchPlayers={p1:null,p2:null};
 let activeStatsGame=null;
 let globalLeaderboard=[];
 let registeredUsers=[];
@@ -1424,6 +1425,7 @@ function getGameNameFromScreen(id){
   if(id==='s-movieguess')return 'movieguess';
   if(id==='s-ghigliottina')return 'ghigliottina';
   if(id==='s-intesa-score')return 'intesa';
+  if(id==='s-guessmatch-score')return 'guessmatch';
   return 'menu';
 }
 function initTtsControls(){
@@ -1676,6 +1678,49 @@ function saveIntesaScores(){
   goTo('s-hero');
 }
 
+async function beginGuessMatch(options={}){
+  activeStatsGame='guessMatch';
+  if(!selP1||!selP2||selP1===selP2) return;
+  if(options.sessionId)listenGameSession(options.sessionId);
+  guessMatchPlayers={p1:selP1,p2:selP2};
+  const p1=players.find(p=>p.id===selP1);
+  const p2=players.find(p=>p.id===selP2);
+  if(!p1||!p2) return;
+  if(!options.fromInvite&&selectedPlayMode==='online'){
+    const sessionId=await createGameSession('guessMatch',{
+      p1Uid:p1.uid||null,
+      p2Uid:p2.uid||null,
+      p1Name:p1.name,
+      p2Name:p2.name,
+      status:'scoring'
+    });
+    sendGameInvites('guessMatch',{p1Uid:p1.uid||null,p2Uid:p2.uid||null,sessionId});
+  }
+  document.getElementById('guessmatch-p1-input').innerHTML=`<span style="flex:1;font-weight:800">${p1.name}</span><input class="tf" id="guessmatch-p1-score" type="number" min="0" value="0" style="width:80px">`;
+  document.getElementById('guessmatch-p2-input').innerHTML=`<span style="flex:1;font-weight:800">${p2.name}</span><input class="tf" id="guessmatch-p2-score" type="number" min="0" value="0" style="width:80px">`;
+  goTo('s-guessmatch-score');
+}
+
+function saveGuessMatchScores(){
+  const v1=parseInt(document.getElementById('guessmatch-p1-score')?.value)||0;
+  const v2=parseInt(document.getElementById('guessmatch-p2-score')?.value)||0;
+  const p1=players.find(p=>p.id===guessMatchPlayers.p1);
+  const p2=players.find(p=>p.id===guessMatchPlayers.p2);
+  awardPlayerPoints(guessMatchPlayers.p1,v1,'guessMatch');
+  awardPlayerPoints(guessMatchPlayers.p2,v2,'guessMatch');
+  const winnerUids=[];
+  if(v1>v2&&p1?.uid)winnerUids.push(p1.uid);
+  if(v2>v1&&p2?.uid)winnerUids.push(p2.uid);
+  if(v1===v2)[p1?.uid,p2?.uid].filter(Boolean).forEach(uid=>winnerUids.push(uid));
+  recordCompletedGame('guessMatch',winnerUids);
+  guessMatchPlayers={p1:null,p2:null};
+  renderPlayers();
+  renderTeamSection();
+  renderHomeLeaderboard();
+  cleanupOnlineGameArtifacts();
+  goTo('s-hero');
+}
+
 /* ── PLAYER/TEAM MANAGEMENT ── */
 function addPlayer(){
   const inp=document.getElementById('inp-player');
@@ -1908,7 +1953,9 @@ function getGameStatsLabel(game){
     ghigliottina:'La Ghigliottina',
     fightlist:'Fight List',
     'fight-list':'Fight List',
-    manche:'Manche'
+    manche:'Manche',
+    guessMatch:'Guess Match',
+    'guess-match':'Guess Match'
   };
   return labels[game]||game||'—';
 }
@@ -2551,10 +2598,13 @@ const GAME_LABELS={
   higherlower:'HIGHER OR LOWER',
   affarituoi:'AFFARI TUOI',
   movieguess:'INDOVINA IL FILM',
-  ghigliottina:'LA GHIGLIOTTINA'
+  ghigliottina:'LA GHIGLIOTTINA',
+  fightlist:'FIGHT LIST',
+  manche:'MANCHE',
+  guessMatch:'GUESS MATCH'
 };
 
-const MULTIPLAYER_GAMES=['ruota','eredita','intesa','catena','sarabanda','guesswho'];
+const MULTIPLAYER_GAMES=['ruota','eredita','intesa','catena','sarabanda','guesswho', 'guessmatch'];
 
 function isMultiplayerGame(game){
   return MULTIPLAYER_GAMES.includes(game);
@@ -3094,6 +3144,23 @@ function startGame(game,options={}){
     goTo('s-pick2');
     return;
   }
+  if(game==='guessMatch'){
+  selP1=null;selP2=null;
+  ['p1','p2'].forEach(slot=>{
+    document.getElementById('pick-grid-'+slot).innerHTML=players.map(p=>{
+      const c=TC[p.ci%TC.length];const t=teams.find(t=>t.mids.includes(p.id));
+      return `<div class="player-pick" id="pp2-${slot}-${p.id}" onclick="selPick2('${slot}',${p.id})" style="margin-bottom:.5rem">
+        <div class="pp-avatar" style="background:${c.light};color:${c.hex}">${initials(p.name)}</div>
+        <div class="pp-name">${p.name}</div>
+        <div class="pp-info">${t?t.name:'Libero'}</div></div>`;
+    }).join('');
+  });
+  document.getElementById('btn-pick2-go').disabled=true;
+  document.getElementById('btn-pick2-go').textContent='APRI GIOCO ›';
+  document.getElementById('btn-pick2-go').onclick=()=>beginGuessMatch();
+  goTo('s-pick2');
+  return;
+}
   if(game==='taboo'){
     selPid=null;
     selTabooPid=null;

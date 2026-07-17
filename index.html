@@ -517,6 +517,12 @@
         <div class="gc-sub">Elenca più risposte possibili</div>
         <div class="gc-tags"><span class="gc-tag solo">1+ giocatore</span></div>
       </div>
+      <div class="game-card" onclick="startGame('guessMatch')">
+        <div class="gc-emoji">🧩</div>
+        <div class="gc-name">Guess and Match</div>
+        <div class="gc-sub">Rispondi in coppia!</div>
+        <div class="gc-tags"><span class="gc-tag solo">1+ giocatori</span></div>
+      </div>
     </div>
     <div class="home-actions">
       <button class="btn-ghost" onclick="goTo('s-setup')">⚙ Configura giocatori &amp; timer</button>
@@ -1009,6 +1015,28 @@
     <button class="btn-ghost" style="flex:1" onclick="goTo('s-hero')">← Annulla</button>
     <button class="btn-gold" style="flex:2" onclick="saveIntesaScores()">Finisci gioco ›</button>
   </div>
+</div>
+
+<!-- GUESS AND MATCH SCORE -->
+<div class="screen" id="s-guessmatch-score">
+<button class="btn-back" onclick="goTo('s-hero')"><img src="Icone_syst/home.png" alt="" aria-hidden="true">Menu</button>
+<div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:3px;color:var(--gold);margin-bottom:.25rem">Punteggi Guess and Match</div>
+<div style="font-size:.82rem;color:var(--mut);margin-bottom:1.2rem">Se l'iframe non viene visualizzato, <a href="https://dialed.gg" target="_blank" rel="noopener" style="color:white">aprilo in una nuova scheda</a>.</div>
+<div class="intesa-iframe-wrap">
+<iframe id="guessmatch-iframe" title="Guess and Match" sandbox="allow-scripts allow-forms allow-same-origin allow-popups" loading="lazy" src="https://dialed.gg" frameborder="0" style="width:100%;min-height:420px;height:42vh;max-height:740px;border:0;border-radius:18px;overflow:hidden"></iframe>
+</div>
+<div style="background:rgba(52,152,219,.08);border:1px solid rgba(52,152,219,.2);border-radius:12px;padding:1rem;margin-bottom:1.4rem">
+<div style="font-size:.7rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:#3498DB;margin-bottom:.8rem">Giocatore 1</div>
+<div id="guessmatch-p1-input" style="display:flex;gap:.6rem;align-items:center"></div>
+</div>
+<div style="background:rgba(231,76,60,.08);border:1px solid rgba(231,76,60,.2);border-radius:12px;padding:1rem;margin-bottom:1.4rem">
+<div style="font-size:.7rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:#E74C3C;margin-bottom:.8rem">Giocatore 2</div>
+<div id="guessmatch-p2-input" style="display:flex;gap:.6rem;align-items:center"></div>
+</div>
+<div style="display:flex;gap:.75rem">
+<button class="btn-ghost" style="flex:1" onclick="goTo('s-hero')">← Annulla</button>
+<button class="btn-gold" style="flex:2" onclick="saveGuessMatchScores()">Finisci gioco ›</button>
+</div>
 </div>
 
 <!-- INDOVINA IL FILM GAME -->
