@@ -1,7 +1,15 @@
 const admin = require('firebase-admin');
 const functions = require('firebase-functions/v1');
 
-admin.initializeApp();
+const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+const adminOptions = serviceAccountJson
+  ? {
+      credential: admin.credential.cert(JSON.parse(serviceAccountJson)),
+      databaseURL: process.env.FIREBASE_DATABASE_URL
+    }
+  : undefined;
+
+admin.initializeApp(adminOptions);
 
 const GAME_LABELS = {
   ruota: 'la Ruota',
@@ -15,6 +23,69 @@ const GAME_LABELS = {
   movieguess: 'Indovina il Film',
   ghigliottina: 'la Ghigliottina'
 };
+
+const ANONYMOUS_MAX_AGE_MS = 3 * 60 * 60 * 1000;
+
+async function deleteQueryDocuments(query) {
+  const snapshot = await query.get();
+  await Promise.all(snapshot.docs.map(doc => doc.ref.delete()));
+}
+
+async function deleteAnonymousData(uid) {
+  const firestore = admin.firestore();
+  const userRef = firestore.collection('users').doc(uid);
+
+  await deleteQueryDocuments(userRef.collection('gameInvites'));
+  await deleteQueryDocuments(userRef.collection('fcmTokens'));
+  await deleteQueryDocuments(
+    firestore.collectionGroup('gameInvites').where('fromUid', '==', uid)
+  );
+  await deleteQueryDocuments(firestore.collection('scoreEvents').where('uid', '==', uid));
+
+  const sessions = await firestore
+    .collection('gameSessions')
+    .where('participantUids', 'array-contains', uid)
+    .get();
+  await Promise.all(sessions.docs.map(doc => {
+    const data = doc.data() || {};
+    if (data.createdBy === uid) return doc.ref.delete();
+    return doc.ref.update({
+      participantUids: admin.firestore.FieldValue.arrayRemove(uid)
+    });
+  }));
+
+  await Promise.all([
+    userRef.delete(),
+    firestore.collection('leaderboard').doc(uid).delete(),
+    admin.database().ref(`status/${uid}`).remove()
+  ]);
+}
+
+async function cleanupExpiredAnonymousUsers() {
+  const cutoff = Date.now() - ANONYMOUS_MAX_AGE_MS;
+  let pageToken;
+  let scanned = 0;
+  let deleted = 0;
+
+  do {
+    const page = await admin.auth().listUsers(1000, pageToken);
+    for (const user of page.users) {
+      scanned += 1;
+      if (!user.isAnonymous || !user.metadata.creationTime) continue;
+      if (new Date(user.metadata.creationTime).getTime() > cutoff) continue;
+
+      // Auth deletion happens only after all related data was removed successfully.
+      await deleteAnonymousData(user.uid);
+      await admin.auth().deleteUser(user.uid);
+      deleted += 1;
+    }
+    pageToken = page.pageToken;
+  } while (pageToken);
+
+  console.log(`Anonymous cleanup completed: scanned=${scanned}, deleted=${deleted}`);
+}
+
+module.exports.cleanupExpiredAnonymousUsers = cleanupExpiredAnonymousUsers;
 
 exports.notifyGameInvite = functions.firestore
   .document('users/{uid}/gameInvites/{inviteId}')

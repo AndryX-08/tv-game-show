@@ -51,8 +51,6 @@ let ttsVoices=[];
 let ttsVoiceURI=localStorage.getItem('tvgn-tts-voice')||'';
 let ttsRate=parseFloat(localStorage.getItem('tvgn-tts-rate'))||.9;
 let onboardingStep=0,onboardingStarted=false;
-const ANON_IDLE_LIMIT_MS=30*60*1000;
-let anonymousCleanupTimer=null,anonymousCleanupInProgress=false,anonymousLifecycleBound=false;
 const FCM_VAPID_KEY='BBxXOj1JjJimGUo7f3f5VbnFGoGP20wEXR2n8xnsC3G9KM3Ho6T603WgdG6bPXVFJv-La7lmameZ-J7dGfs6TOI';
 
 const APP_ROUTES={
@@ -2122,94 +2120,6 @@ function prevOnboardingStep(){
 function isFreshFirebaseAuthUser(user){
   if(!user?.metadata)return false;
   return user.metadata.creationTime&&user.metadata.lastSignInTime&&user.metadata.creationTime===user.metadata.lastSignInTime;
-}
-
-function clearAnonymousCleanupTimer(){
-  if(anonymousCleanupTimer)clearTimeout(anonymousCleanupTimer);
-  anonymousCleanupTimer=null;
-}
-
-function resetAnonymousActivityTimer(){
-  if(!currentUser?.isAnonymous||anonymousCleanupInProgress)return;
-  clearAnonymousCleanupTimer();
-  anonymousCleanupTimer=setTimeout(()=>{
-    cleanupAnonymousAccount('idle-timeout');
-  },ANON_IDLE_LIMIT_MS);
-}
-
-function bindAnonymousActivityListeners(){
-  if(anonymousLifecycleBound)return;
-  anonymousLifecycleBound=true;
-  ['pointerdown','keydown','touchstart','scroll'].forEach(eventName=>{
-    window.addEventListener(eventName,resetAnonymousActivityTimer,{passive:true});
-  });
-  window.addEventListener('pagehide',cleanupAnonymousAccountOnExit);
-  window.addEventListener('beforeunload',cleanupAnonymousAccountOnExit);
-}
-
-function startAnonymousLifecycle(){
-  bindAnonymousActivityListeners();
-  resetAnonymousActivityTimer();
-}
-
-function stopAnonymousLifecycle(){
-  clearAnonymousCleanupTimer();
-}
-
-function cleanupAnonymousAccountOnExit(){
-  if(!currentUser?.isAnonymous||anonymousCleanupInProgress)return;
-  cleanupAnonymousAccount('page-exit');
-}
-
-async function deleteAnonymousFirestoreData(uid){
-  if(!uid||!window.db)return;
-  const batch=db.batch();
-  try{
-    const invitesSnap=await db.collection('users').doc(uid).collection('gameInvites').limit(100).get();
-    invitesSnap.docs.forEach(doc=>batch.delete(doc.ref));
-  }catch(err){
-    console.error('Errore lettura inviti anonimi:',err);
-  }
-  try{
-    const sessionsSnap=await db.collection('gameSessions').where('createdBy','==',uid).limit(25).get();
-    sessionsSnap.docs.forEach(doc=>batch.delete(doc.ref));
-  }catch(err){
-    console.error('Errore lettura sessioni anonime:',err);
-  }
-  batch.delete(db.collection('leaderboard').doc(uid));
-  batch.delete(db.collection('users').doc(uid));
-  await batch.commit();
-}
-
-async function cleanupAnonymousAccount(reason='manual',options={}){
-  const user=currentUser||auth.currentUser;
-  if(!user?.isAnonymous||anonymousCleanupInProgress)return;
-  anonymousCleanupInProgress=true;
-  stopAnonymousLifecycle();
-  try{
-    stopSarabandaAudio();
-    stopGameSessionListener();
-    if(database){
-      await database.ref(`status/${user.uid}`).remove().catch(err=>console.error('Errore rimozione presenza anonima:',err));
-    }
-    await deleteAnonymousFirestoreData(user.uid);
-    players=players.filter(p=>p.uid!==user.uid);
-    renderPlayers();
-    renderTeamSection();
-    renderRegisteredUserSelect();
-    if(options.deleteAuth!==false&&auth.currentUser?.uid===user.uid){
-      await user.delete();
-    }else if(options.signOut!==false&&auth.currentUser?.uid===user.uid){
-      await auth.signOut();
-    }
-  }catch(err){
-    console.error(`Errore pulizia account anonimo (${reason}):`,err);
-    if(auth.currentUser?.uid===user.uid){
-      auth.signOut().catch(()=>{});
-    }
-  }finally{
-    anonymousCleanupInProgress=false;
-  }
 }
 
 function saveUserIfNew(user){
@@ -7195,9 +7105,6 @@ document.addEventListener("DOMContentLoaded", () => {
       updateUserUI(user);
       if(user.isAnonymous){
         showOnboardingTutorial();
-        startAnonymousLifecycle();
-      }else{
-        stopAnonymousLifecycle();
       }
       saveUserIfNew(user).then(isNewUser=>{
         if(isNewUser||isFreshFirebaseAuthUser(user))showOnboardingTutorial();
@@ -7213,7 +7120,6 @@ document.addEventListener("DOMContentLoaded", () => {
       openInviteFromNotification();
     } else {
       teardownPresence();
-      stopAnonymousLifecycle();
       if(unsubscribeLeaderboard)unsubscribeLeaderboard();
       if(unsubscribeRegisteredUsers)unsubscribeRegisteredUsers();
       if(unsubscribeCurrentUserProfile)unsubscribeCurrentUserProfile();
@@ -7273,7 +7179,7 @@ function logout(){
   stopSarabandaAudio();
   teardownPresence();
   if(currentUser?.isAnonymous){
-    cleanupAnonymousAccount('logout');
+    auth.signOut();
     return;
   }
   auth.signOut();
