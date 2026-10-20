@@ -86,11 +86,7 @@ Prima del primo avvio configura questi GitHub Actions Secrets nel repository:
 - `FIREBASE_SERVICE_ACCOUNT_JSON`: il JSON di una service account autorizzata a gestire Authentication, Firestore e Realtime Database;
 - `FIREBASE_DATABASE_URL`: l'URL del Realtime Database, ad esempio `https://tv-game-night-default-rtdb.europe-west1.firebasedatabase.app`.
 
-Non inserire mai il JSON della service account nei file del repository o nei log del workflow. Pubblica anche l'indice collection-group richiesto dalla pulizia degli inviti:
-
-```sh
-firebase deploy --only firestore:indexes
-```
+Non inserire mai il JSON della service account nei file del repository o nei log del workflow. La pulizia non richiede un indice Firestore manuale aggiuntivo.
 
 Il workflow può essere avviato manualmente dalla scheda Actions oppure automaticamente ogni ora. GitHub segnala che gli eventi schedulati possono subire ritardi nei periodi di carico elevato; il workflow è quindi progettato per essere ripetibile e lascia l'account Authentication intatto se una fase di pulizia fallisce.
 
