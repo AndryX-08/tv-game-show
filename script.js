@@ -124,8 +124,38 @@ const DEFAULT_PROFILE_STATS={
   wins:0,
   lastGame:'—'
 };
+const RELEASE_NOTES_VERSION='2026-10-21-quiz-sarabanda';
 const NIGHT_RECAP_STORAGE_KEY='tvgn-night-events-v1';
 let nightEvents=loadNightEvents();
+
+function closeReleaseNotes(){
+  const overlay=document.getElementById('releaseNotesOverlay');
+  if(!overlay)return;
+  overlay.classList.add('hidden');
+  overlay.style.display='none';
+}
+
+function showReleaseNotesOnce(user=currentUser){
+  if(!user)return;
+  const storageKey=`tvgn-release-notes-${RELEASE_NOTES_VERSION}-${user.uid}`;
+  if(localStorage.getItem(storageKey)==='1')return;
+  const waitForEntryOverlays=()=>{
+    const intro=document.getElementById('openingIntro');
+    const tutorial=document.getElementById('tutorialOverlay');
+    const introVisible=intro&&!intro.classList.contains('hidden')&&intro.style.display!=='none';
+    const tutorialVisible=tutorial&&!tutorial.classList.contains('hidden')&&tutorial.style.display!=='none';
+    if(introVisible||tutorialVisible){
+      setTimeout(waitForEntryOverlays,300);
+      return;
+    }
+    const overlay=document.getElementById('releaseNotesOverlay');
+    if(!overlay)return;
+    localStorage.setItem(storageKey,'1');
+    overlay.classList.remove('hidden');
+    overlay.style.display='flex';
+  };
+  waitForEntryOverlays();
+}
 
 const ONBOARDING_STEPS=[
   {
@@ -205,6 +235,57 @@ const AUA_Q=[
 {q:"E' giusto dire che in Italia non si guida a sinistra?",a:["Sì","No"],wrong:"Sì"},
 {q:"E' giusto dire che Boni è gay?",a:["Sì","No"],wrong:"No"},
 {q:"Solo Marzo ha 28 giorni",a:["Vero","Falso"],wrong:"Vero"},
+{q:"Qual è la capitale del Portogallo?",a:["Lisbona","Porto"],wrong:"Porto"},
+{q:"Quale oceano bagna la costa orientale degli Stati Uniti?",a:["Pacifico","Atlantico"],wrong:"Pacifico"},
+{q:"Chi ha scritto la tragedia Romeo e Giulietta?",a:["William Shakespeare","Charles Dickens"],wrong:"Charles Dickens"},
+{q:"Qual è il simbolo chimico del ferro?",a:["Fe","Fi"],wrong:"Fi"},
+{q:"Quale gas è indispensabile per la respirazione umana?",a:["Azoto","Ossigeno"],wrong:"Azoto"},
+{q:"In quale città si trova la Torre Eiffel?",a:["Parigi","Bruxelles"],wrong:"Bruxelles"},
+{q:"Qual è il continente più grande?",a:["Asia","Africa"],wrong:"Africa"},
+{q:"Chi compose Le quattro stagioni?",a:["Antonio Vivaldi","Wolfgang Amadeus Mozart"],wrong:"Wolfgang Amadeus Mozart"},
+{q:"Quale strumento si usa per misurare la temperatura?",a:["Barometro","Termometro"],wrong:"Barometro"},
+{q:"Qual è la lingua più parlata in Brasile?",a:["Spagnolo","Portoghese"],wrong:"Spagnolo"},
+{q:"Quale pianeta è il più grande del sistema solare?",a:["Giove","Saturno"],wrong:"Saturno"},
+{q:"In quale anno è caduto il Muro di Berlino?",a:["1989","1979"],wrong:"1979"},
+{q:"Qual è la capitale del Giappone?",a:["Kyoto","Tokyo"],wrong:"Kyoto"},
+{q:"Quale animale è noto per cambiare colore?",a:["Camaleonte","Delfino"],wrong:"Delfino"},
+{q:"Chi dipinse Guernica?",a:["Pablo Picasso","Claude Monet"],wrong:"Claude Monet"},
+{q:"Qual è il numero atomico dell'idrogeno?",a:["1","2"],wrong:"2"},
+{q:"Quale mare separa l'Europa dall'Africa?",a:["Mar Mediterraneo","Mar Baltico"],wrong:"Mar Baltico"},
+{q:"Qual è la moneta ufficiale del Regno Unito?",a:["Euro","Sterlina"],wrong:"Euro"},
+{q:"Chi fu il primo uomo a camminare sulla Luna?",a:["Neil Armstrong","Buzz Aldrin"],wrong:"Buzz Aldrin"},
+{q:"Quale città è attraversata dal fiume Senna?",a:["Parigi","Berlino"],wrong:"Berlino"},
+{q:"Qual è la capitale dell'Australia?",a:["Sydney","Canberra"],wrong:"Sydney"},
+{q:"Quale animale è il simbolo dell'Australia?",a:["Canguro","Panda"],wrong:"Panda"},
+{q:"Chi ha scritto La coscienza di Zeno?",a:["Italo Svevo","Luigi Pirandello"],wrong:"Luigi Pirandello"},
+{q:"Quale vitamina viene prodotta dalla pelle con la luce solare?",a:["Vitamina D","Vitamina C"],wrong:"Vitamina C"},
+{q:"Qual è la montagna più alta d'Italia?",a:["Monte Bianco","Etna"],wrong:"Etna"},
+{q:"Quale organo filtra il sangue e produce urina?",a:["Rene","Polmone"],wrong:"Polmone"},
+{q:"Qual è il più piccolo numero primo?",a:["1","2"],wrong:"1"},
+{q:"In quale paese si trova Machu Picchu?",a:["Perù","Messico"],wrong:"Messico"},
+{q:"Quale metallo è liquido a temperatura ambiente?",a:["Mercurio","Alluminio"],wrong:"Alluminio"},
+{q:"Qual è la capitale della Grecia?",a:["Atene","Salonicco"],wrong:"Salonicco"},
+{q:"Chi ha scritto Il piccolo principe?",a:["Antoine de Saint-Exupéry","Jules Verne"],wrong:"Jules Verne"},
+{q:"Quale sport si disputa a Wimbledon?",a:["Tennis","Golf"],wrong:"Golf"},
+{q:"Qual è il colore complementare del rosso nella sintesi pittorica?",a:["Verde","Blu"],wrong:"Blu"},
+{q:"Quale paese ha come capitale Ottawa?",a:["Canada","Australia"],wrong:"Australia"},
+{q:"Quante corde ha normalmente un violino?",a:["4","6"],wrong:"6"},
+{q:"Qual è il nome della galassia che contiene il Sistema Solare?",a:["Andromeda","Via Lattea"],wrong:"Andromeda"},
+{q:"Quale civiltà costruì Machu Picchu?",a:["Inca","Romana"],wrong:"Romana"},
+{q:"Qual è la capitale dell'Irlanda?",a:["Dublino","Belfast"],wrong:"Belfast"},
+{q:"Quale parte della pianta assorbe principalmente acqua dal terreno?",a:["Radici","Fiori"],wrong:"Fiori"},
+{q:"Chi è l'autore della Commedia, poi chiamata Divina Commedia?",a:["Dante Alighieri","Francesco Petrarca"],wrong:"Francesco Petrarca"},
+{q:"Qual è il risultato di 15×4?",a:["60","50"],wrong:"50"},
+{q:"Quale paese è famoso per i fiordi?",a:["Norvegia","Ungheria"],wrong:"Ungheria"},
+{q:"Quale apparato permette di respirare?",a:["Apparato respiratorio","Apparato digerente"],wrong:"Apparato digerente"},
+{q:"Quale città italiana è famosa per i canali?",a:["Venezia","Torino"],wrong:"Torino"},
+{q:"Chi formulò la teoria della relatività?",a:["Albert Einstein","Isaac Newton"],wrong:"Isaac Newton"},
+{q:"Qual è la capitale dell'Egitto?",a:["Il Cairo","Alessandria"],wrong:"Alessandria"},
+{q:"Quale animale è un mammifero marino?",a:["Delfino","Sardina"],wrong:"Sardina"},
+{q:"Quanti gradi misura un angolo retto?",a:["90","180"],wrong:"180"},
+{q:"Quale continente è attraversato dal fiume Nilo?",a:["Africa","Europa"],wrong:"Europa"},
+{q:"Qual è la capitale della Germania?",a:["Berlino","Monaco"],wrong:"Monaco"},
+{q:"Quale corrente artistica è associata a Monet?",a:["Impressionismo","Cubismo"],wrong:"Cubismo"},
 ];
 
 const ERE_WORDS=[
@@ -258,6 +339,57 @@ const ERE_WORDS=[
 {clue:"Qual è il simbolo del carbonio?",word:"C"},
 {clue:"Chi ha dipinto La Nascita di Venere?",word:"BOTTICELLI"},
 {clue:"Qual è la capitale della Grecia?",word:"ATENE"}
+,{clue:"Qual è la capitale del Portogallo?",word:"LISBONA"}
+,{clue:"Quale oceano bagna la costa orientale degli Stati Uniti?",word:"ATLANTICO"}
+,{clue:"Chi ha scritto Romeo e Giulietta?",word:"SHAKESPEARE"}
+,{clue:"Qual è il simbolo chimico del ferro?",word:"FE"}
+,{clue:"Quale gas respiriamo principalmente per vivere?",word:"OSSIGENO"}
+,{clue:"In quale città si trova la Torre Eiffel?",word:"PARIGI"}
+,{clue:"Qual è il continente più grande?",word:"ASIA"}
+,{clue:"Chi compose Le quattro stagioni?",word:"VIVALDI"}
+,{clue:"Quale strumento misura la temperatura?",word:"TERMOMETRO"}
+,{clue:"Qual è la lingua ufficiale del Brasile?",word:"PORTOGHESE"}
+,{clue:"Qual è il pianeta più grande del sistema solare?",word:"GIOVE"}
+,{clue:"In quale anno è caduto il Muro di Berlino?",word:"1989"}
+,{clue:"Qual è la capitale del Giappone?",word:"TOKYO"}
+,{clue:"Quale animale può cambiare colore per mimetizzarsi?",word:"CAMALEONTE"}
+,{clue:"Chi dipinse Guernica?",word:"PICASSO"}
+,{clue:"Qual è il numero atomico dell'idrogeno?",word:"UNO"}
+,{clue:"Quale mare separa l'Europa dall'Africa?",word:"MEDITERRANEO"}
+,{clue:"Qual è la moneta del Regno Unito?",word:"STERLINA"}
+,{clue:"Chi fu il primo uomo sulla Luna?",word:"ARMSTRONG"}
+,{clue:"Quale fiume attraversa Parigi?",word:"SENNA"}
+,{clue:"Qual è la capitale dell'Australia?",word:"CANBERRA"}
+,{clue:"Quale animale è simbolo dell'Australia?",word:"CANGURO"}
+,{clue:"Chi ha scritto La coscienza di Zeno?",word:"SVEVO"}
+,{clue:"Quale vitamina produce la pelle con il sole?",word:"VITAMINA D"}
+,{clue:"Qual è la montagna più alta d'Italia?",word:"MONTE BIANCO"}
+,{clue:"Quale organo filtra il sangue e produce urina?",word:"RENE"}
+,{clue:"Qual è il più piccolo numero primo?",word:"DUE"}
+,{clue:"In quale paese si trova Machu Picchu?",word:"PERU"}
+,{clue:"Quale metallo è liquido a temperatura ambiente?",word:"MERCURIO"}
+,{clue:"Qual è la capitale della Grecia?",word:"ATENE"}
+,{clue:"Chi ha scritto Il piccolo principe?",word:"SAINT EXUPERY"}
+,{clue:"Quale sport si disputa a Wimbledon?",word:"TENNIS"}
+,{clue:"Qual è il colore complementare del rosso?",word:"VERDE"}
+,{clue:"Quale paese ha come capitale Ottawa?",word:"CANADA"}
+,{clue:"Quante corde ha normalmente un violino?",word:"QUATTRO"}
+,{clue:"Come si chiama la galassia del Sistema Solare?",word:"VIA LATTEA"}
+,{clue:"Quale civiltà costruì Machu Picchu?",word:"INCA"}
+,{clue:"Qual è la capitale dell'Irlanda?",word:"DUBLINO"}
+,{clue:"Quale parte della pianta assorbe acqua dal terreno?",word:"RADICI"}
+,{clue:"Chi scrisse la Divina Commedia?",word:"DANTE"}
+,{clue:"Quanto fa 15 per 4?",word:"60"}
+,{clue:"Quale paese è famoso per i fiordi?",word:"NORVEGIA"}
+,{clue:"Quale apparato permette di respirare?",word:"RESPIRATORIO"}
+,{clue:"Quale città italiana è famosa per i canali?",word:"VENEZIA"}
+,{clue:"Chi formulò la teoria della relatività?",word:"EINSTEIN"}
+,{clue:"Qual è la capitale dell'Egitto?",word:"IL CAIRO"}
+,{clue:"Quale animale è un mammifero marino?",word:"DELFINO"}
+,{clue:"Quanti gradi misura un angolo retto?",word:"NOVANTA"}
+,{clue:"Quale continente è attraversato dal Nilo?",word:"AFRICA"}
+,{clue:"Qual è la capitale della Germania?",word:"BERLINO"}
+,{clue:"A quale corrente artistica è associato Monet?",word:"IMPRESSIONISMO"}
 ];
 
 const WHEEL_PHRASES=[
@@ -495,7 +627,25 @@ const SARABANDA_TRACKS=[
   {title:"64 Barre In Faccia",artist:"Artie 5ive",src:"Sarabanda/64-barre-in-faccia-red-bull-64-bars-spotdownorg_PzuleJn6.mp3"},
   {title:"Davverodavvero",artist:"Artie 5ive",src:"Sarabanda/davverodavvero-spotdownorg_ggk0EC8Y.mp3"},
   {title:"Warzone",artist:"Capo Plaza",src:"Sarabanda/warzone-feat-artie-5ive-capo-plaza-nerissima-serpe-spotdownorg_YMIfakiN.mp3"},
-  {title:"Chuck Norris",artist:"Kid Yugi",src:"Sarabanda/chuck-norris-feat-papa-v-rrari-dal-tacco-nerissima-serpe-spotdownorg_aL0dv8Hv.mp3"}
+  {title:"Chuck Norris",artist:"Kid Yugi",src:"Sarabanda/chuck-norris-feat-papa-v-rrari-dal-tacco-nerissima-serpe-spotdownorg_aL0dv8Hv.mp3"},
+  {title:"Animals",artist:"Martin Garrix",src:"Sarabanda/Animals_spotdown.org.mp3"},
+  {title:"Ballas 3",artist:"Diss Gacha feat. LilCR",src:"Sarabanda/BALLAS 3 (feat. LILCR)_spotdown.org.mp3"},
+  {title:"Benihana",artist:"ANNA",src:"Sarabanda/BENIHANA_spotdown.org.mp3"},
+  {title:"Bop Bop",artist:"Artie 5ive",src:"Sarabanda/BOP BOP_spotdown.org.mp3"},
+  {title:"Bambola",artist:"Artie 5ive feat. Niky Savage",src:"Sarabanda/Bambola_spotdown.org.mp3"},
+  {title:"Dal Tacco",artist:"RRARI DAL TACCO",src:"Sarabanda/DAL TACCO_spotdown.org.mp3"},
+  {title:"Darkmoney",artist:"Pyrex feat. Sfera Ebbasta",src:"Sarabanda/DARKMONEY (feat. Sfera Ebbasta)_spotdown.org.mp3"},
+  {title:"Grammelot",artist:"Kid Yugi",src:"Sarabanda/GRAMMELOT_spotdown.org.mp3"},
+  {title:"Loco In Discoteca",artist:"G.Mineiro feat. Yuri Redicopa",src:"Sarabanda/Loco In Discoteca (feat. Yuri Redicopa)_spotdown.org.mp3"},
+  {title:"Malpensa",artist:"G.Mineiro",src:"Sarabanda/Malpensa_spotdown.org.mp3"},
+  {title:"Moonlight",artist:"Intifaya & Rayan feat. 8blevrai",src:"Sarabanda/Moonlight (prod. 2nd Roof)_spotdown.org.mp3"},
+  {title:"Safari",artist:"ANNA feat. Astro & Tony Boy",src:"Sarabanda/SAFARI (feat. Astro & Tony Boy)_spotdown.org.mp3"},
+  {title:"Sono Io Il Pass",artist:"ANNA feat. Lazza",src:"Sarabanda/SONO IO IL PASS (feat. Lazza)_spotdown.org.mp3"},
+  {title:"Swag Music",artist:"Artie 5ive",src:"Sarabanda/SWAG MUSIC_spotdown.org.mp3"},
+  {title:"Selena Gomez",artist:"YB Nana",src:"Sarabanda/Selena Gomez_spotdown.org.mp3"},
+  {title:"Splinter Cell",artist:"G.Mineiro, Flatpearl, Jiz & Succo",src:"Sarabanda/Splinter Cell_spotdown.org.mp3"},
+  {title:"Tokyo Drift",artist:"Diss Gacha & Sala feat. Low-Red",src:"Sarabanda/TOKYO DRIFT (feat. Low-Red)_spotdown.org.mp3"},
+  {title:"Yamamay",artist:"Niky Savage",src:"Sarabanda/YAMAMAY_spotdown.org.mp3"}
 ];
 const AFFARI_GOOD_AUDIO_FILES=[
   'Sarabanda/4-gambe-spotdownorg_ahdpSiQy.mp3',
@@ -2554,7 +2704,14 @@ async function loadQuestionBank(key,fallback){
   try{
     const doc=await db.collection('questionBanks').doc(key).get();
     const data=doc.exists?doc.data():null;
-    return Array.isArray(data?.items)&&data.items.length?data.items:fallback;
+    if(!Array.isArray(data?.items)||!data.items.length)return fallback;
+    // Mantieni disponibili anche le nuove domande incluse nell'app quando una
+    // banca Firestore precedente è ancora presente online.
+    if(['aua','eredita'].includes(key)){
+      const seen=new Set(data.items.map(item=>JSON.stringify(item)));
+      return [...data.items,...fallback.filter(item=>!seen.has(JSON.stringify(item)))];
+    }
+    return data.items;
   }catch(err){
     console.error(`Errore caricamento questionBanks/${key}:`,err);
     return fallback;
@@ -5311,6 +5468,8 @@ async function beginSarabanda(options={}){
     revealed:false,
     fullPlay:false,
     resumeAt:0,
+    previewStart:null,
+    previewEnd:null,
     message:`Turno di ${saraPlayers[0]?.name||'Giocatore'}. Premi play quando siete pronti.`,
     completed:false
   };
@@ -5339,6 +5498,8 @@ function serializeSarabandaState(){
     revealed:!!sarabandaState.revealed,
     fullPlay:!!sarabandaState.fullPlay,
     resumeAt:Number(sarabandaState.resumeAt)||0,
+    previewStart:Number.isFinite(sarabandaState.previewStart)?sarabandaState.previewStart:null,
+    previewEnd:Number.isFinite(sarabandaState.previewEnd)?sarabandaState.previewEnd:null,
     message:sarabandaState.message||'',
     completed:!!sarabandaState.completed
   };
@@ -5376,6 +5537,8 @@ function applyRemoteSarabandaState(state){
     revealed:!!state.revealed,
     fullPlay:!!state.fullPlay,
     resumeAt:Number(state.resumeAt)||0,
+    previewStart:Number.isFinite(Number(state.previewStart))?Number(state.previewStart):null,
+    previewEnd:Number.isFinite(Number(state.previewEnd))?Number(state.previewEnd):null,
     message:state.message||'',
     completed:!!state.completed
   };
@@ -5468,9 +5631,10 @@ function setupSarabandaAudioPreview(){
   }
   sarabandaPreviewHandler=()=>{
     if(sarabandaState.fullPlay||sarabandaState.revealed)return;
-    if(audio.currentTime>=SARABANDA_PREVIEW_SECONDS){
+    const previewEnd=Number(sarabandaState.previewEnd)||SARABANDA_PREVIEW_SECONDS;
+    if(audio.currentTime>=previewEnd){
       audio.pause();
-      sarabandaState.resumeAt=audio.currentTime;
+      sarabandaState.resumeAt=previewEnd;
       setSarabandaMessage(`Anteprima finita: ${SARABANDA_PREVIEW_SECONDS} secondi ascoltati.`);
       syncSarabandaState();
     }
@@ -5497,8 +5661,25 @@ function playSarabandaPreview(){
   if(!audio)return;
   sarabandaState.fullPlay=false;
   sarabandaState.resumeAt=0;
-  audio.currentTime=0;
-  audio.play().catch(()=>{});
+  const startPreview=()=>{
+    const duration=Number(audio.duration);
+    const hasShortClip=Number.isFinite(duration)&&duration>0&&duration<=SARABANDA_PREVIEW_SECONDS*2;
+    const maxStart=Number.isFinite(duration)&&duration>SARABANDA_PREVIEW_SECONDS*2
+      ? duration-SARABANDA_PREVIEW_SECONDS
+      : 0;
+    // Le clip da 12 secondi (e quelle più brevi) partono sempre dall'inizio;
+    // i brani completi usano ogni volta un punto casuale di sei secondi.
+    const start=hasShortClip||maxStart<=0
+      ? 0
+      : Math.random()*maxStart;
+    sarabandaState.previewStart=start;
+    sarabandaState.previewEnd=start+Math.min(SARABANDA_PREVIEW_SECONDS,Number.isFinite(duration)&&duration>0?duration: SARABANDA_PREVIEW_SECONDS);
+    audio.currentTime=start;
+    audio.play().catch(()=>{});
+    syncSarabandaState();
+  };
+  if(audio.readyState>=1&&Number.isFinite(audio.duration)&&audio.duration>0)startPreview();
+  else audio.addEventListener('loadedmetadata',startPreview,{once:true});
 }
 
 function stopSarabandaAudio(){
@@ -5587,6 +5768,8 @@ function nextSarabandaTrack(){
   sarabandaState.revealed=false;
   sarabandaState.fullPlay=false;
   sarabandaState.resumeAt=0;
+  sarabandaState.previewStart=null;
+  sarabandaState.previewEnd=null;
   sarabandaState.message=`Turno di ${nextPlayer?.name||'Giocatore'}.`;
   renderSarabanda();
   playSarabandaPreview();
@@ -7103,6 +7286,7 @@ document.addEventListener("DOMContentLoaded", () => {
         overlay.style.display = "none"; // forza nascondimento
       }
       updateUserUI(user);
+      showReleaseNotesOnce(user);
       if(user.isAnonymous){
         showOnboardingTutorial();
       }
